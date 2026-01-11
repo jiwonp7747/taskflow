@@ -2,8 +2,9 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import type { Task } from '@/types/task';
 import { parseTaskContent, generateTaskContent, updateTaskFrontmatter } from './taskParser';
+import { getActiveTasksDirectory } from './config';
 
-// Default tasks directory
+// Default tasks directory (fallback)
 const DEFAULT_TASKS_DIR = process.env.TASKS_DIR || path.join(process.cwd(), 'tasks');
 
 // Validate path to prevent directory traversal
@@ -14,9 +15,10 @@ function validatePath(filePath: string, baseDir: string): boolean {
 }
 
 // Ensure tasks directory exists
-export async function ensureTasksDirectory(dir: string = DEFAULT_TASKS_DIR): Promise<void> {
+export async function ensureTasksDirectory(dir?: string): Promise<void> {
+  const targetDir = dir || await getActiveTasksDirectory();
   try {
-    await fs.mkdir(dir, { recursive: true });
+    await fs.mkdir(targetDir, { recursive: true });
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'EEXIST') {
       throw error;
@@ -24,7 +26,12 @@ export async function ensureTasksDirectory(dir: string = DEFAULT_TASKS_DIR): Pro
   }
 }
 
-// Get the tasks directory path
+// Get the tasks directory path (async to support dynamic config)
+export async function getTasksDirectoryAsync(): Promise<string> {
+  return await getActiveTasksDirectory();
+}
+
+// Get the tasks directory path (sync fallback - deprecated, use getTasksDirectoryAsync)
 export function getTasksDirectory(): string {
   return DEFAULT_TASKS_DIR;
 }

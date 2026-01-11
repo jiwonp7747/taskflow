@@ -1,12 +1,16 @@
 ---
 id: task-demo-fix
 title: Fix Memory Leak in WebSocket Handler
-status: NEED_FIX
+status: IN_REVIEW
 priority: URGENT
 assignee: ai-agent
-created_at: 2025-01-10T15:00:00Z
-updated_at: 2025-01-11T11:00:00Z
-tags: [backend, bug, performance, websocket]
+created_at: 2025-01-10T15:00:00.000Z
+updated_at: '2026-01-11T14:45:15.685Z'
+tags:
+  - backend
+  - bug
+  - performance
+  - websocket
 ---
 
 ## Description
@@ -26,5 +30,11 @@ The previous fix didn't address the issue completely. Please also check the even
 
 ## AI Work Log
 
+
+
+### 2026-01-11
+Fixed memory leak by properly cleaning up event listeners in message handler
+### 2026-01-11
+Started working on this task.
 [2025-01-11 10:00] Initial investigation complete. Found that event listeners are not being removed.
 [2025-01-11 11:00] Submitted fix, awaiting review.

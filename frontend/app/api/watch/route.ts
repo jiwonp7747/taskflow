@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { fileWatcher, startWatching } from '@/lib/fileWatcher';
-import { getTasksDirectory } from '@/lib/fileSystem';
+import { getTasksDirectoryAsync } from '@/lib/fileSystem';
 import type { FileWatchEvent } from '@/types/task';
 
 // GET /api/watch - SSE endpoint for file changes
 export async function GET(): Promise<Response> {
-  const directory = getTasksDirectory();
+  const directory = await getTasksDirectoryAsync();
 
   // Start watching if not already
   startWatching(directory);

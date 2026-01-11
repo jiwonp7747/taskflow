@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTaskById, updateTask, deleteTask } from '@/lib/fileSystem';
+import { getTaskById, updateTask, deleteTask, getTasksDirectoryAsync } from '@/lib/fileSystem';
 import type { TaskDetailResponse, TaskUpdateRequest, ApiError } from '@/types/task';
 
 interface RouteParams {
@@ -13,7 +13,8 @@ export async function GET(
 ): Promise<NextResponse<TaskDetailResponse | ApiError>> {
   try {
     const { id } = await params;
-    const task = await getTaskById(id);
+    const directory = await getTasksDirectoryAsync();
+    const task = await getTaskById(id, directory);
 
     if (!task) {
       return NextResponse.json(
@@ -51,8 +52,9 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = (await request.json()) as TaskUpdateRequest;
+    const directory = await getTasksDirectoryAsync();
 
-    const existingTask = await getTaskById(id);
+    const existingTask = await getTaskById(id, directory);
     if (!existingTask) {
       return NextResponse.json(
         {
@@ -65,7 +67,7 @@ export async function PUT(
       );
     }
 
-    const task = await updateTask(id, body);
+    const task = await updateTask(id, body, directory);
 
     return NextResponse.json({ task });
   } catch (error) {
@@ -90,8 +92,9 @@ export async function DELETE(
 ): Promise<NextResponse<{ success: boolean } | ApiError>> {
   try {
     const { id } = await params;
+    const directory = await getTasksDirectoryAsync();
 
-    const existingTask = await getTaskById(id);
+    const existingTask = await getTaskById(id, directory);
     if (!existingTask) {
       return NextResponse.json(
         {
@@ -104,7 +107,7 @@ export async function DELETE(
       );
     }
 
-    await deleteTask(id);
+    await deleteTask(id, directory);
 
     return NextResponse.json({ success: true });
   } catch (error) {

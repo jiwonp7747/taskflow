@@ -1,0 +1,38 @@
+{
+  "sources": [
+    {
+      "id": "source-1768122195802",
+      "name": "TaskFlow Tasks",
+      "path": "/Users/jiwonp/project/taskflow/frontend/tasks",
+      "isActive": false,
+      "createdAt": "2026-01-11T09:03:15.802Z",
+      "lastAccessed": "2026-01-11T15:47:55.399Z"
+    },
+    {
+      "id": "source-1768122350893",
+      "name": "todo",
+      "path": "/Users/jiwonp/project/docs/todo",
+      "isActive": true,
+      "createdAt": "2026-01-11T09:05:50.893Z",
+      "lastAccessed": "2026-01-11T15:47:56.409Z"
+    },
+    {
+      "id": "source-1768122686552",
+      "name": "Test Source",
+      "path": "/Users/jiwonp/project/taskflow/frontend/test-tasks",
+      "isActive": false,
+      "createdAt": "2026-01-11T09:11:26.552Z",
+      "lastAccessed": "2026-01-11T15:47:51.446Z"
+    }
+  ],
+  "activeSourceId": "source-1768122350893",
+  "theme": "dark",
+  "sidebarCollapsed": false,
+  "aiWorker": {
+    "enabled": true,
+    "autoStart": false,
+    "pollingInterval": 30000,
+    "maxConcurrent": 1,
+    "timeout": 600000
+  }
+}

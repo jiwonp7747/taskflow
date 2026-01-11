@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllTasks, createTask, getTasksDirectory } from '@/lib/fileSystem';
+import { getAllTasks, createTask, getTasksDirectoryAsync } from '@/lib/fileSystem';
 import type { TaskListResponse, TaskCreateRequest, ApiError } from '@/types/task';
 
 // GET /api/tasks - Get all tasks
 export async function GET(): Promise<NextResponse<TaskListResponse | ApiError>> {
   try {
-    const directory = getTasksDirectory();
+    const directory = await getTasksDirectoryAsync();
     const tasks = await getAllTasks(directory);
 
     return NextResponse.json({
@@ -47,15 +47,21 @@ export async function POST(
       );
     }
 
-    const task = await createTask({
-      title: body.title.trim(),
-      priority: body.priority || 'MEDIUM',
-      assignee: body.assignee || 'user',
-      tags: body.tags || [],
-      description: body.description || '',
-      requirements: body.requirements || '',
-      status: 'TODO',
-    });
+    // Get the active tasks directory
+    const directory = await getTasksDirectoryAsync();
+
+    const task = await createTask(
+      {
+        title: body.title.trim(),
+        priority: body.priority || 'MEDIUM',
+        assignee: body.assignee || 'user',
+        tags: body.tags || [],
+        description: body.description || '',
+        requirements: body.requirements || '',
+        status: 'TODO',
+      },
+      directory
+    );
 
     return NextResponse.json({ task }, { status: 201 });
   } catch (error) {

@@ -4,7 +4,8 @@ import { useState, useCallback, useMemo } from 'react';
 import {
   DndContext,
   DragOverlay,
-  closestCorners,
+  pointerWithin,
+  rectIntersection,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -12,6 +13,7 @@ import {
   type DragStartEvent,
   type DragEndEvent,
   type DragOverEvent,
+  type CollisionDetection,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import type { Task, TaskStatus } from '@/types/task';
@@ -25,6 +27,37 @@ interface TaskBoardProps {
   onTaskClick: (task: Task) => void;
   workingTaskIds?: string[];
 }
+
+// Custom collision detection that prioritizes columns over task cards
+const columnIds = COLUMNS.map((col) => col.id);
+
+const customCollisionDetection: CollisionDetection = (args) => {
+  // First, check for pointer within collisions
+  const pointerCollisions = pointerWithin(args);
+
+  // Filter to prioritize column droppables
+  const columnCollisions = pointerCollisions.filter(
+    (collision) => columnIds.includes(collision.id as TaskStatus)
+  );
+
+  // If we have column collisions, return those
+  if (columnCollisions.length > 0) {
+    return columnCollisions;
+  }
+
+  // Fall back to rect intersection for columns
+  const rectCollisions = rectIntersection(args);
+  const columnRectCollisions = rectCollisions.filter(
+    (collision) => columnIds.includes(collision.id as TaskStatus)
+  );
+
+  if (columnRectCollisions.length > 0) {
+    return columnRectCollisions;
+  }
+
+  // If no column collision, return all collisions (for sorting within column)
+  return pointerCollisions;
+};
 
 export function TaskBoard({ tasks, onTaskUpdate, onTaskClick, workingTaskIds = [] }: TaskBoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -99,7 +132,7 @@ export function TaskBoard({ tasks, onTaskUpdate, onTaskClick, workingTaskIds = [
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={customCollisionDetection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}

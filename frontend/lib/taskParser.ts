@@ -144,6 +144,19 @@ export function updateTaskFrontmatter(
 ): string {
   const { data, content } = matter(originalContent);
 
+  // Handle AI Work Log update in markdown body
+  let updatedContent = content;
+  if (updates.aiWorkLog !== undefined) {
+    // Find the AI Work Log section and update it
+    const aiWorkLogRegex = /(## AI Work Log\s*\n)[\s\S]*$/;
+    if (aiWorkLogRegex.test(updatedContent)) {
+      updatedContent = updatedContent.replace(aiWorkLogRegex, `$1\n${updates.aiWorkLog}\n`);
+    } else {
+      // If section doesn't exist, append it
+      updatedContent += `\n## AI Work Log\n\n${updates.aiWorkLog}\n`;
+    }
+  }
+
   // Merge updates
   const updatedData = {
     ...data,
@@ -159,5 +172,5 @@ export function updateTaskFrontmatter(
   delete updatedData.filePath;
   delete updatedData.rawContent;
 
-  return matter.stringify(content, updatedData);
+  return matter.stringify(updatedContent, updatedData);
 }

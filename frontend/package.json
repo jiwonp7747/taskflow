@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "ai": "tsx scripts/ai-agent-helper.ts",
+    "ai:list": "tsx scripts/ai-agent-helper.ts list",
+    "ai:start": "tsx scripts/ai-agent-helper.ts start",
+    "ai:complete": "tsx scripts/ai-agent-helper.ts complete"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -26,6 +30,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
