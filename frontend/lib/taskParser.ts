@@ -56,7 +56,7 @@ function parseTags(value: unknown): string[] {
   return [];
 }
 
-// Parse date string
+// Parse date string (required - defaults to now)
 function parseDate(value: unknown): string {
   if (value instanceof Date) {
     return value.toISOString();
@@ -66,6 +66,19 @@ function parseDate(value: unknown): string {
     return isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
   }
   return new Date().toISOString();
+}
+
+// Parse optional date string (for start_date, due_date)
+function parseOptionalDate(value: unknown): string | undefined {
+  if (!value) return undefined;
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (typeof value === 'string' && value.trim()) {
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? undefined : date.toISOString();
+  }
+  return undefined;
 }
 
 // Parse a markdown file content into a Task object
@@ -83,6 +96,8 @@ export function parseTaskContent(content: string, filePath: string): Task {
     assignee: parseAssignee(data.assignee),
     created_at: parseDate(data.created_at),
     updated_at: parseDate(data.updated_at),
+    start_date: parseOptionalDate(data.start_date),
+    due_date: parseOptionalDate(data.due_date),
     tags: parseTags(data.tags),
     description: extractSection(markdownContent, 'Description'),
     requirements: extractSection(markdownContent, 'Requirements'),
@@ -103,18 +118,33 @@ export function generateTaskContent(task: Partial<Task>): string {
     assignee: task.assignee || 'user',
     created_at: task.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    start_date: task.start_date,
+    due_date: task.due_date,
     tags: task.tags || [],
   };
 
+  // Build frontmatter string with optional date fields
+  const dateParts = [
+    `id: ${frontmatter.id}`,
+    `title: ${frontmatter.title}`,
+    `status: ${frontmatter.status}`,
+    `priority: ${frontmatter.priority}`,
+    `assignee: ${frontmatter.assignee}`,
+    `created_at: ${frontmatter.created_at}`,
+    `updated_at: ${frontmatter.updated_at}`,
+  ];
+
+  if (frontmatter.start_date) {
+    dateParts.push(`start_date: ${frontmatter.start_date}`);
+  }
+  if (frontmatter.due_date) {
+    dateParts.push(`due_date: ${frontmatter.due_date}`);
+  }
+
+  dateParts.push(`tags: [${frontmatter.tags.join(', ')}]`);
+
   const content = `---
-id: ${frontmatter.id}
-title: ${frontmatter.title}
-status: ${frontmatter.status}
-priority: ${frontmatter.priority}
-assignee: ${frontmatter.assignee}
-created_at: ${frontmatter.created_at}
-updated_at: ${frontmatter.updated_at}
-tags: [${frontmatter.tags.join(', ')}]
+${dateParts.join('\n')}
 ---
 
 ## Description

@@ -5,6 +5,35 @@ import { CSS } from '@dnd-kit/utilities';
 import type { Task } from '@/types/task';
 import { PRIORITY_CONFIG } from '@/types/task';
 
+// Helper function for due date formatting with color coding
+function formatDueDate(dateStr?: string): { text: string; color: string; bg: string } | null {
+  if (!dateStr) return null;
+
+  const date = new Date(dateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dueDate = new Date(date);
+  dueDate.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    return { text: `${Math.abs(diffDays)}d overdue`, color: 'text-red-400', bg: 'bg-red-500/10' };
+  } else if (diffDays === 0) {
+    return { text: 'Due today', color: 'text-amber-400', bg: 'bg-amber-500/10' };
+  } else if (diffDays === 1) {
+    return { text: 'Tomorrow', color: 'text-amber-400', bg: 'bg-amber-500/10' };
+  } else if (diffDays <= 7) {
+    return { text: `${diffDays}d left`, color: 'text-cyan-400', bg: 'bg-cyan-500/10' };
+  } else {
+    return {
+      text: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      color: 'text-slate-400',
+      bg: 'bg-slate-800/50',
+    };
+  }
+}
+
 interface TaskCardProps {
   task: Task;
   onClick: () => void;
@@ -92,7 +121,7 @@ export function TaskCard({ task, onClick, isDragging = false, isAiWorking = fals
           {task.title}
         </h3>
 
-        {/* Footer: File path & Tags */}
+        {/* Footer: File path, Due date & Tags */}
         <div className="space-y-2">
           {/* File path indicator */}
           <div className="flex items-center gap-1 text-[10px] font-mono text-slate-500 truncate">
@@ -101,6 +130,20 @@ export function TaskCard({ task, onClick, isDragging = false, isAiWorking = fals
             </svg>
             <span className="truncate opacity-70">{task.id}.md</span>
           </div>
+
+          {/* Due date indicator */}
+          {task.due_date && (() => {
+            const dueInfo = formatDueDate(task.due_date);
+            if (!dueInfo) return null;
+            return (
+              <div className={`flex items-center gap-1 text-[10px] font-mono ${dueInfo.color}`}>
+                <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className={`px-1.5 py-0.5 rounded ${dueInfo.bg}`}>{dueInfo.text}</span>
+              </div>
+            );
+          })()}
 
           {/* Tags */}
           {task.tags.length > 0 && (

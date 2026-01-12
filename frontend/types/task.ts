@@ -13,6 +13,20 @@ export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 // Task Assignee Types
 export type TaskAssignee = 'ai-agent' | 'user' | string;
 
+// Date Preset Types for filtering
+export type DatePreset = 'all' | 'today' | 'this_week' | 'this_month' | 'overdue' | 'custom';
+
+// Task Filter Interface
+export interface TaskFilter {
+  tags?: string[];
+  assignee?: TaskAssignee | 'all';
+  dateRange?: {
+    type: DatePreset;
+    startDate?: string;
+    endDate?: string;
+  };
+}
+
 // Main Task Interface
 export interface Task {
   // Frontmatter fields
@@ -23,6 +37,8 @@ export interface Task {
   assignee: TaskAssignee;
   created_at: string;
   updated_at: string;
+  start_date?: string;  // ISO date string, optional
+  due_date?: string;    // ISO date string, optional
   tags: string[];
 
   // Content fields (markdown sections)
@@ -53,6 +69,8 @@ export interface TaskUpdateRequest {
   priority?: TaskPriority;
   assignee?: TaskAssignee;
   tags?: string[];
+  start_date?: string;
+  due_date?: string;
   description?: string;
   requirements?: string;
   feedback?: string;
@@ -63,6 +81,8 @@ export interface TaskCreateRequest {
   priority?: TaskPriority;
   assignee?: TaskAssignee;
   tags?: string[];
+  start_date?: string;
+  due_date?: string;
   description?: string;
   requirements?: string;
 }

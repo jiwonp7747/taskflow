@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import type { TaskPriority, TaskCreateRequest } from '@/types/task';
 import { PRIORITY_CONFIG } from '@/types/task';
+import { DatePicker } from '@/components/ui/DatePicker';
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -15,6 +16,8 @@ export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalPr
   const [priority, setPriority] = useState<TaskPriority>('MEDIUM');
   const [assignee, setAssignee] = useState<'user' | 'ai-agent'>('user');
   const [tags, setTags] = useState('');
+  const [startDate, setStartDate] = useState<string | undefined>(undefined);
+  const [dueDate, setDueDate] = useState<string | undefined>(undefined);
   const [description, setDescription] = useState('');
   const [requirements, setRequirements] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -29,6 +32,8 @@ export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalPr
         priority,
         assignee,
         tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
+        start_date: startDate,
+        due_date: dueDate,
         description,
         requirements,
       });
@@ -38,13 +43,15 @@ export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalPr
       setPriority('MEDIUM');
       setAssignee('user');
       setTags('');
+      setStartDate(undefined);
+      setDueDate(undefined);
       setDescription('');
       setRequirements('');
       onClose();
     } finally {
       setIsCreating(false);
     }
-  }, [title, priority, assignee, tags, description, requirements, onCreate, onClose]);
+  }, [title, priority, assignee, tags, startDate, dueDate, description, requirements, onCreate, onClose]);
 
   if (!isOpen) return null;
 
@@ -158,6 +165,22 @@ export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalPr
                 onChange={(e) => setTags(e.target.value)}
                 className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all"
                 placeholder="backend, api, auth..."
+              />
+            </div>
+
+            {/* Date Fields */}
+            <div className="grid grid-cols-2 gap-4">
+              <DatePicker
+                label="Start Date"
+                value={startDate}
+                onChange={setStartDate}
+                maxDate={dueDate}
+              />
+              <DatePicker
+                label="Due Date"
+                value={dueDate}
+                onChange={setDueDate}
+                minDate={startDate}
               />
             </div>
 

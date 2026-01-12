@@ -7,9 +7,11 @@ import { useFileWatcher } from '@/hooks/useFileWatcher';
 import { useConfig } from '@/hooks/useConfig';
 import { useAIWorker } from '@/hooks/useAIWorker';
 import { useConversation } from '@/hooks/useConversation';
+import { useTaskFilter } from '@/hooks/useTaskFilter';
 import { TaskBoard } from '@/components/kanban/TaskBoard';
 import { TaskSidebar } from '@/components/kanban/TaskSidebar';
 import { CreateTaskModal } from '@/components/kanban/CreateTaskModal';
+import { FilterBar } from '@/components/kanban/FilterBar';
 import { LeftSidebar } from '@/components/sidebar/LeftSidebar';
 import { AIStatusBar } from '@/components/ai/AIStatusBar';
 
@@ -56,6 +58,19 @@ export default function Home() {
     sendMessage,
     stopSession,
   } = useConversation(selectedTask?.id || null);
+
+  // Task filter hook
+  const {
+    filter,
+    filteredTasks,
+    setTagFilter,
+    setAssigneeFilter,
+    setDatePreset,
+    setCustomDateRange,
+    clearFilters,
+    availableTags,
+    isFiltered,
+  } = useTaskFilter(tasks);
 
   // File watcher for real-time updates
   const { isConnected, lastEvent, reconnect } = useFileWatcher({
@@ -297,10 +312,26 @@ export default function Home() {
             </div>
           )}
 
+          {/* Filter bar */}
+          {tasks.length > 0 && (
+            <FilterBar
+              filter={filter}
+              availableTags={availableTags}
+              onTagsChange={setTagFilter}
+              onAssigneeChange={setAssigneeFilter}
+              onDatePresetChange={setDatePreset}
+              onCustomDateRange={setCustomDateRange}
+              onClearFilters={clearFilters}
+              isFiltered={isFiltered}
+              totalTasks={tasks.length}
+              filteredCount={filteredTasks.length}
+            />
+          )}
+
           {/* Kanban board */}
           {!loading || tasks.length > 0 ? (
             <TaskBoard
-              tasks={tasks}
+              tasks={filteredTasks}
               onTaskUpdate={handleTaskUpdate}
               onTaskClick={handleTaskClick}
               workingTaskIds={workingTaskIds}

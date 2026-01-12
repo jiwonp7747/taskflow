@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Task, TaskStatus, TaskPriority, TaskUpdateRequest } from '@/types/task';
 import type { ConversationMessage } from '@/lib/sessionManager';
 import { COLUMNS, PRIORITY_CONFIG } from '@/types/task';
+import { DatePicker } from '@/components/ui/DatePicker';
 
 type TabType = 'settings' | 'chat';
 
@@ -50,6 +51,8 @@ export function TaskSidebar({
         priority: task.priority,
         assignee: task.assignee,
         tags: task.tags,
+        start_date: task.start_date,
+        due_date: task.due_date,
         description: task.description,
         requirements: task.requirements,
         feedback: task.feedback,
@@ -365,6 +368,22 @@ export function TaskSidebar({
               onChange={(e) => handleChange('tags', e.target.value.split(',').map((t) => t.trim()).filter(Boolean))}
               className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all"
               placeholder="backend, api, auth..."
+            />
+          </div>
+
+          {/* Date Fields */}
+          <div className="grid grid-cols-2 gap-4">
+            <DatePicker
+              label="Start Date"
+              value={editedTask.start_date}
+              onChange={(date) => handleChange('start_date', date)}
+              maxDate={editedTask.due_date}
+            />
+            <DatePicker
+              label="Due Date"
+              value={editedTask.due_date}
+              onChange={(date) => handleChange('due_date', date)}
+              minDate={editedTask.start_date}
             />
           </div>
 
