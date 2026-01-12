@@ -7,6 +7,7 @@
 import type { ISourceRepository } from '@/core/ports/out/ISourceRepository';
 import type { IConfigRepository } from '@/core/ports/out/IConfigRepository';
 import { FileSourceRepository, FileConfigRepository } from '@/adapters/persistence/file';
+import { SqliteSourceRepository, SqliteConfigRepository } from '@/adapters/persistence/sqlite';
 
 /**
  * 지원되는 저장소 타입
@@ -25,7 +26,7 @@ export function createSourceRepository(
       return new FileSourceRepository(options?.configFilePath);
 
     case 'sqlite':
-      throw new Error('SQLite adapter is not implemented yet. Coming soon!');
+      return new SqliteSourceRepository(options?.dbPath);
 
     case 'postgresql':
       throw new Error('PostgreSQL adapter is not implemented yet. Coming soon!');
@@ -47,7 +48,7 @@ export function createConfigRepository(
       return new FileConfigRepository(options?.configFilePath);
 
     case 'sqlite':
-      throw new Error('SQLite adapter is not implemented yet. Coming soon!');
+      return new SqliteConfigRepository(options?.dbPath);
 
     case 'postgresql':
       throw new Error('PostgreSQL adapter is not implemented yet. Coming soon!');

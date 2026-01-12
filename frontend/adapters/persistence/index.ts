@@ -1,6 +1,6 @@
 // Persistence Adapters
 export * from './file';
+export * from './sqlite';
 
-// Future: SQLite, PostgreSQL adapters
-// export * from './sqlite';
+// Future: PostgreSQL adapter
 // export * from './postgresql';
