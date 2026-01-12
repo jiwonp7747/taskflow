@@ -12,7 +12,6 @@ import { TaskSidebar } from '@/components/kanban/TaskSidebar';
 import { CreateTaskModal } from '@/components/kanban/CreateTaskModal';
 import { LeftSidebar } from '@/components/sidebar/LeftSidebar';
 import { AIStatusBar } from '@/components/ai/AIStatusBar';
-import { ConversationPanel } from '@/components/ai/ConversationPanel';
 
 export default function Home() {
   const {
@@ -48,16 +47,15 @@ export default function Home() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [workingTaskIds, setWorkingTaskIds] = useState<string[]>([]);
-  const [conversationTask, setConversationTask] = useState<Task | null>(null);
 
-  // Conversation hook
+  // Conversation hook - now based on selectedTask
   const {
     messages: conversationMessages,
     isSessionActive,
     startSession,
     sendMessage,
     stopSession,
-  } = useConversation(conversationTask?.id || null);
+  } = useConversation(selectedTask?.id || null);
 
   // File watcher for real-time updates
   const { isConnected, lastEvent, reconnect } = useFileWatcher({
@@ -80,14 +78,9 @@ export default function Home() {
     setWorkingTaskIds(workingIds);
   }, [aiStatus.isRunning, aiStatus.currentTask, aiStatus.isPaused]);
 
-  // Handle task click
+  // Handle task click - always open TaskSidebar with tabs
   const handleTaskClick = useCallback((task: Task) => {
-    // If AI agent task, open conversation panel
-    if (task.assignee === 'ai-agent') {
-      setConversationTask(task);
-    } else {
-      setSelectedTask(task);
-    }
+    setSelectedTask(task);
   }, []);
 
   // Handle sidebar close
@@ -382,12 +375,17 @@ export default function Home() {
         </footer>
       </div>
 
-      {/* Task sidebar */}
+      {/* Task sidebar with settings and chat tabs */}
       <TaskSidebar
         task={selectedTask}
         onClose={handleCloseSidebar}
         onSave={handleTaskUpdate}
         onDelete={handleTaskDelete}
+        conversationMessages={conversationMessages}
+        isSessionActive={isSessionActive}
+        onStartSession={startSession}
+        onSendMessage={sendMessage}
+        onStopSession={stopSession}
       />
 
       {/* Create task modal */}
@@ -395,18 +393,6 @@ export default function Home() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={createTask}
-      />
-
-      {/* Conversation panel for AI tasks */}
-      <ConversationPanel
-        task={conversationTask}
-        isOpen={conversationTask !== null}
-        onClose={() => setConversationTask(null)}
-        messages={conversationMessages}
-        isSessionActive={isSessionActive}
-        onStartSession={startSession}
-        onSendMessage={sendMessage}
-        onStopSession={stopSession}
       />
 
       {/* Last event indicator (for debugging) */}
