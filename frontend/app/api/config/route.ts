@@ -71,8 +71,8 @@ export async function POST(
     // Validate the path
     let validation = await validateSourcePath(body.path);
 
-    // If directory doesn't exist, create it
-    if (!validation.exists) {
+    // If directory doesn't exist and createIfNotExist is true, create it
+    if (!validation.exists && body.createIfNotExist) {
       try {
         await createSourceDirectory(body.path);
         validation = await validateSourcePath(body.path);
@@ -88,6 +88,19 @@ export async function POST(
           { status: 500 }
         );
       }
+    }
+
+    // If directory doesn't exist and createIfNotExist is false/undefined
+    if (!validation.exists && !body.createIfNotExist) {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'DIRECTORY_NOT_FOUND',
+            message: 'Directory does not exist. Enable "Create folder if it doesn\'t exist" option.',
+          },
+        },
+        { status: 400 }
+      );
     }
 
     if (!validation.valid) {

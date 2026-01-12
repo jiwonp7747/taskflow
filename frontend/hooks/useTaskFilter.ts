@@ -108,8 +108,8 @@ export function useTaskFilter(tasks: Task[]): UseTaskFilterReturn {
   }, [tasks, filter, getDateRange]);
 
   // Check if any filter is active
-  const isFiltered = useMemo(() => {
-    return (
+  const isFiltered = useMemo((): boolean => {
+    return Boolean(
       (filter.tags && filter.tags.length > 0) ||
       (filter.assignee && filter.assignee !== 'all') ||
       (filter.dateRange && filter.dateRange.type !== 'all')

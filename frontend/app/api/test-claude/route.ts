@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { execSync } from 'child_process';
 
 // Test Claude CLI using execSync
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   console.log('[Test Claude] Testing Claude with execSync...');
   console.log('[Test Claude] Platform:', process.platform);
   console.log('[Test Claude] CWD:', process.cwd());

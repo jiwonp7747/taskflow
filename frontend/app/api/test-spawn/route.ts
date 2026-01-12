@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 
 // Simple test to verify spawn works in Next.js API routes
-export async function GET(request: NextRequest) {
-  return new Promise((resolve) => {
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  return new Promise<NextResponse>((resolve) => {
     console.log('[Test Spawn] Testing spawn...');
     console.log('[Test Spawn] Platform:', process.platform);
     console.log('[Test Spawn] CWD:', process.cwd());

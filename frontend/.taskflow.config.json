@@ -1,14 +1,14 @@
 {
   "sources": [
     {
-      "id": "source-1768180183303",
+      "id": "source-1768219415432",
       "name": "todo",
-      "path": "C:\\Users\\Bistelligence\\project\\docs\\todo",
+      "path": "/Users/jiwonp/project/docs/todo",
       "isActive": true,
-      "createdAt": "2026-01-12T01:09:43.303Z"
+      "createdAt": "2026-01-12T12:03:35.432Z"
     }
   ],
-  "activeSourceId": "source-1768180183303",
+  "activeSourceId": "source-1768219415432",
   "theme": "dark",
   "sidebarCollapsed": false,
   "aiWorker": {

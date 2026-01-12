@@ -7,6 +7,7 @@ interface UseTasksReturn {
   tasks: Task[];
   loading: boolean;
   error: string | null;
+  noSource: boolean;
   fetchTasks: () => Promise<void>;
   createTask: (data: TaskCreateRequest) => Promise<Task | null>;
   updateTask: (id: string, data: TaskUpdateRequest) => Promise<Task | null>;
@@ -19,19 +20,28 @@ export function useTasks(): UseTasksReturn {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [noSource, setNoSource] = useState(false);
 
   // Fetch all tasks
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      setNoSource(false);
 
       const response = await fetch('/api/tasks');
+      const data = await response.json();
+
+      // Check for NO_SOURCE_CONFIGURED error
       if (!response.ok) {
-        throw new Error('Failed to fetch tasks');
+        if (data.error?.code === 'NO_SOURCE_CONFIGURED') {
+          setNoSource(true);
+          setTasks([]);
+          return;
+        }
+        throw new Error(data.error?.message || 'Failed to fetch tasks');
       }
 
-      const data = await response.json();
       setTasks(data.tasks || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -145,6 +155,7 @@ export function useTasks(): UseTasksReturn {
     tasks,
     loading,
     error,
+    noSource,
     fetchTasks,
     createTask,
     updateTask,

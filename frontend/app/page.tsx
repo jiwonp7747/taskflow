@@ -14,12 +14,14 @@ import { CreateTaskModal } from '@/components/kanban/CreateTaskModal';
 import { FilterBar } from '@/components/kanban/FilterBar';
 import { LeftSidebar } from '@/components/sidebar/LeftSidebar';
 import { AIStatusBar } from '@/components/ai/AIStatusBar';
+import { WelcomeScreen } from '@/components/onboarding/WelcomeScreen';
 
 export default function Home() {
   const {
     tasks,
     loading,
     error,
+    noSource,
     fetchTasks,
     createTask,
     updateTask,
@@ -283,8 +285,16 @@ export default function Home() {
 
         {/* Main content */}
         <main className="max-w-[1800px] mx-auto px-6 py-6">
-          {/* Error state */}
-          {error && (
+          {/* Welcome Screen - No source configured */}
+          {noSource && !loading && (
+            <WelcomeScreen
+              onAddSource={addSource}
+              onSourceAdded={handleSourceChange}
+            />
+          )}
+
+          {/* Error state (only show if not noSource) */}
+          {error && !noSource && (
             <div className="mb-6 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-red-400" />
               <span className="text-sm text-red-400">{error}</span>
@@ -298,7 +308,7 @@ export default function Home() {
           )}
 
           {/* Loading state */}
-          {loading && tasks.length === 0 && (
+          {loading && tasks.length === 0 && !noSource && (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-cyan-400 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -313,7 +323,7 @@ export default function Home() {
           )}
 
           {/* Filter bar */}
-          {tasks.length > 0 && (
+          {!noSource && tasks.length > 0 && (
             <FilterBar
               filter={filter}
               availableTags={availableTags}
@@ -329,7 +339,7 @@ export default function Home() {
           )}
 
           {/* Kanban board */}
-          {!loading || tasks.length > 0 ? (
+          {!noSource && (!loading || tasks.length > 0) ? (
             <TaskBoard
               tasks={filteredTasks}
               onTaskUpdate={handleTaskUpdate}
@@ -338,8 +348,8 @@ export default function Home() {
             />
           ) : null}
 
-          {/* Empty state */}
-          {!loading && tasks.length === 0 && !error && (
+          {/* Empty state - has source but no tasks */}
+          {!noSource && !loading && tasks.length === 0 && !error && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-950/50 to-slate-900 border border-cyan-500/20 flex items-center justify-center mb-6">
                 <svg className="w-10 h-10 text-cyan-400/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -348,9 +358,7 @@ export default function Home() {
               </div>
               <h2 className="text-lg font-medium text-white mb-2">No tasks yet</h2>
               <p className="text-sm text-slate-500 mb-6 max-w-sm">
-                {config.sources.length === 0
-                  ? 'Add a source directory in the left sidebar to get started.'
-                  : 'Create your first task or add markdown files to the tasks folder.'}
+                Create your first task or add markdown files to the tasks folder.
               </p>
               <button
                 onClick={() => setIsCreateModalOpen(true)}

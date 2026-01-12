@@ -45,6 +45,7 @@ export interface SourceValidationResult {
 export interface AddSourceRequest {
   name: string;
   path: string;
+  createIfNotExist?: boolean;
 }
 
 export interface UpdateSourceRequest {
