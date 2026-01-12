@@ -431,13 +431,13 @@ export function TaskSidebar({
             </div>
           )}
 
-          {/* AI Work Log (read-only) */}
+          {/* AI Work Log (read-only, scrollable) */}
           {task.aiWorkLog && (
             <div>
               <label className="block text-[10px] font-mono text-violet-400 uppercase tracking-wider mb-2">
                 AI Work Log
               </label>
-              <div className="px-4 py-3 bg-violet-900/10 border border-violet-500/20 rounded-lg text-sm text-slate-300 font-mono whitespace-pre-wrap">
+              <div className="max-h-64 overflow-y-auto px-4 py-3 bg-violet-900/10 border border-violet-500/20 rounded-lg text-sm text-slate-300 font-mono whitespace-pre-wrap scrollbar-thin scrollbar-track-transparent scrollbar-thumb-violet-700/50">
                 {task.aiWorkLog}
               </div>
             </div>

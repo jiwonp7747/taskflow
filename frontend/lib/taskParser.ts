@@ -14,9 +14,21 @@ const VALID_STATUSES: TaskStatus[] = [
 // Valid priority values
 const VALID_PRIORITIES: TaskPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 
-// Extract a markdown section by heading
+// Known section headers - only these are used as boundaries
+// Can be moved to external config if needed
+const SECTION_HEADERS = ['Description', 'Requirements', 'Feedback', 'AI Work Log'];
+
+// Extract a markdown section by heading (only splits on known headers)
 function extractSection(content: string, heading: string): string {
-  const regex = new RegExp(`## ${heading}\\s*\\n([\\s\\S]*?)(?=\\n## |$)`, 'i');
+  // Build regex pattern that only matches known section headers as boundaries
+  const otherHeaders = SECTION_HEADERS.filter(h => h.toLowerCase() !== heading.toLowerCase());
+  const boundaryPattern = otherHeaders.map(h => `## ${h}`).join('|');
+
+  // Handle both Unix (\n) and Windows (\r\n) line endings
+  const regex = new RegExp(
+    `## ${heading}[ \\t]*\\r?\\n([\\s\\S]*?)(?=\\r?\\n(?:${boundaryPattern})[ \\t]*\\r?\\n|$)`,
+    'i'
+  );
   const match = content.match(regex);
   return match ? match[1].trim() : '';
 }
