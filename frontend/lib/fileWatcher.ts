@@ -52,6 +52,8 @@ class FileWatcherService {
     }
 
     this.watchedDirectory = directory;
+    console.log('[FileWatcher] Starting file watcher for:', directory);
+
     this.watcher = chokidar.watch(path.join(directory, '*.md'), {
       persistent: true,
       ignoreInitial: true,
@@ -64,9 +66,12 @@ class FileWatcherService {
     // Create debounced broadcast function
     const debouncedBroadcast = debounce(
       (type: 'add' | 'change' | 'unlink', filePath: string) => {
+        const taskId = extractTaskId(filePath);
+        console.log(`[FileWatcher] File event: ${type} - ${taskId}`);
+
         const event: FileWatchEvent = {
           type,
-          taskId: extractTaskId(filePath),
+          taskId,
           path: filePath,
           timestamp: Date.now(),
         };
@@ -80,15 +85,17 @@ class FileWatcherService {
       .on('change', (filePath) => debouncedBroadcast('change', filePath))
       .on('unlink', (filePath) => debouncedBroadcast('unlink', filePath))
       .on('error', (error) => {
-        console.error('File watcher error:', error);
+        console.error('[FileWatcher] Error:', error);
       });
 
     this.isWatching = true;
+    console.log('[FileWatcher] File watcher started successfully');
   }
 
   // Stop watching
   stop(): void {
     if (this.watcher) {
+      console.log('[FileWatcher] Stopping file watcher');
       this.watcher.close();
       this.watcher = null;
     }
@@ -112,7 +119,7 @@ class FileWatcherService {
       try {
         callback(event);
       } catch (error) {
-        console.error('Error in file watcher subscriber:', error);
+        console.error('[FileWatcher] Error in subscriber callback:', error);
       }
     });
   }

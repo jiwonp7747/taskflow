@@ -54,6 +54,7 @@ export function useFileWatcher(options: UseFileWatcherOptions = {}): UseFileWatc
       eventSourceRef.current = eventSource;
 
       eventSource.onopen = () => {
+        console.log('[FileWatcher] SSE connected');
         setIsConnected(true);
         reconnectAttemptsRef.current = 0;
         onConnect?.();
@@ -64,23 +65,34 @@ export function useFileWatcher(options: UseFileWatcherOptions = {}): UseFileWatc
           const data = JSON.parse(event.data);
 
           // Handle different message types
-          if (data.type === 'connected' || data.type === 'heartbeat') {
-            // Connection/heartbeat messages
+          if (data.type === 'connected') {
+            console.log('[FileWatcher] SSE connection confirmed:', data.directory);
+            return;
+          }
+
+          if (data.type === 'heartbeat') {
+            console.log('[FileWatcher] SSE heartbeat:', new Date(data.timestamp).toISOString());
             return;
           }
 
           // File change event
           if (data.type === 'add' || data.type === 'change' || data.type === 'unlink') {
             const fileEvent = data as FileWatchEvent;
+            console.log('[FileWatcher] SSE event received:', {
+              type: fileEvent.type,
+              taskId: fileEvent.taskId,
+              timestamp: new Date(fileEvent.timestamp).toISOString(),
+            });
             setLastEvent(fileEvent);
             onFileChange?.(fileEvent);
           }
         } catch (err) {
-          console.error('Failed to parse SSE message:', err);
+          console.error('[FileWatcher] Failed to parse SSE message:', err);
         }
       };
 
       eventSource.onerror = () => {
+        console.log('[FileWatcher] SSE disconnected');
         setIsConnected(false);
         onDisconnect?.();
         cleanup();
@@ -90,13 +102,17 @@ export function useFileWatcher(options: UseFileWatcherOptions = {}): UseFileWatc
           const delay = reconnectDelay * Math.pow(2, reconnectAttemptsRef.current);
           reconnectAttemptsRef.current += 1;
 
+          console.log(`[FileWatcher] SSE reconnecting... (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts}, delay: ${delay}ms)`);
+
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
           }, delay);
+        } else {
+          console.error('[FileWatcher] SSE max reconnection attempts reached');
         }
       };
     } catch (err) {
-      console.error('Failed to create EventSource:', err);
+      console.error('[FileWatcher] Failed to create EventSource:', err);
       setIsConnected(false);
     }
   }, [cleanup, onConnect, onDisconnect, onFileChange, reconnectDelay, maxReconnectAttempts]);
