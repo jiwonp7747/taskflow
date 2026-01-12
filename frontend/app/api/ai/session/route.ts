@@ -97,11 +97,17 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Task not found' }, { status: 404 });
         }
 
+        // Use the current working directory (project root) which should have Claude context
+        // tasksDir could be anywhere but Claude needs a directory with .claude context
+        const workingDir = process.cwd();
+        console.log('[Session API] tasksDir:', tasksDir);
+        console.log('[Session API] workingDir:', workingDir);
+
         await sessionManager.startSession(
           taskId,
           task.title,
           task.rawContent,
-          tasksDir.replace('/todo', '') // Use project root as working directory
+          workingDir
         );
 
         return NextResponse.json({

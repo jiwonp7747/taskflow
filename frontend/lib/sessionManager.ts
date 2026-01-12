@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess } from 'child_process';
+import { execSync } from 'child_process';
 import { EventEmitter } from 'events';
 
 // Message types
@@ -17,6 +17,7 @@ export interface TaskSession {
   isActive: boolean;
   startedAt: string;
   lastActivityAt: string;
+  workingDirectory?: string;
 }
 
 // Session events
@@ -28,18 +29,10 @@ export type SessionEvent =
   | { type: 'session-ended'; taskId: string }
   | { type: 'error'; taskId: string; error: string };
 
-// Active process state
-interface ActiveProcess {
-  process: ChildProcess;
-  taskId: string;
-  currentMessageId: string | null;
-  buffer: string;
-}
-
-// Session manager singleton
+// Session manager singleton - supports multiple concurrent sessions per task
 class SessionManager extends EventEmitter {
   private sessions: Map<string, TaskSession> = new Map();
-  private activeProcess: ActiveProcess | null = null;
+  private runningTasks: Set<string> = new Set();
 
   constructor() {
     super();
@@ -57,17 +50,14 @@ class SessionManager extends EventEmitter {
 
   // Check if a task has an active session
   isSessionActive(taskId: string): boolean {
-    return this.activeProcess?.taskId === taskId;
+    return this.runningTasks.has(taskId);
   }
 
   // Start a new session for a task
   async startSession(taskId: string, taskTitle: string, taskContent: string, workingDirectory: string): Promise<void> {
-    // Check if already has an active session for different task
-    if (this.activeProcess && this.activeProcess.taskId !== taskId) {
-      throw new Error(`Another session is active for task: ${this.activeProcess.taskId}`);
-    }
+    console.log('[SessionManager] Starting session for task:', taskId);
 
-    // Get existing session if any
+    // Get existing session if any (preserves message history)
     let session = this.sessions.get(taskId);
 
     if (!session) {
@@ -78,48 +68,29 @@ class SessionManager extends EventEmitter {
         isActive: false,
         startedAt: new Date().toISOString(),
         lastActivityAt: new Date().toISOString(),
+        workingDirectory,
       };
       this.sessions.set(taskId, session);
     }
 
-    // Build Claude args
-    const claudeCommand = process.env.CLAUDE_CODE_PATH || 'claude';
-    const args: string[] = [
-      '--dangerously-skip-permissions',
-    ];
-
-    // If we have a session ID, resume it
-    if (session.sessionId) {
-      args.push('--resume', session.sessionId);
-    }
-
-    // Spawn Claude process
-    const isWindows = process.platform === 'win32';
-    const childProcess = spawn(claudeCommand, args, {
-      cwd: workingDirectory,
-      shell: isWindows,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: {
-        ...process.env,
-        FORCE_COLOR: '0', // Disable colors for cleaner parsing
-      },
-    });
-
-    console.log('[SessionManager] Process spawned, PID:', childProcess.pid);
-
-    this.activeProcess = {
-      process: childProcess,
-      taskId,
-      currentMessageId: null,
-      buffer: '',
-    };
-
     session.isActive = true;
+    session.workingDirectory = workingDirectory;
     session.lastActivityAt = new Date().toISOString();
 
-    // If this is a new session, send the initial task context
-    if (!session.sessionId) {
-      const initialPrompt = `다음 태스크를 수행해주세요:
+    this.emit('event', { type: 'session-started', taskId, sessionId: session.sessionId || 'new' } as SessionEvent);
+
+    // Add system message
+    const systemMessage: ConversationMessage = {
+      id: this.generateId(),
+      role: 'system',
+      content: `태스크 세션 시작: ${taskTitle}`,
+      timestamp: new Date().toISOString(),
+    };
+    session.messages.push(systemMessage);
+    this.emit('event', { type: 'message', taskId, message: systemMessage } as SessionEvent);
+
+    // Build initial prompt
+    const initialPrompt = `다음 태스크를 수행해주세요:
 
 태스크 ID: ${taskId}
 제목: ${taskTitle}
@@ -128,52 +99,12 @@ ${taskContent}
 
 작업을 시작하기 전에 계획을 간략히 설명해주세요.`;
 
-      // Add system message
-      const systemMessage: ConversationMessage = {
-        id: this.generateId(),
-        role: 'system',
-        content: `태스크 세션 시작: ${taskTitle}`,
-        timestamp: new Date().toISOString(),
-      };
-      session.messages.push(systemMessage);
-      this.emit('event', { type: 'message', taskId, message: systemMessage } as SessionEvent);
-
-      // Send initial prompt
-      this.sendMessage(taskId, initialPrompt);
-    }
-
-    // Handle stdout
-    childProcess.stdout?.on('data', (data: Buffer) => {
-      this.handleOutput(taskId, data.toString());
-    });
-
-    // Handle stderr
-    childProcess.stderr?.on('data', (data: Buffer) => {
-      console.error('[SessionManager] stderr:', data.toString());
-    });
-
-    // Handle process exit
-    childProcess.on('close', (code) => {
-      console.log('[SessionManager] Process closed with code:', code);
-      this.handleProcessExit(taskId);
-    });
-
-    // Handle process error
-    childProcess.on('error', (error) => {
-      console.error('[SessionManager] Process error:', error);
-      this.emit('event', { type: 'error', taskId, error: error.message } as SessionEvent);
-      this.handleProcessExit(taskId);
-    });
-
-    this.emit('event', { type: 'session-started', taskId, sessionId: session.sessionId || 'new' } as SessionEvent);
+    // Execute with initial prompt
+    await this.executeClaudeCommand(taskId, initialPrompt, workingDirectory);
   }
 
-  // Send a message to the active session
-  sendMessage(taskId: string, content: string): void {
-    if (!this.activeProcess || this.activeProcess.taskId !== taskId) {
-      throw new Error('No active session for this task');
-    }
-
+  // Execute a Claude command for a task using execSync
+  private async executeClaudeCommand(taskId: string, prompt: string, workingDirectory: string): Promise<void> {
     const session = this.sessions.get(taskId);
     if (!session) {
       throw new Error('Session not found');
@@ -183,11 +114,10 @@ ${taskContent}
     const userMessage: ConversationMessage = {
       id: this.generateId(),
       role: 'user',
-      content,
+      content: prompt,
       timestamp: new Date().toISOString(),
     };
     session.messages.push(userMessage);
-    session.lastActivityAt = new Date().toISOString();
     this.emit('event', { type: 'message', taskId, message: userMessage } as SessionEvent);
 
     // Create placeholder for assistant response
@@ -200,93 +130,111 @@ ${taskContent}
       isStreaming: true,
     };
     session.messages.push(assistantMessage);
-    this.activeProcess.currentMessageId = assistantMessageId;
     this.emit('event', { type: 'message', taskId, message: assistantMessage } as SessionEvent);
 
-    // Send to Claude
-    this.activeProcess.process.stdin?.write(content + '\n');
-    console.log('[SessionManager] Sent message:', content.substring(0, 100) + '...');
+    // Mark task as running
+    this.runningTasks.add(taskId);
+
+    // Build Claude command
+    const claudeCommand = process.env.CLAUDE_CODE_PATH || 'claude';
+
+    // Escape the prompt for command line
+    const escapedPrompt = prompt.replace(/"/g, '\\"').replace(/\n/g, '\\n');
+
+    let args = ['--print', '--dangerously-skip-permissions'];
+
+    // If we have a session ID, resume it
+    if (session.sessionId) {
+      args.push('--resume', session.sessionId);
+    }
+
+    const fullCommand = `${claudeCommand} ${args.join(' ')} "${escapedPrompt}"`;
+
+    console.log('[SessionManager] Executing command (truncated):', fullCommand.substring(0, 100) + '...');
+    console.log('[SessionManager] Working directory:', workingDirectory);
+
+    try {
+      const result = execSync(fullCommand, {
+        cwd: workingDirectory,
+        encoding: 'utf-8',
+        timeout: 300000, // 5 minutes timeout
+        maxBuffer: 50 * 1024 * 1024, // 50MB
+        env: {
+          ...process.env,
+          FORCE_COLOR: '0',
+          NO_COLOR: '1',
+        },
+      });
+
+      console.log('[SessionManager] Command completed, response length:', result?.length || 0);
+
+      // Update assistant message with the response
+      assistantMessage.content = result || 'No response from Claude';
+      assistantMessage.isStreaming = false;
+
+      // Emit stream event with full content
+      this.emit('event', {
+        type: 'stream',
+        taskId,
+        content: assistantMessage.content,
+        messageId: assistantMessageId,
+      } as SessionEvent);
+
+      // Emit stream end
+      this.emit('event', {
+        type: 'stream-end',
+        taskId,
+        messageId: assistantMessageId,
+      } as SessionEvent);
+
+    } catch (error: any) {
+      console.error('[SessionManager] Command failed:', error.message);
+
+      // Update assistant message with error
+      assistantMessage.content = `오류 발생: ${error.message}`;
+      assistantMessage.isStreaming = false;
+
+      this.emit('event', {
+        type: 'stream',
+        taskId,
+        content: assistantMessage.content,
+        messageId: assistantMessageId,
+      } as SessionEvent);
+
+      this.emit('event', {
+        type: 'stream-end',
+        taskId,
+        messageId: assistantMessageId,
+      } as SessionEvent);
+
+      this.emit('event', { type: 'error', taskId, error: error.message } as SessionEvent);
+    } finally {
+      this.runningTasks.delete(taskId);
+      session.lastActivityAt = new Date().toISOString();
+    }
   }
 
-  // Handle Claude output
-  private handleOutput(taskId: string, text: string): void {
-    if (!this.activeProcess || this.activeProcess.taskId !== taskId) {
-      return;
-    }
-
+  // Send a message to a task's session
+  async sendMessage(taskId: string, content: string): Promise<void> {
     const session = this.sessions.get(taskId);
-    if (!session) return;
-
-    // Append to buffer
-    this.activeProcess.buffer += text;
-
-    // Try to extract session ID if we don't have one
-    if (!session.sessionId) {
-      const sessionMatch = this.activeProcess.buffer.match(/Session ID: ([a-f0-9-]+)/i);
-      if (sessionMatch) {
-        session.sessionId = sessionMatch[1];
-        console.log('[SessionManager] Captured session ID:', session.sessionId);
-      }
+    if (!session) {
+      throw new Error('Session not found');
     }
 
-    // Stream content to the current message
-    if (this.activeProcess.currentMessageId) {
-      const message = session.messages.find(m => m.id === this.activeProcess!.currentMessageId);
-      if (message) {
-        message.content += text;
-        message.isStreaming = true;
-        this.emit('event', {
-          type: 'stream',
-          taskId,
-          content: text,
-          messageId: this.activeProcess.currentMessageId
-        } as SessionEvent);
-      }
-    }
-
-    session.lastActivityAt = new Date().toISOString();
+    const workingDirectory = session.workingDirectory || process.cwd();
+    await this.executeClaudeCommand(taskId, content, workingDirectory);
   }
 
-  // Handle process exit
-  private handleProcessExit(taskId: string): void {
+  // Stop a session for a specific task
+  stopSession(taskId: string): void {
     const session = this.sessions.get(taskId);
+
     if (session) {
       session.isActive = false;
-      session.lastActivityAt = new Date().toISOString();
-
-      // Mark current message as done streaming
-      if (this.activeProcess?.currentMessageId) {
-        const message = session.messages.find(m => m.id === this.activeProcess!.currentMessageId);
-        if (message) {
-          message.isStreaming = false;
-        }
-        this.emit('event', {
-          type: 'stream-end',
-          taskId,
-          messageId: this.activeProcess.currentMessageId
-        } as SessionEvent);
-      }
     }
 
-    if (this.activeProcess?.taskId === taskId) {
-      this.activeProcess = null;
-    }
-
+    this.runningTasks.delete(taskId);
     this.emit('event', { type: 'session-ended', taskId } as SessionEvent);
-  }
-
-  // Stop a session
-  stopSession(taskId: string): void {
-    if (this.activeProcess?.taskId === taskId) {
-      this.activeProcess.process.kill('SIGTERM');
-
-      // Force kill after 5 seconds
-      setTimeout(() => {
-        if (this.activeProcess?.taskId === taskId) {
-          this.activeProcess.process.kill('SIGKILL');
-        }
-      }, 5000);
-    }
   }
 
   // Clear session data for a task
