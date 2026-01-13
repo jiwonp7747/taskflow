@@ -12,6 +12,8 @@ import { TaskBoard } from '@/components/kanban/TaskBoard';
 import { TaskSidebar } from '@/components/kanban/TaskSidebar';
 import { CreateTaskModal } from '@/components/kanban/CreateTaskModal';
 import { FilterBar } from '@/components/kanban/FilterBar';
+import { ViewToggle, type ViewType } from '@/components/kanban/ViewToggle';
+import { CalendarView } from '@/components/calendar';
 import { LeftSidebar } from '@/components/sidebar/LeftSidebar';
 import { AIStatusBar } from '@/components/ai/AIStatusBar';
 import { WelcomeScreen } from '@/components/onboarding/WelcomeScreen';
@@ -51,6 +53,7 @@ export default function Home() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [workingTaskIds, setWorkingTaskIds] = useState<string[]>([]);
+  const [activeView, setActiveView] = useState<ViewType>('kanban');
 
   // Conversation hook - now based on selectedTask
   const {
@@ -322,6 +325,14 @@ export default function Home() {
             </div>
           )}
 
+          {/* View toggle and Filter bar */}
+          {!noSource && tasks.length > 0 && (
+            <div className="flex items-center justify-between mb-4">
+              <ViewToggle activeView={activeView} onViewChange={setActiveView} />
+              <div className="flex-1" />
+            </div>
+          )}
+
           {/* Filter bar */}
           {!noSource && tasks.length > 0 && (
             <FilterBar
@@ -338,14 +349,22 @@ export default function Home() {
             />
           )}
 
-          {/* Kanban board */}
+          {/* Kanban board or Calendar view */}
           {!noSource && (!loading || tasks.length > 0) ? (
-            <TaskBoard
-              tasks={filteredTasks}
-              onTaskUpdate={handleTaskUpdate}
-              onTaskClick={handleTaskClick}
-              workingTaskIds={workingTaskIds}
-            />
+            activeView === 'kanban' ? (
+              <TaskBoard
+                tasks={filteredTasks}
+                onTaskUpdate={handleTaskUpdate}
+                onTaskClick={handleTaskClick}
+                workingTaskIds={workingTaskIds}
+              />
+            ) : (
+              <CalendarView
+                tasks={filteredTasks}
+                onTaskClick={handleTaskClick}
+                workingTaskIds={workingTaskIds}
+              />
+            )
           ) : null}
 
           {/* Empty state - has source but no tasks */}
