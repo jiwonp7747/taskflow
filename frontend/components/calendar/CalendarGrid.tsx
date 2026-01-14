@@ -1,13 +1,15 @@
 'use client';
 
 import type { Task } from '@/types/task';
-import { CalendarDayCell } from './CalendarDayCell';
+import { CalendarWeekRow } from './CalendarWeekRow';
+import type { SpanningTaskInfo } from './CalendarSpanningTask';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 interface CalendarGridProps {
   days: Date[];
   tasksByDate: Record<string, Task[]>;
+  spanningTasks: SpanningTaskInfo[];
   onTaskClick: (task: Task) => void;
   isToday: (date: Date) => boolean;
   isCurrentMonth: (date: Date) => boolean;
@@ -17,6 +19,7 @@ interface CalendarGridProps {
 export function CalendarGrid({
   days,
   tasksByDate,
+  spanningTasks,
   onTaskClick,
   isToday,
   isCurrentMonth,
@@ -29,6 +32,12 @@ export function CalendarGrid({
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
+  // Split days into weeks (groups of 7)
+  const weeks: Date[][] = [];
+  for (let i = 0; i < days.length; i += 7) {
+    weeks.push(days.slice(i, i + 7));
+  }
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -44,24 +53,21 @@ export function CalendarGrid({
         ))}
       </div>
 
-      {/* Calendar days grid */}
-      <div className="flex-1 grid grid-cols-7 auto-rows-fr overflow-auto">
-        {days.map((date, index) => {
-          const dateKey = formatDateKey(date);
-          const dayTasks = tasksByDate[dateKey] || [];
-
-          return (
-            <CalendarDayCell
-              key={index}
-              date={date}
-              tasks={dayTasks}
-              onTaskClick={onTaskClick}
-              isToday={isToday(date)}
-              isCurrentMonth={isCurrentMonth(date)}
-              workingTaskIds={workingTaskIds}
-            />
-          );
-        })}
+      {/* Calendar weeks */}
+      <div className="flex-1 flex flex-col overflow-auto">
+        {weeks.map((weekDays, weekIndex) => (
+          <CalendarWeekRow
+            key={weekIndex}
+            weekDays={weekDays}
+            tasksByDate={tasksByDate}
+            spanningTasks={spanningTasks}
+            onTaskClick={onTaskClick}
+            isToday={isToday}
+            isCurrentMonth={isCurrentMonth}
+            workingTaskIds={workingTaskIds}
+            formatDateKey={formatDateKey}
+          />
+        ))}
       </div>
     </div>
   );
