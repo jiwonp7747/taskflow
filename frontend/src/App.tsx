@@ -21,6 +21,7 @@ import { LeftSidebar } from '../components/sidebar/LeftSidebar';
 import { AIStatusBar } from '../components/ai/AIStatusBar';
 import { WelcomeScreen } from '../components/onboarding/WelcomeScreen';
 import { TitleBar } from './components/TitleBar';
+import { TerminalView } from './components/terminal';
 
 export default function App() {
   const {
@@ -59,6 +60,7 @@ export default function App() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [workingTaskIds, setWorkingTaskIds] = useState<string[]>([]);
   const [activeView, setActiveView] = useState<ViewType>('kanban');
+  const [isTerminalMode, setIsTerminalMode] = useState(false);
 
   // Conversation hook
   const {
@@ -290,6 +292,31 @@ export default function App() {
                   </svg>
                 </button>
 
+                {/* Terminal/Panel toggle button */}
+                <button
+                  onClick={() => setIsTerminalMode(!isTerminalMode)}
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-all ${
+                    isTerminalMode
+                      ? 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30 hover:bg-cyan-500/20'
+                      : 'text-slate-300 bg-slate-800/50 border-white/5 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <span>{isTerminalMode ? 'Panel' : 'Terminal'}</span>
+                </button>
+
                 {/* Create task button */}
                 <button
                   onClick={() => setIsCreateModalOpen(true)}
@@ -381,90 +408,100 @@ export default function App() {
             </div>
           )}
 
-          {/* View toggle and Filter bar */}
-          {!noSource && tasks.length > 0 && (
-            <div className="flex items-center justify-between mb-4">
-              <ViewToggle activeView={activeView} onViewChange={setActiveView} />
-              <div className="flex-1" />
-            </div>
-          )}
-
-          {/* Filter bar */}
-          {!noSource && tasks.length > 0 && (
-            <FilterBar
-              filter={filter}
-              availableTags={availableTags}
-              onTagsChange={setTagFilter}
-              onAssigneeChange={setAssigneeFilter}
-              onDatePresetChange={setDatePreset}
-              onCustomDateRange={setCustomDateRange}
-              onClearFilters={clearFilters}
-              isFiltered={isFiltered}
-              totalTasks={tasks.length}
-              filteredCount={filteredTasks.length}
+          {/* Terminal Mode */}
+          {isTerminalMode ? (
+            <TerminalView
+              initialCwd={activeSource?.path}
+              onClose={() => setIsTerminalMode(false)}
             />
-          )}
+          ) : (
+            <>
+              {/* View toggle and Filter bar */}
+              {!noSource && tasks.length > 0 && (
+                <div className="flex items-center justify-between mb-4">
+                  <ViewToggle activeView={activeView} onViewChange={setActiveView} />
+                  <div className="flex-1" />
+                </div>
+              )}
 
-          {/* Kanban board or Calendar view */}
-          {!noSource && (!loading || tasks.length > 0) ? (
-            activeView === 'kanban' ? (
-              <TaskBoard
-                tasks={filteredTasks}
-                onTaskUpdate={handleTaskUpdate}
-                onTaskClick={handleTaskClick}
-                workingTaskIds={workingTaskIds}
-              />
-            ) : (
-              <CalendarView
-                tasks={filteredTasks}
-                onTaskClick={handleTaskClick}
-                workingTaskIds={workingTaskIds}
-              />
-            )
-          ) : null}
+              {/* Filter bar */}
+              {!noSource && tasks.length > 0 && (
+                <FilterBar
+                  filter={filter}
+                  availableTags={availableTags}
+                  onTagsChange={setTagFilter}
+                  onAssigneeChange={setAssigneeFilter}
+                  onDatePresetChange={setDatePreset}
+                  onCustomDateRange={setCustomDateRange}
+                  onClearFilters={clearFilters}
+                  isFiltered={isFiltered}
+                  totalTasks={tasks.length}
+                  filteredCount={filteredTasks.length}
+                />
+              )}
 
-          {/* Empty state */}
-          {!noSource && !loading && tasks.length === 0 && !error && (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-950/50 to-slate-900 border border-cyan-500/20 flex items-center justify-center mb-6">
-                <svg
-                  className="w-10 h-10 text-cyan-400/50"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+              {/* Kanban board or Calendar view */}
+              {!noSource && (!loading || tasks.length > 0) ? (
+                activeView === 'kanban' ? (
+                  <TaskBoard
+                    tasks={filteredTasks}
+                    onTaskUpdate={handleTaskUpdate}
+                    onTaskClick={handleTaskClick}
+                    workingTaskIds={workingTaskIds}
                   />
-                </svg>
-              </div>
-              <h2 className="text-lg font-medium text-white mb-2">No tasks yet</h2>
-              <p className="text-sm text-slate-500 mb-6 max-w-sm">
-                Create your first task or add markdown files to the tasks folder.
-              </p>
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-lg shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
+                ) : (
+                  <CalendarView
+                    tasks={filteredTasks}
+                    onTaskClick={handleTaskClick}
+                    workingTaskIds={workingTaskIds}
                   />
-                </svg>
-                <span>Create First Task</span>
-              </button>
-            </div>
+                )
+              ) : null}
+
+              {/* Empty state */}
+              {!noSource && !loading && tasks.length === 0 && !error && (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-950/50 to-slate-900 border border-cyan-500/20 flex items-center justify-center mb-6">
+                    <svg
+                      className="w-10 h-10 text-cyan-400/50"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                      />
+                    </svg>
+                  </div>
+                  <h2 className="text-lg font-medium text-white mb-2">No tasks yet</h2>
+                  <p className="text-sm text-slate-500 mb-6 max-w-sm">
+                    Create your first task or add markdown files to the tasks folder.
+                  </p>
+                  <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-lg shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    <span>Create First Task</span>
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </main>
 

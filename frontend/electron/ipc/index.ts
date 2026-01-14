@@ -10,6 +10,7 @@ import { registerSourcesIPC } from './sources.ipc';
 import { registerDialogIPC } from './dialog.ipc';
 import { registerAIWorkerIPC } from './ai.ipc';
 import { registerWindowIPC } from './window.ipc';
+import { registerTerminalIPC, cleanupAllPty } from './terminal.ipc';
 
 /**
  * Register all IPC handlers
@@ -23,6 +24,7 @@ export function registerAllIPC(): void {
   registerDialogIPC();
   registerAIWorkerIPC();
   registerWindowIPC();
+  registerTerminalIPC();
 
   console.log('[IPC] All handlers registered');
 }
@@ -33,3 +35,4 @@ export { registerSourcesIPC } from './sources.ipc';
 export { registerDialogIPC } from './dialog.ipc';
 export { registerAIWorkerIPC } from './ai.ipc';
 export { registerWindowIPC } from './window.ipc';
+export { registerTerminalIPC, cleanupAllPty } from './terminal.ipc';

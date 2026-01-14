@@ -31,7 +31,12 @@ export type InvokeChannel =
   | 'window:isMaximized'
   | 'window:close'
   | 'window:toggleFullScreen'
-  | 'window:isFullScreen';
+  | 'window:isFullScreen'
+  | 'terminal:create'
+  | 'terminal:write'
+  | 'terminal:resize'
+  | 'terminal:kill'
+  | 'terminal:getCwd';
 
 export type ReceiveChannel =
   | 'file:changed'
@@ -39,7 +44,9 @@ export type ReceiveChannel =
   | 'ai:taskStarted'
   | 'ai:taskCompleted'
   | 'ai:taskFailed'
-  | 'ai:log';
+  | 'ai:log'
+  | 'terminal:data'
+  | 'terminal:exit';
 
 export interface ElectronAPI {
   invoke: <T>(channel: InvokeChannel, ...args: unknown[]) => Promise<T>;

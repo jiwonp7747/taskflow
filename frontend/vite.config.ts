@@ -22,7 +22,7 @@ export default defineConfig({
           build: {
             outDir: 'dist-electron',
             rollupOptions: {
-              external: ['better-sqlite3'],
+              external: ['better-sqlite3', 'node-pty'],
             },
           },
         },
@@ -37,7 +37,7 @@ export default defineConfig({
           build: {
             outDir: 'dist-electron',
             rollupOptions: {
-              external: ['better-sqlite3'],
+              external: ['better-sqlite3', 'node-pty'],
             },
           },
         },
@@ -59,6 +59,6 @@ export default defineConfig({
     port: 5173,
   },
   optimizeDeps: {
-    exclude: ['better-sqlite3'],
+    exclude: ['better-sqlite3', 'node-pty'],
   },
 });

@@ -43,6 +43,12 @@ const validInvokeChannels = [
   'window:close',
   'window:toggleFullScreen',
   'window:isFullScreen',
+  // Terminal
+  'terminal:create',
+  'terminal:write',
+  'terminal:resize',
+  'terminal:kill',
+  'terminal:getCwd',
 ] as const;
 
 const validReceiveChannels = [
@@ -54,6 +60,9 @@ const validReceiveChannels = [
   'ai:taskCompleted',
   'ai:taskFailed',
   'ai:log',
+  // Terminal Events
+  'terminal:data',
+  'terminal:exit',
 ] as const;
 
 type InvokeChannel = typeof validInvokeChannels[number];
