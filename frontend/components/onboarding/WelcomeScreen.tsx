@@ -6,9 +6,10 @@ import type { AddSourceRequest } from '@/types/config';
 interface WelcomeScreenProps {
   onAddSource: (data: AddSourceRequest) => Promise<unknown>;
   onSourceAdded: () => void;
+  onSelectFolder?: () => Promise<string | null>;
 }
 
-export function WelcomeScreen({ onAddSource, onSourceAdded }: WelcomeScreenProps) {
+export function WelcomeScreen({ onAddSource, onSourceAdded, onSelectFolder }: WelcomeScreenProps) {
   const [name, setName] = useState('');
   const [path, setPath] = useState('');
   const [createIfNotExist, setCreateIfNotExist] = useState(true);
@@ -102,13 +103,30 @@ export function WelcomeScreen({ onAddSource, onSourceAdded }: WelcomeScreenProps
                 </svg>
                 Tasks Folder Path
               </label>
-              <input
-                type="text"
-                value={path}
-                onChange={(e) => setPath(e.target.value)}
-                placeholder="/Users/you/project/tasks"
-                className="w-full px-4 py-3 bg-slate-950/50 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-colors font-mono text-sm"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={path}
+                  onChange={(e) => setPath(e.target.value)}
+                  placeholder="/Users/you/project/tasks"
+                  className="flex-1 px-4 py-3 bg-slate-950/50 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-colors font-mono text-sm"
+                />
+                {onSelectFolder && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const selected = await onSelectFolder();
+                      if (selected) setPath(selected);
+                    }}
+                    className="px-4 py-3 bg-slate-950/50 border border-white/10 rounded-lg text-slate-400 hover:text-white hover:border-cyan-500/50 transition-colors"
+                    title="Browse folder"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Create folder checkbox */}

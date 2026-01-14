@@ -13,6 +13,7 @@ interface LeftSidebarProps {
   onDeleteSource: (id: string) => Promise<boolean>;
   onSetActiveSource: (id: string) => Promise<boolean>;
   onSourceChange?: () => void;
+  onSelectFolder?: () => Promise<string | null>;
 }
 
 type TabType = 'sources' | 'settings';
@@ -26,12 +27,13 @@ export function LeftSidebar({
   onDeleteSource,
   onSetActiveSource,
   onSourceChange,
+  onSelectFolder,
 }: LeftSidebarProps) {
   const [activeTab, setActiveTab] = useState<TabType>('sources');
 
   return (
     <div
-      className={`fixed left-0 top-0 h-screen z-40 flex transition-all duration-300 ease-out ${
+      className={`fixed left-0 top-8 h-[calc(100vh-2rem)] z-40 flex transition-all duration-300 ease-out ${
         isCollapsed ? 'w-16' : 'w-80'
       }`}
     >
@@ -147,6 +149,7 @@ export function LeftSidebar({
                 onDeleteSource={onDeleteSource}
                 onSetActiveSource={onSetActiveSource}
                 onSourceChange={onSourceChange}
+                onSelectFolder={onSelectFolder}
               />
             )}
             {activeTab === 'settings' && (

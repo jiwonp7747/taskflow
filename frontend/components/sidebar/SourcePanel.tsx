@@ -11,6 +11,7 @@ interface SourcePanelProps {
   onDeleteSource: (id: string) => Promise<boolean>;
   onSetActiveSource: (id: string) => Promise<boolean>;
   onSourceChange?: () => void;
+  onSelectFolder?: () => Promise<string | null>;
 }
 
 export function SourcePanel({
@@ -21,6 +22,7 @@ export function SourcePanel({
   onDeleteSource,
   onSetActiveSource,
   onSourceChange,
+  onSelectFolder,
 }: SourcePanelProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -119,13 +121,30 @@ export function SourcePanel({
             <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
               Path
             </label>
-            <input
-              type="text"
-              value={newPath}
-              onChange={(e) => setNewPath(e.target.value)}
-              placeholder="/path/to/tasks"
-              className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 font-mono"
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newPath}
+                onChange={(e) => setNewPath(e.target.value)}
+                placeholder="/path/to/tasks"
+                className="flex-1 px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 font-mono"
+              />
+              {onSelectFolder && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const selected = await onSelectFolder();
+                    if (selected) setNewPath(selected);
+                  }}
+                  className="px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-slate-400 hover:text-white hover:border-cyan-500/50 transition-colors"
+                  title="Browse folder"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
 
           {error && (
