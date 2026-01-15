@@ -62,5 +62,19 @@ export function registerWindowIPC(): void {
     return win ? win.isFullScreen() : false;
   });
 
+  // DevTools 토글
+  ipcMain.handle('window:toggleDevTools', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) {
+      if (win.webContents.isDevToolsOpened()) {
+        win.webContents.closeDevTools();
+      } else {
+        win.webContents.openDevTools();
+      }
+      return win.webContents.isDevToolsOpened();
+    }
+    return false;
+  });
+
   console.log('[WindowIPC] Handlers registered');
 }

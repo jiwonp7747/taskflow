@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
@@ -19,6 +20,8 @@ interface TerminalPaneProps {
   onPtyCreated?: (ptyId: string) => void;
   onPtyExited?: (exitCode: number) => void;
   onFocus?: () => void;
+  onSplitRequest?: (direction: 'horizontal' | 'vertical', position: 'before' | 'after') => void;
+  onClosePane?: () => void;
 }
 
 // TaskFlow 테마에 맞는 xterm 설정
@@ -55,6 +58,8 @@ export function TerminalPane({
   onPtyCreated,
   onPtyExited,
   onFocus,
+  onSplitRequest,
+  onClosePane,
 }: TerminalPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
@@ -354,7 +359,9 @@ export function TerminalPane({
     return () => cancelAnimationFrame(rafId);
   }, [isVisible, initReady]);
 
-  // 리사이즈 처리 - ResizeObserver 사용 (Issue #4 fix)
+  // 리사이즈 처리 - ResizeObserver 사용
+  const lastColsRowsRef = useRef<string>('');
+
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -362,49 +369,38 @@ export function TerminalPane({
 
     const handleResize = () => {
       if (!fitAddonRef.current || !terminalRef.current || !container) return;
+      if (container.offsetWidth <= 0 || container.offsetHeight <= 0) return;
 
       try {
-        // 컨테이너 크기가 유효한지 확인
-        if (container.offsetWidth > 0 && container.offsetHeight > 0) {
-          fitAddonRef.current.fit();
-          if (ptyIdRef.current) {
-            const { cols, rows } = terminalRef.current;
-            resizePty(ptyIdRef.current, cols, rows);
-          }
+        fitAddonRef.current.fit();
+
+        const { cols, rows } = terminalRef.current;
+        const key = `${cols}x${rows}`;
+
+        // cols/rows가 실제로 변경된 경우에만 PTY에 알림
+        if (ptyIdRef.current && lastColsRowsRef.current !== key) {
+          console.log(`[TerminalPane] Resize: ${lastColsRowsRef.current} -> ${key}`);
+          lastColsRowsRef.current = key;
+          resizePty(ptyIdRef.current, cols, rows);
         }
       } catch {
-        // silent fail - terminal not ready yet
+        // silent fail
       }
     };
 
-    // ResizeObserver로 컨테이너 크기 변화 감지 (split 포함)
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
-          // Debounce fit call
-          if (resizeTimeoutRef.current) {
-            clearTimeout(resizeTimeoutRef.current);
-          }
-          resizeTimeoutRef.current = setTimeout(handleResize, 50);
-        }
-      }
-    });
-
-    resizeObserver.observe(container);
-
-    // window resize도 감지 (창 크기 변경)
-    const debouncedWindowResize = () => {
+    const resizeObserver = new ResizeObserver(() => {
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current);
       }
-      resizeTimeoutRef.current = setTimeout(handleResize, 100);
-    };
+      resizeTimeoutRef.current = setTimeout(handleResize, 50);
+    });
 
-    window.addEventListener('resize', debouncedWindowResize);
+    resizeObserver.observe(container);
+    window.addEventListener('resize', handleResize);
 
     return () => {
       resizeObserver.disconnect();
-      window.removeEventListener('resize', debouncedWindowResize);
+      window.removeEventListener('resize', handleResize);
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current);
       }
@@ -426,12 +422,127 @@ export function TerminalPane({
     }
   }, [onFocus]);
 
+  // 컨텍스트 메뉴 상태
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+  // 우클릭 컨텍스트 메뉴
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // 메뉴가 열릴 때 터미널 블러 (입력 방지)
+    if (terminalRef.current) {
+      terminalRef.current.blur();
+    }
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  // 메뉴 닫기 (refocus 옵션)
+  const closeContextMenu = useCallback((shouldRefocus = true) => {
+    setContextMenu(null);
+    if (shouldRefocus && terminalRef.current) {
+      // 약간의 지연 후 포커스 (DOM 업데이트 대기)
+      setTimeout(() => terminalRef.current?.focus(), 10);
+    }
+  }, []);
+
+  // 메뉴 액션 - split/close 시에는 새 pane이 포커스 받으므로 refocus 안함
+  const handleSplit = useCallback((direction: 'horizontal' | 'vertical', position: 'before' | 'after') => {
+    closeContextMenu(false); // 먼저 메뉴 닫기 (refocus 안함)
+    onSplitRequest?.(direction, position);
+  }, [onSplitRequest, closeContextMenu]);
+
+  const handleClose = useCallback(() => {
+    closeContextMenu(false);
+    onClosePane?.();
+  }, [onClosePane, closeContextMenu]);
+
+  // 외부 클릭 시 메뉴 닫기
+  useEffect(() => {
+    if (!contextMenu) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      e.preventDefault();
+      closeContextMenu(true); // 외부 클릭 시 refocus
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [contextMenu, closeContextMenu]);
+
   return (
-    <div
-      ref={containerRef}
-      className={`h-full w-full ${isActive ? 'ring-1 ring-cyan-500/30' : ''}`}
-      onClick={handleClick}
-      style={{ padding: '8px' }}
-    />
+    <div className="relative h-full w-full group">
+      {/* Terminal Container */}
+      <div
+        ref={containerRef}
+        className={`h-full w-full ${isActive ? 'ring-1 ring-cyan-500/30' : ''}`}
+        onClick={handleClick}
+        onContextMenu={handleContextMenu}
+        style={{ padding: '8px' }}
+      />
+
+      {/* Context Menu - Portal로 document.body에 렌더링하여 터미널과 완전히 분리 */}
+      {contextMenu && createPortal(
+        <div
+          className="fixed z-[9999] py-1 bg-slate-900 border border-white/10 rounded-lg shadow-xl min-w-48"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onKeyDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSplit('horizontal', 'after'); }}
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className="w-full flex items-center justify-between px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800/50"
+          >
+            <span>Split Right</span>
+            <kbd className="text-xs text-slate-500">⌘D</kbd>
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSplit('horizontal', 'before'); }}
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className="w-full flex items-center justify-between px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800/50"
+          >
+            <span>Split Left</span>
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSplit('vertical', 'after'); }}
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className="w-full flex items-center justify-between px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800/50"
+          >
+            <span>Split Down</span>
+            <kbd className="text-xs text-slate-500">⇧⌘D</kbd>
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSplit('vertical', 'before'); }}
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className="w-full flex items-center justify-between px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800/50"
+          >
+            <span>Split Up</span>
+          </button>
+
+          <div className="my-1 border-t border-white/5" />
+
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleClose(); }}
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className="w-full flex items-center justify-between px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-slate-800/50"
+          >
+            <span>Close Pane</span>
+            <kbd className="text-xs text-slate-500">⌘W</kbd>
+          </button>
+        </div>,
+        document.body
+      )}
+    </div>
   );
 }

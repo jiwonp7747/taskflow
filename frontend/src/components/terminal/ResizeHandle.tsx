@@ -63,21 +63,15 @@ export function ResizeHandle({
   return (
     <div
       onMouseDown={handleMouseDown}
-      className={`absolute ${
+      className={`w-full h-full ${
         direction === 'horizontal'
-          ? 'right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:w-2'
-          : 'bottom-0 left-0 right-0 h-1.5 cursor-row-resize hover:h-2'
+          ? 'cursor-col-resize'
+          : 'cursor-row-resize'
       } ${
         isDragging
           ? 'bg-cyan-500/60'
           : 'bg-white/5 hover:bg-cyan-500/40'
-      } transition-all z-20`}
-      style={{
-        // 드래그 중 핸들이 보이도록
-        ...(isDragging && {
-          [direction === 'horizontal' ? 'width' : 'height']: '4px',
-        }),
-      }}
+      } transition-all`}
     />
   );
 }

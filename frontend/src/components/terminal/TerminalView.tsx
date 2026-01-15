@@ -2,162 +2,351 @@
  * TerminalView Component
  *
  * 터미널 모드 메인 컨테이너
+ * Flat rendering approach - terminals never unmount on split
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { TerminalTabBar } from './TerminalTabBar';
 import { TerminalPane } from './TerminalPane';
 import { ResizeHandle } from './ResizeHandle';
-import type { TerminalTab, TerminalPane as TerminalPaneType, TerminalViewProps } from './types';
+import type { TerminalTab, PaneNode, TerminalPaneData, SplitPaneData } from './types';
 
-// 임시 ID 생성 함수
+// ID 생성 함수
 function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
 
-// 초기 pane 생성 헬퍼 (컴포넌트 외부에서 사용)
-function createInitialPane(cwd: string): TerminalPaneType {
+// 새 터미널 pane 생성
+function createTerminalPane(cwd: string): TerminalPaneData {
   return {
+    type: 'terminal',
     id: generateId(),
     ptyId: '',
     cwd,
-    isActive: true,
   };
 }
 
-// 초기 탭 생성 헬퍼 (컴포넌트 외부에서 사용)
-function createInitialTab(cwd: string): { tab: TerminalTab; paneId: string } {
-  const pane = createInitialPane(cwd);
-  const tab: TerminalTab = {
+// 초기 탭 생성
+function createInitialTab(cwd: string): TerminalTab {
+  return {
     id: generateId(),
     name: 'Tab 1',
-    panes: [pane],
-    layout: { type: 'single' },
+    rootPane: createTerminalPane(cwd),
   };
-  return { tab, paneId: pane.id };
 }
 
-export function TerminalView({ initialCwd, onClose, isVisible = true }: TerminalViewProps) {
-  // 초기 탭을 useState 초기화에서 직접 생성하여 렌더링 중 setState 방지
-  const [initialState] = useState(() => {
+// Tree 유틸리티 함수들
+
+// 모든 terminal pane 수집
+function collectTerminals(node: PaneNode): TerminalPaneData[] {
+  if (node.type === 'terminal') {
+    return [node];
+  }
+  return node.children.flatMap(collectTerminals);
+}
+
+// Pane의 bounds 계산 (퍼센트)
+interface PaneBounds {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+function calculatePaneBounds(
+  node: PaneNode,
+  bounds: PaneBounds = { left: 0, top: 0, width: 100, height: 100 }
+): Map<string, PaneBounds> {
+  const result = new Map<string, PaneBounds>();
+
+  if (node.type === 'terminal') {
+    result.set(node.id, bounds);
+    return result;
+  }
+
+  const { direction, children, sizes } = node;
+  const isHorizontal = direction === 'horizontal';
+  let offset = 0;
+
+  for (let i = 0; i < children.length; i++) {
+    const size = sizes[i];
+    const childBounds: PaneBounds = isHorizontal
+      ? {
+          left: bounds.left + (offset / 100) * bounds.width,
+          top: bounds.top,
+          width: (size / 100) * bounds.width,
+          height: bounds.height,
+        }
+      : {
+          left: bounds.left,
+          top: bounds.top + (offset / 100) * bounds.height,
+          width: bounds.width,
+          height: (size / 100) * bounds.height,
+        };
+
+    const childResults = calculatePaneBounds(children[i], childBounds);
+    childResults.forEach((v, k) => result.set(k, v));
+
+    offset += size;
+  }
+
+  return result;
+}
+
+// Split 정보 수집 (리사이즈 핸들용)
+interface SplitInfo {
+  id: string;
+  direction: 'horizontal' | 'vertical';
+  position: number; // 퍼센트
+  bounds: PaneBounds; // 핸들의 영역
+  index: number;
+}
+
+function collectSplits(
+  node: PaneNode,
+  bounds: PaneBounds = { left: 0, top: 0, width: 100, height: 100 }
+): SplitInfo[] {
+  if (node.type === 'terminal') {
+    return [];
+  }
+
+  const result: SplitInfo[] = [];
+  const { direction, children, sizes } = node;
+  const isHorizontal = direction === 'horizontal';
+  let offset = 0;
+
+  for (let i = 0; i < children.length; i++) {
+    const size = sizes[i];
+
+    // Add resize handle between children
+    if (i < children.length - 1) {
+      const handlePosition = offset + size;
+      const handleBounds: PaneBounds = isHorizontal
+        ? {
+            left: bounds.left + (handlePosition / 100) * bounds.width,
+            top: bounds.top,
+            width: 0,
+            height: bounds.height,
+          }
+        : {
+            left: bounds.left,
+            top: bounds.top + (handlePosition / 100) * bounds.height,
+            width: bounds.width,
+            height: 0,
+          };
+
+      result.push({
+        id: node.id,
+        direction,
+        position: handlePosition,
+        bounds: handleBounds,
+        index: i,
+      });
+    }
+
+    // Recurse into children
+    const childBounds: PaneBounds = isHorizontal
+      ? {
+          left: bounds.left + (offset / 100) * bounds.width,
+          top: bounds.top,
+          width: (size / 100) * bounds.width,
+          height: bounds.height,
+        }
+      : {
+          left: bounds.left,
+          top: bounds.top + (offset / 100) * bounds.height,
+          width: bounds.width,
+          height: (size / 100) * bounds.height,
+        };
+
+    result.push(...collectSplits(children[i], childBounds));
+    offset += size;
+  }
+
+  return result;
+}
+
+// pane을 split으로 변환
+// position: 'before' = new pane goes left/up, 'after' = new pane goes right/down
+function splitPane(
+  node: PaneNode,
+  targetId: string,
+  direction: 'horizontal' | 'vertical',
+  newPane: TerminalPaneData,
+  position: 'before' | 'after' = 'after'
+): PaneNode {
+  if (node.id === targetId && node.type === 'terminal') {
+    return {
+      type: 'split',
+      id: generateId(),
+      direction,
+      children: position === 'before' ? [newPane, node] : [node, newPane],
+      sizes: [50, 50],
+    };
+  }
+
+  if (node.type === 'split') {
+    return {
+      ...node,
+      children: node.children.map(child =>
+        splitPane(child, targetId, direction, newPane, position)
+      ),
+    };
+  }
+
+  return node;
+}
+
+// pane 닫기
+function closePane(node: PaneNode, targetId: string): PaneNode | null {
+  if (node.id === targetId) {
+    return null;
+  }
+
+  if (node.type === 'split') {
+    const newChildren = node.children
+      .map(child => closePane(child, targetId))
+      .filter((child): child is PaneNode => child !== null);
+
+    if (newChildren.length === 0) return null;
+    if (newChildren.length === 1) return newChildren[0];
+
+    const totalSize = node.sizes.reduce((a, b) => a + b, 0);
+    const newSizes = newChildren.map(() => totalSize / newChildren.length);
+
+    return { ...node, children: newChildren, sizes: newSizes };
+  }
+
+  return node;
+}
+
+// ptyId 업데이트
+function updatePtyId(node: PaneNode, paneId: string, ptyId: string): PaneNode {
+  if (node.type === 'terminal' && node.id === paneId) {
+    return { ...node, ptyId };
+  }
+
+  if (node.type === 'split') {
+    return {
+      ...node,
+      children: node.children.map(child => updatePtyId(child, paneId, ptyId)),
+    };
+  }
+
+  return node;
+}
+
+// split 크기 조정
+function resizeSplit(
+  node: PaneNode,
+  splitId: string,
+  index: number,
+  deltaPercent: number
+): PaneNode {
+  if (node.type === 'split' && node.id === splitId) {
+    const sizes = [...node.sizes];
+    sizes[index] = Math.max(10, sizes[index] + deltaPercent);
+    sizes[index + 1] = Math.max(10, sizes[index + 1] - deltaPercent);
+
+    if (sizes[index] < 10 || sizes[index + 1] < 10) return node;
+    return { ...node, sizes };
+  }
+
+  if (node.type === 'split') {
+    return {
+      ...node,
+      children: node.children.map(child =>
+        resizeSplit(child, splitId, index, deltaPercent)
+      ),
+    };
+  }
+
+  return node;
+}
+
+// 첫 번째 terminal ID
+function getFirstTerminalId(node: PaneNode): string | null {
+  if (node.type === 'terminal') return node.id;
+  if (node.type === 'split' && node.children.length > 0) {
+    return getFirstTerminalId(node.children[0]);
+  }
+  return null;
+}
+
+// terminal 개수
+function countTerminals(node: PaneNode): number {
+  if (node.type === 'terminal') return 1;
+  return node.children.reduce((sum, child) => sum + countTerminals(child), 0);
+}
+
+export function TerminalView({ initialCwd, onClose, isVisible = true }: { initialCwd?: string; onClose: () => void; isVisible?: boolean }) {
+  const [tabs, setTabs] = useState<TerminalTab[]>(() => {
     const cwd = initialCwd || '~';
-    return createInitialTab(cwd);
+    return [createInitialTab(cwd)];
   });
 
-  const [tabs, setTabs] = useState<TerminalTab[]>([initialState.tab]);
-  const [activeTabId, setActiveTabId] = useState<string>(initialState.tab.id);
-  const [activePaneId, setActivePaneId] = useState<string>(initialState.paneId);
+  const [activeTabId, setActiveTabId] = useState<string>(() => tabs[0].id);
+  const [activePaneId, setActivePaneId] = useState<string>(() => {
+    return getFirstTerminalId(tabs[0].rootPane) || '';
+  });
 
-  // 새 pane 생성 헬퍼
-  const createPane = useCallback((cwd: string): TerminalPaneType => {
-    return {
-      id: generateId(),
-      ptyId: '',
-      cwd,
-      isActive: true,
-    };
-  }, []);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // 새 탭 생성
   const createTab = useCallback(() => {
     const cwd = initialCwd || '~';
-    const pane = createPane(cwd);
+    const newTab = createInitialTab(cwd);
+    newTab.name = `Tab ${tabs.length + 1}`;
 
-    setTabs((prev) => {
-      const newTab: TerminalTab = {
-        id: generateId(),
-        name: `Tab ${prev.length + 1}`,
-        panes: [pane],
-        layout: { type: 'single' },
-      };
-      // setState 내부에서 activeTabId, activePaneId 설정을 위해 setTimeout 사용
-      // 렌더링 중 다른 컴포넌트의 setState 호출 방지
-      setTimeout(() => {
-        setActiveTabId(newTab.id);
-        setActivePaneId(pane.id);
-      }, 0);
-      return [...prev, newTab];
-    });
-  }, [initialCwd, createPane]);
+    setTabs(prev => [...prev, newTab]);
+    setTimeout(() => {
+      setActiveTabId(newTab.id);
+      const firstPaneId = getFirstTerminalId(newTab.rootPane);
+      if (firstPaneId) setActivePaneId(firstPaneId);
+    }, 0);
+  }, [initialCwd, tabs.length]);
 
   // 탭 선택
   const selectTab = useCallback((tabId: string) => {
     setActiveTabId(tabId);
-    // 첫 번째 pane을 활성화
     const tab = tabs.find(t => t.id === tabId);
-    if (tab && tab.panes.length > 0) {
-      setActivePaneId(tab.panes[0].id);
+    if (tab) {
+      const firstPaneId = getFirstTerminalId(tab.rootPane);
+      if (firstPaneId) setActivePaneId(firstPaneId);
     }
   }, [tabs]);
 
   // 탭 닫기
   const closeTab = useCallback((tabId: string) => {
-    setTabs((prev) => {
-      const newTabs = prev.filter((t) => t.id !== tabId);
+    setTabs(prev => {
+      const newTabs = prev.filter(t => t.id !== tabId);
 
-      // 마지막 탭을 닫으면 터미널 모드 종료
-      // 새 탭을 생성해두어 다시 열 때 사용 (기존 탭은 제거)
       if (newTabs.length === 0) {
-        const cwd = initialCwd || '~';
-        const newPane = createPane(cwd);
-        const freshTab: TerminalTab = {
-          id: generateId(),
-          name: 'Tab 1',
-          panes: [newPane],
-          layout: { type: 'single' },
-        };
-        // setTimeout으로 다음 렌더 사이클에서 호출하여 "setState during render" 에러 방지
-        setTimeout(() => {
-          setActiveTabId(freshTab.id);
-          setActivePaneId(newPane.id);
-          onClose();
-        }, 0);
-        return [freshTab];
+        // All tabs closed - close terminal view, let it remount fresh when reopened
+        setTimeout(onClose, 0);
+        return prev; // Keep current state until unmount
       }
 
-      // 활성 탭을 닫았으면 다른 탭 선택
       if (tabId === activeTabId) {
-        const closedIndex = prev.findIndex((t) => t.id === tabId);
+        const closedIndex = prev.findIndex(t => t.id === tabId);
         const newActiveIndex = Math.min(closedIndex, newTabs.length - 1);
-        // setTimeout으로 다음 렌더 사이클에서 호출
         setTimeout(() => {
           setActiveTabId(newTabs[newActiveIndex].id);
-          if (newTabs[newActiveIndex].panes.length > 0) {
-            setActivePaneId(newTabs[newActiveIndex].panes[0].id);
-          }
+          const firstPaneId = getFirstTerminalId(newTabs[newActiveIndex].rootPane);
+          if (firstPaneId) setActivePaneId(firstPaneId);
         }, 0);
       }
 
       return newTabs;
     });
-  }, [activeTabId, onClose, initialCwd, createPane]);
+  }, [activeTabId, onClose]);
 
-  // Split 요청
-  const handleSplitRequest = useCallback((direction: 'horizontal' | 'vertical') => {
-    const activeTab = tabs.find(t => t.id === activeTabId);
-    if (!activeTab || activeTab.panes.length >= 4) return; // 최대 4개 pane
-
-    const cwd = initialCwd || '~';
-    const newPane = createPane(cwd);
-
-    setTabs((prev) => prev.map((tab) => {
-      if (tab.id !== activeTabId) return tab;
-
-      const newPanes = [...tab.panes, newPane];
-      const sizes = newPanes.map(() => 100 / newPanes.length);
-
-      return {
-        ...tab,
-        panes: newPanes,
-        layout: {
-          type: direction,
-          sizes,
-        },
-      };
-    }));
-
-    setActivePaneId(newPane.id);
-  }, [tabs, activeTabId, initialCwd, createPane]);
+  // 탭 이름 변경
+  const renameTab = useCallback((tabId: string, newName: string) => {
+    setTabs(prev => prev.map(tab =>
+      tab.id === tabId ? { ...tab, name: newName } : tab
+    ));
+  }, []);
 
   // Pane 포커스
   const handlePaneFocus = useCallback((paneId: string) => {
@@ -166,176 +355,132 @@ export function TerminalView({ initialCwd, onClose, isVisible = true }: Terminal
 
   // PTY 생성 콜백
   const handlePtyCreated = useCallback((paneId: string, ptyId: string) => {
-    setTabs((prev) => prev.map((tab) => ({
+    setTabs(prev => prev.map(tab => ({
       ...tab,
-      panes: tab.panes.map((pane) =>
-        pane.id === paneId ? { ...pane, ptyId } : pane
-      ),
+      rootPane: updatePtyId(tab.rootPane, paneId, ptyId),
     })));
   }, []);
 
   // PTY 종료 콜백
   const handlePtyExited = useCallback((paneId: string, exitCode: number) => {
-    // 종료된 pane 제거 또는 표시
     console.log(`Pane ${paneId} exited with code ${exitCode}`);
   }, []);
 
-  // 탭 이름 변경
-  const renameTab = useCallback((tabId: string, newName: string) => {
-    setTabs((prev) => prev.map((tab) =>
-      tab.id === tabId ? { ...tab, name: newName } : tab
-    ));
-  }, []);
+  // Split 요청
+  const handleSplitRequest = useCallback((paneId: string, direction: 'horizontal' | 'vertical', position: 'before' | 'after' = 'after') => {
+    const activeTab = tabs.find(t => t.id === activeTabId);
+    if (!activeTab) return;
 
-  // Pane 리사이즈 핸들러
-  const containerRef = useRef<HTMLDivElement>(null);
+    if (countTerminals(activeTab.rootPane) >= 4) return;
 
-  const handlePaneResize = useCallback((tabId: string, paneIndex: number, delta: number) => {
-    if (!containerRef.current) return;
+    const cwd = initialCwd || '~';
+    const newPane = createTerminalPane(cwd);
 
-    setTabs((prev) => prev.map((tab) => {
-      if (tab.id !== tabId) return tab;
-      if (tab.layout.type === 'single') return tab;
-
-      const sizes = [...tab.layout.sizes];
-      const isHorizontal = tab.layout.type === 'horizontal';
-
-      // 컨테이너 크기 기준으로 delta를 퍼센트로 변환
-      const containerSize = isHorizontal
-        ? containerRef.current!.offsetWidth
-        : containerRef.current!.offsetHeight;
-
-      if (containerSize === 0) return tab;
-
-      const deltaPercent = (delta / containerSize) * 100;
-
-      // 현재 pane과 다음 pane의 크기 조정
-      sizes[paneIndex] = Math.max(10, sizes[paneIndex] + deltaPercent);
-      sizes[paneIndex + 1] = Math.max(10, sizes[paneIndex + 1] - deltaPercent);
-
-      // 최소 크기 제한 (10%)
-      if (sizes[paneIndex] < 10 || sizes[paneIndex + 1] < 10) {
-        return tab;
-      }
-
+    setTabs(prev => prev.map(tab => {
+      if (tab.id !== activeTabId) return tab;
       return {
         ...tab,
-        layout: { ...tab.layout, sizes },
+        rootPane: splitPane(tab.rootPane, paneId, direction, newPane, position),
       };
     }));
-  }, []);
+
+    setTimeout(() => setActivePaneId(newPane.id), 0);
+  }, [tabs, activeTabId, initialCwd]);
+
+  // Pane 닫기
+  const handleClosePane = useCallback((paneId: string) => {
+    setTabs(prev => prev.map(tab => {
+      if (tab.id !== activeTabId) return tab;
+
+      const newRootPane = closePane(tab.rootPane, paneId);
+
+      if (!newRootPane) {
+        const cwd = initialCwd || '~';
+        const freshPane = createTerminalPane(cwd);
+        setTimeout(() => setActivePaneId(freshPane.id), 0);
+        return { ...tab, rootPane: freshPane };
+      }
+
+      if (paneId === activePaneId) {
+        const firstPaneId = getFirstTerminalId(newRootPane);
+        if (firstPaneId) setTimeout(() => setActivePaneId(firstPaneId), 0);
+      }
+
+      return { ...tab, rootPane: newRootPane };
+    }));
+  }, [activeTabId, activePaneId, initialCwd]);
+
+  // Pane 리사이즈
+  const handlePaneResize = useCallback((splitId: string, index: number, delta: number) => {
+    if (!containerRef.current) return;
+
+    const container = containerRef.current;
+    const containerWidth = container.offsetWidth;
+    const containerHeight = container.offsetHeight;
+
+    // Find the split to determine direction
+    const activeTab = tabs.find(t => t.id === activeTabId);
+    if (!activeTab) return;
+
+    // Calculate delta as percentage
+    const findSplitDirection = (node: PaneNode): 'horizontal' | 'vertical' | null => {
+      if (node.type === 'split') {
+        if (node.id === splitId) return node.direction;
+        for (const child of node.children) {
+          const result = findSplitDirection(child);
+          if (result) return result;
+        }
+      }
+      return null;
+    };
+
+    const direction = findSplitDirection(activeTab.rootPane);
+    if (!direction) return;
+
+    const containerSize = direction === 'horizontal' ? containerWidth : containerHeight;
+    const deltaPercent = (delta / containerSize) * 100;
+
+    setTabs(prev => prev.map(tab => {
+      if (tab.id !== activeTabId) return tab;
+      return {
+        ...tab,
+        rootPane: resizeSplit(tab.rootPane, splitId, index, deltaPercent),
+      };
+    }));
+  }, [activeTabId, tabs]);
 
   // 키보드 단축키
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // ⌘T: 새 탭
       if (e.metaKey && e.key === 't') {
         e.preventDefault();
         createTab();
       }
-      // ⌘W: 탭 닫기
       if (e.metaKey && e.key === 'w' && !e.shiftKey) {
         e.preventDefault();
-        if (activeTabId) {
-          closeTab(activeTabId);
-        }
+        if (activeTabId) closeTab(activeTabId);
       }
-      // ⌘D: Split right
       if (e.metaKey && e.key === 'd' && !e.shiftKey) {
         e.preventDefault();
-        handleSplitRequest('horizontal');
+        if (activePaneId) handleSplitRequest(activePaneId, 'horizontal', 'after');
       }
-      // ⇧⌘D: Split down
       if (e.metaKey && e.shiftKey && e.key === 'd') {
         e.preventDefault();
-        handleSplitRequest('vertical');
+        if (activePaneId) handleSplitRequest(activePaneId, 'vertical', 'after');
       }
-      // ⌘1-9: 탭 전환
       if (e.metaKey && e.key >= '1' && e.key <= '9') {
         e.preventDefault();
         const index = parseInt(e.key) - 1;
-        if (tabs[index]) {
-          selectTab(tabs[index].id);
-        }
+        if (tabs[index]) selectTab(tabs[index].id);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [createTab, closeTab, selectTab, handleSplitRequest, activeTabId, tabs]);
+  }, [createTab, closeTab, selectTab, handleSplitRequest, activeTabId, activePaneId, tabs]);
 
-  // 활성 탭 정보
-  const activeTab = tabs.find((t) => t.id === activeTabId);
-
-  // 단일 탭의 panes 렌더링 - 일관된 구조 사용
-  const renderTabPanes = (tab: TerminalTab, isTabActive: boolean) => {
-    const { panes, layout } = tab;
-
-    const isHorizontal = layout.type === 'horizontal';
-    const isSingle = layout.type === 'single' || panes.length === 1;
-    const sizes = isSingle
-      ? [100]
-      : ('sizes' in layout ? layout.sizes : panes.map(() => 100 / panes.length));
-
-    return (
-      <div className={`flex ${isHorizontal ? 'flex-row' : 'flex-col'} h-full`}>
-        {panes.map((pane, index) => (
-          <div
-            key={pane.id}
-            className="relative h-full"
-            style={{
-              [isHorizontal ? 'width' : 'height']: `${sizes[index]}%`,
-              flex: isSingle ? '1' : 'none',
-              minWidth: isHorizontal ? '200px' : undefined,
-              minHeight: !isHorizontal ? '100px' : undefined,
-            }}
-          >
-            <TerminalPane
-              paneId={pane.id}
-              cwd={pane.cwd}
-              isActive={pane.id === activePaneId && isTabActive}
-              isVisible={isVisible && isTabActive}
-              onPtyCreated={(ptyId) => handlePtyCreated(pane.id, ptyId)}
-              onPtyExited={(exitCode) => handlePtyExited(pane.id, exitCode)}
-              onFocus={() => handlePaneFocus(pane.id)}
-            />
-            {/* Resize handle (between panes) */}
-            {index < panes.length - 1 && (
-              <ResizeHandle
-                direction={isHorizontal ? 'horizontal' : 'vertical'}
-                onResize={(delta) => handlePaneResize(tab.id, index, delta)}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  // 모든 탭의 Panes 렌더링 - 탭 전환 시 세션 유지 (Tab switching fix)
-  const renderAllTabs = () => {
-    if (tabs.length === 0) return null;
-
-    return (
-      <>
-        {tabs.map((tab) => {
-          const isTabActive = tab.id === activeTabId;
-          return (
-            <div
-              key={tab.id}
-              className="absolute inset-0"
-              style={{
-                display: isTabActive ? 'block' : 'none',
-                visibility: isTabActive ? 'visible' : 'hidden',
-              }}
-            >
-              {renderTabPanes(tab, isTabActive)}
-            </div>
-          );
-        })}
-      </>
-    );
-  };
+  // 활성 탭
+  const activeTab = tabs.find(t => t.id === activeTabId);
 
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)] bg-[#050508] rounded-xl border border-white/5 overflow-hidden">
@@ -346,19 +491,80 @@ export function TerminalView({ initialCwd, onClose, isVisible = true }: Terminal
         onTabSelect={selectTab}
         onTabClose={closeTab}
         onTabAdd={createTab}
-        onSplitRequest={handleSplitRequest}
         onTabRename={renameTab}
       />
 
-      {/* Terminal Content - 모든 탭을 렌더링하고 활성 탭만 표시 */}
+      {/* Terminal Content - Flat Rendering */}
       <div ref={containerRef} className="flex-1 overflow-hidden relative">
-        {tabs.length > 0 ? (
-          renderAllTabs()
-        ) : (
-          <div className="h-full flex items-center justify-center text-slate-500">
-            No terminal tab open
-          </div>
-        )}
+        {tabs.map(tab => {
+          const isTabActive = tab.id === activeTabId;
+          const terminals = collectTerminals(tab.rootPane);
+          const paneBounds = calculatePaneBounds(tab.rootPane);
+          const splits = collectSplits(tab.rootPane);
+
+          return (
+            <div
+              key={tab.id}
+              className="absolute inset-0"
+              style={{
+                display: isTabActive ? 'block' : 'none',
+                visibility: isTabActive ? 'visible' : 'hidden',
+              }}
+            >
+              {/* Render all terminals flat */}
+              {terminals.map(terminal => {
+                const bounds = paneBounds.get(terminal.id);
+                if (!bounds) return null;
+
+                return (
+                  <div
+                    key={terminal.id}
+                    className="absolute"
+                    style={{
+                      left: `${bounds.left}%`,
+                      top: `${bounds.top}%`,
+                      width: `${bounds.width}%`,
+                      height: `${bounds.height}%`,
+                    }}
+                  >
+                    <TerminalPane
+                      paneId={terminal.id}
+                      cwd={terminal.cwd}
+                      isActive={terminal.id === activePaneId && isTabActive}
+                      isVisible={isVisible && isTabActive}
+                      onPtyCreated={(ptyId) => handlePtyCreated(terminal.id, ptyId)}
+                      onPtyExited={(exitCode) => handlePtyExited(terminal.id, exitCode)}
+                      onFocus={() => handlePaneFocus(terminal.id)}
+                      onSplitRequest={(direction: 'horizontal' | 'vertical', position: 'before' | 'after') => handleSplitRequest(terminal.id, direction, position)}
+                      onClosePane={() => handleClosePane(terminal.id)}
+                    />
+                  </div>
+                );
+              })}
+
+              {/* Render resize handles */}
+              {splits.map((split, idx) => (
+                <div
+                  key={`${split.id}-${idx}`}
+                  className="absolute"
+                  style={{
+                    left: `${split.bounds.left}%`,
+                    top: `${split.bounds.top}%`,
+                    width: split.direction === 'horizontal' ? '8px' : `${split.bounds.width}%`,
+                    height: split.direction === 'vertical' ? '8px' : `${split.bounds.height}%`,
+                    transform: split.direction === 'horizontal' ? 'translateX(-4px)' : 'translateY(-4px)',
+                    zIndex: 10,
+                  }}
+                >
+                  <ResizeHandle
+                    direction={split.direction}
+                    onResize={(delta) => handlePaneResize(split.id, split.index, delta)}
+                  />
+                </div>
+              ))}
+            </div>
+          );
+        })}
       </div>
 
       {/* Status Bar */}
@@ -366,9 +572,9 @@ export function TerminalView({ initialCwd, onClose, isVisible = true }: Terminal
         <div className="flex items-center gap-4">
           <span className="text-cyan-400/70">zsh</span>
           <span>{initialCwd || '~/project'}</span>
-          {activeTab && activeTab.panes.length > 1 && (
+          {activeTab && countTerminals(activeTab.rootPane) > 1 && (
             <span className="text-slate-600">
-              {activeTab.panes.length} panes
+              {countTerminals(activeTab.rootPane)} panes
             </span>
           )}
         </div>
@@ -377,7 +583,7 @@ export function TerminalView({ initialCwd, onClose, isVisible = true }: Terminal
             <kbd className="px-1 py-0.5 bg-slate-800 rounded text-slate-500">⌘T</kbd> new tab
           </span>
           <span className="text-slate-600">
-            <kbd className="px-1 py-0.5 bg-slate-800 rounded text-slate-500">⌘D</kbd> split
+            <kbd className="px-1 py-0.5 bg-slate-800 rounded text-slate-500">Right-click</kbd> split
           </span>
           <span>{new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
         </div>

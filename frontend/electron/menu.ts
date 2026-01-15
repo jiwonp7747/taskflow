@@ -166,7 +166,7 @@ export function createApplicationMenu(): void {
         { type: 'separator' },
         {
           label: 'Toggle AI Panel',
-          accelerator: 'CmdOrCtrl+Shift+I',
+          accelerator: 'CmdOrCtrl+Shift+P',
           click: () => {
             const win = BrowserWindow.getFocusedWindow();
             if (win) {

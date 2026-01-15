@@ -1,7 +1,7 @@
 /**
  * TerminalTabBar Component
  *
- * 터미널 탭 바 - 탭 네비게이션 및 Split 메뉴
+ * 터미널 탭 바 - 탭 네비게이션
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -13,12 +13,8 @@ export function TerminalTabBar({
   onTabSelect,
   onTabClose,
   onTabAdd,
-  onSplitRequest,
   onTabRename,
 }: TerminalTabBarProps) {
-  const [isSplitMenuOpen, setIsSplitMenuOpen] = useState(false);
-  const splitMenuRef = useRef<HTMLDivElement>(null);
-
   // 탭 이름 편집 상태
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -28,22 +24,6 @@ export function TerminalTabBar({
   // 스크롤 상태 (좌우 화살표 표시 여부)
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (splitMenuRef.current && !splitMenuRef.current.contains(event.target as Node)) {
-        setIsSplitMenuOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleSplit = (direction: 'horizontal' | 'vertical') => {
-    onSplitRequest(direction);
-    setIsSplitMenuOpen(false);
-  };
 
   // 더블클릭으로 편집 모드 진입
   const handleDoubleClick = useCallback((tab: TerminalTab) => {
@@ -125,7 +105,7 @@ export function TerminalTabBar({
   }, []);
 
   return (
-    <div className="flex items-center justify-between px-2 py-2 bg-slate-900/50 border-b border-white/5 gap-2">
+    <div className="flex items-center px-2 py-2 bg-slate-900/50 border-b border-white/5 gap-2">
       {/* Tabs with horizontal scroll */}
       <div className="flex items-center gap-1 flex-1 min-w-0">
         {/* Scroll Left Button */}
@@ -202,6 +182,17 @@ export function TerminalTabBar({
             </button>
           </div>
         ))}
+
+          {/* Add Tab Button - 탭 바로 옆에 */}
+          <button
+            onClick={onTabAdd}
+            className="flex-shrink-0 p-2 text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50 rounded-lg transition-colors"
+            title="New Tab (⌘T)"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
         </div>
 
         {/* Scroll Right Button */}
@@ -215,82 +206,6 @@ export function TerminalTabBar({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
-        )}
-
-        {/* Add Tab Button */}
-        <button
-          onClick={onTabAdd}
-          className="flex-shrink-0 p-2 text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50 rounded-lg transition-colors"
-          title="New Tab (⌘T)"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Split Menu */}
-      <div className="relative" ref={splitMenuRef}>
-        <button
-          onClick={() => setIsSplitMenuOpen(!isSplitMenuOpen)}
-          className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-          </svg>
-          <span>Split</span>
-          <svg className={`w-3 h-3 transition-transform ${isSplitMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-
-        {/* Dropdown Menu */}
-        {isSplitMenuOpen && (
-          <div className="absolute right-0 top-full mt-1 w-56 py-1 bg-slate-900 border border-white/10 rounded-lg shadow-xl z-50">
-            <button
-              onClick={() => handleSplit('horizontal')}
-              className="w-full flex items-center justify-between px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800/50"
-            >
-              <span>Split pane right</span>
-              <kbd className="text-xs text-slate-500">⌘D</kbd>
-            </button>
-            <button
-              onClick={() => handleSplit('horizontal')}
-              className="w-full flex items-center justify-between px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800/50"
-            >
-              <span>Split pane left</span>
-              <kbd className="text-xs text-slate-500"></kbd>
-            </button>
-            <button
-              onClick={() => handleSplit('vertical')}
-              className="w-full flex items-center justify-between px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800/50"
-            >
-              <span>Split pane down</span>
-              <kbd className="text-xs text-slate-500">⇧⌘D</kbd>
-            </button>
-            <button
-              onClick={() => handleSplit('vertical')}
-              className="w-full flex items-center justify-between px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800/50"
-            >
-              <span>Split pane up</span>
-              <kbd className="text-xs text-slate-500"></kbd>
-            </button>
-
-            <div className="my-1 border-t border-white/5" />
-
-            <button
-              className="w-full flex items-center justify-between px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800/50"
-            >
-              <span>Maximize pane</span>
-              <kbd className="text-xs text-slate-500">⇧⌘↵</kbd>
-            </button>
-            <button
-              className="w-full flex items-center justify-between px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800/50"
-            >
-              <span>Close pane</span>
-              <kbd className="text-xs text-slate-500">⌘W</kbd>
-            </button>
-          </div>
         )}
       </div>
     </div>

@@ -43,6 +43,7 @@ const validInvokeChannels = [
   'window:close',
   'window:toggleFullScreen',
   'window:isFullScreen',
+  'window:toggleDevTools',
   // Terminal
   'terminal:create',
   'terminal:write',
