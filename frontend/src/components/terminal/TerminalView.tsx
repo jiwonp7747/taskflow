@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { TerminalTabBar } from './TerminalTabBar';
 import { TerminalPane } from './TerminalPane';
+import { ResizeHandle } from './ResizeHandle';
 import type { TerminalTab, TerminalPane as TerminalPaneType, TerminalViewProps } from './types';
 
 // 임시 ID 생성 함수
@@ -14,11 +15,38 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
 
+// 초기 pane 생성 헬퍼 (컴포넌트 외부에서 사용)
+function createInitialPane(cwd: string): TerminalPaneType {
+  return {
+    id: generateId(),
+    ptyId: '',
+    cwd,
+    isActive: true,
+  };
+}
+
+// 초기 탭 생성 헬퍼 (컴포넌트 외부에서 사용)
+function createInitialTab(cwd: string): { tab: TerminalTab; paneId: string } {
+  const pane = createInitialPane(cwd);
+  const tab: TerminalTab = {
+    id: generateId(),
+    name: 'Tab 1',
+    panes: [pane],
+    layout: { type: 'single' },
+  };
+  return { tab, paneId: pane.id };
+}
+
 export function TerminalView({ initialCwd, onClose, isVisible = true }: TerminalViewProps) {
-  const [tabs, setTabs] = useState<TerminalTab[]>([]);
-  const [activeTabId, setActiveTabId] = useState<string>('');
-  const [activePaneId, setActivePaneId] = useState<string>('');
-  const initializedRef = useRef(false);
+  // 초기 탭을 useState 초기화에서 직접 생성하여 렌더링 중 setState 방지
+  const [initialState] = useState(() => {
+    const cwd = initialCwd || '~';
+    return createInitialTab(cwd);
+  });
+
+  const [tabs, setTabs] = useState<TerminalTab[]>([initialState.tab]);
+  const [activeTabId, setActiveTabId] = useState<string>(initialState.tab.id);
+  const [activePaneId, setActivePaneId] = useState<string>(initialState.paneId);
 
   // 새 pane 생성 헬퍼
   const createPane = useCallback((cwd: string): TerminalPaneType => {
@@ -34,25 +62,23 @@ export function TerminalView({ initialCwd, onClose, isVisible = true }: Terminal
   const createTab = useCallback(() => {
     const cwd = initialCwd || '~';
     const pane = createPane(cwd);
-    const newTab: TerminalTab = {
-      id: generateId(),
-      name: `Tab ${tabs.length + 1}`,
-      panes: [pane],
-      layout: { type: 'single' },
-    };
 
-    setTabs((prev) => [...prev, newTab]);
-    setActiveTabId(newTab.id);
-    setActivePaneId(pane.id);
-  }, [tabs.length, initialCwd, createPane]);
-
-  // 초기 탭 생성 (StrictMode에서 중복 생성 방지)
-  useEffect(() => {
-    if (tabs.length === 0 && !initializedRef.current) {
-      initializedRef.current = true;
-      createTab();
-    }
-  }, []);
+    setTabs((prev) => {
+      const newTab: TerminalTab = {
+        id: generateId(),
+        name: `Tab ${prev.length + 1}`,
+        panes: [pane],
+        layout: { type: 'single' },
+      };
+      // setState 내부에서 activeTabId, activePaneId 설정을 위해 setTimeout 사용
+      // 렌더링 중 다른 컴포넌트의 setState 호출 방지
+      setTimeout(() => {
+        setActiveTabId(newTab.id);
+        setActivePaneId(pane.id);
+      }, 0);
+      return [...prev, newTab];
+    });
+  }, [initialCwd, createPane]);
 
   // 탭 선택
   const selectTab = useCallback((tabId: string) => {
@@ -70,8 +96,9 @@ export function TerminalView({ initialCwd, onClose, isVisible = true }: Terminal
       const newTabs = prev.filter((t) => t.id !== tabId);
 
       // 마지막 탭을 닫으면 터미널 모드 종료
+      // setTimeout으로 다음 렌더 사이클에서 호출하여 "setState during render" 에러 방지
       if (newTabs.length === 0) {
-        onClose();
+        setTimeout(() => onClose(), 0);
         return prev;
       }
 
@@ -79,10 +106,13 @@ export function TerminalView({ initialCwd, onClose, isVisible = true }: Terminal
       if (tabId === activeTabId) {
         const closedIndex = prev.findIndex((t) => t.id === tabId);
         const newActiveIndex = Math.min(closedIndex, newTabs.length - 1);
-        setActiveTabId(newTabs[newActiveIndex].id);
-        if (newTabs[newActiveIndex].panes.length > 0) {
-          setActivePaneId(newTabs[newActiveIndex].panes[0].id);
-        }
+        // setTimeout으로 다음 렌더 사이클에서 호출
+        setTimeout(() => {
+          setActiveTabId(newTabs[newActiveIndex].id);
+          if (newTabs[newActiveIndex].panes.length > 0) {
+            setActivePaneId(newTabs[newActiveIndex].panes[0].id);
+          }
+        }, 0);
       }
 
       return newTabs;
@@ -135,6 +165,51 @@ export function TerminalView({ initialCwd, onClose, isVisible = true }: Terminal
   const handlePtyExited = useCallback((paneId: string, exitCode: number) => {
     // 종료된 pane 제거 또는 표시
     console.log(`Pane ${paneId} exited with code ${exitCode}`);
+  }, []);
+
+  // 탭 이름 변경
+  const renameTab = useCallback((tabId: string, newName: string) => {
+    setTabs((prev) => prev.map((tab) =>
+      tab.id === tabId ? { ...tab, name: newName } : tab
+    ));
+  }, []);
+
+  // Pane 리사이즈 핸들러
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handlePaneResize = useCallback((tabId: string, paneIndex: number, delta: number) => {
+    if (!containerRef.current) return;
+
+    setTabs((prev) => prev.map((tab) => {
+      if (tab.id !== tabId) return tab;
+      if (tab.layout.type === 'single') return tab;
+
+      const sizes = [...tab.layout.sizes];
+      const isHorizontal = tab.layout.type === 'horizontal';
+
+      // 컨테이너 크기 기준으로 delta를 퍼센트로 변환
+      const containerSize = isHorizontal
+        ? containerRef.current!.offsetWidth
+        : containerRef.current!.offsetHeight;
+
+      if (containerSize === 0) return tab;
+
+      const deltaPercent = (delta / containerSize) * 100;
+
+      // 현재 pane과 다음 pane의 크기 조정
+      sizes[paneIndex] = Math.max(10, sizes[paneIndex] + deltaPercent);
+      sizes[paneIndex + 1] = Math.max(10, sizes[paneIndex + 1] - deltaPercent);
+
+      // 최소 크기 제한 (10%)
+      if (sizes[paneIndex] < 10 || sizes[paneIndex + 1] < 10) {
+        return tab;
+      }
+
+      return {
+        ...tab,
+        layout: { ...tab.layout, sizes },
+      };
+    }));
   }, []);
 
   // 키보드 단축키
@@ -213,12 +288,9 @@ export function TerminalView({ initialCwd, onClose, isVisible = true }: Terminal
             />
             {/* Resize handle (between panes) */}
             {index < panes.length - 1 && (
-              <div
-                className={`absolute ${
-                  isHorizontal
-                    ? 'right-0 top-0 bottom-0 w-1 cursor-col-resize'
-                    : 'bottom-0 left-0 right-0 h-1 cursor-row-resize'
-                } bg-white/5 hover:bg-cyan-500/30 transition-colors`}
+              <ResizeHandle
+                direction={isHorizontal ? 'horizontal' : 'vertical'}
+                onResize={(delta) => handlePaneResize(tab.id, index, delta)}
               />
             )}
           </div>
@@ -262,10 +334,11 @@ export function TerminalView({ initialCwd, onClose, isVisible = true }: Terminal
         onTabClose={closeTab}
         onTabAdd={createTab}
         onSplitRequest={handleSplitRequest}
+        onTabRename={renameTab}
       />
 
       {/* Terminal Content - 모든 탭을 렌더링하고 활성 탭만 표시 */}
-      <div className="flex-1 overflow-hidden relative">
+      <div ref={containerRef} className="flex-1 overflow-hidden relative">
         {tabs.length > 0 ? (
           renderAllTabs()
         ) : (

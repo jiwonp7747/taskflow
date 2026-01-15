@@ -4,8 +4,8 @@
  * 터미널 탭 바 - 탭 네비게이션 및 Split 메뉴
  */
 
-import { useState, useRef, useEffect } from 'react';
-import type { TerminalTabBarProps } from './types';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import type { TerminalTabBarProps, TerminalTab } from './types';
 
 export function TerminalTabBar({
   tabs,
@@ -14,9 +14,15 @@ export function TerminalTabBar({
   onTabClose,
   onTabAdd,
   onSplitRequest,
+  onTabRename,
 }: TerminalTabBarProps) {
   const [isSplitMenuOpen, setIsSplitMenuOpen] = useState(false);
   const splitMenuRef = useRef<HTMLDivElement>(null);
+
+  // 탭 이름 편집 상태
+  const [editingTabId, setEditingTabId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -34,6 +40,46 @@ export function TerminalTabBar({
     setIsSplitMenuOpen(false);
   };
 
+  // 더블클릭으로 편집 모드 진입
+  const handleDoubleClick = useCallback((tab: TerminalTab) => {
+    setEditingTabId(tab.id);
+    setEditValue(tab.name);
+  }, []);
+
+  // 편집 완료
+  const handleRenameSubmit = useCallback(() => {
+    if (editingTabId && editValue.trim()) {
+      onTabRename(editingTabId, editValue.trim());
+    }
+    setEditingTabId(null);
+    setEditValue('');
+  }, [editingTabId, editValue, onTabRename]);
+
+  // 편집 취소
+  const handleRenameCancel = useCallback(() => {
+    setEditingTabId(null);
+    setEditValue('');
+  }, []);
+
+  // 키보드 이벤트 처리
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleRenameSubmit();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleRenameCancel();
+    }
+  }, [handleRenameSubmit, handleRenameCancel]);
+
+  // 편집 모드 진입 시 input에 포커스
+  useEffect(() => {
+    if (editingTabId && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editingTabId]);
+
   return (
     <div className="flex items-center justify-between px-4 py-2 bg-slate-900/50 border-b border-white/5">
       {/* Tabs */}
@@ -46,9 +92,36 @@ export function TerminalTabBar({
                 ? 'text-cyan-400 bg-cyan-500/10 border-b-2 border-cyan-400'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
             }`}
-            onClick={() => onTabSelect(tab.id)}
+            onClick={() => {
+              if (editingTabId !== tab.id) {
+                onTabSelect(tab.id);
+              }
+            }}
           >
-            <span>{tab.name}</span>
+            {/* 탭 이름 - 더블클릭으로 편집 */}
+            {editingTabId === tab.id ? (
+              <input
+                ref={inputRef}
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={handleRenameSubmit}
+                onKeyDown={handleKeyDown}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-transparent border-b border-cyan-400 outline-none w-20 text-sm px-0 py-0"
+                maxLength={20}
+              />
+            ) : (
+              <span
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  handleDoubleClick(tab);
+                }}
+                title="Double-click to rename"
+              >
+                {tab.name}
+              </span>
+            )}
             <button
               onClick={(e) => {
                 e.stopPropagation();

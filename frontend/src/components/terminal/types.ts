@@ -28,6 +28,7 @@ export interface TerminalTabBarProps {
   onTabClose: (tabId: string) => void;
   onTabAdd: () => void;
   onSplitRequest: (direction: 'horizontal' | 'vertical') => void;
+  onTabRename: (tabId: string, newName: string) => void;
 }
 
 export interface TerminalViewProps {

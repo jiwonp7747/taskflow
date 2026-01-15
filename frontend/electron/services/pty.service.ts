@@ -6,6 +6,8 @@
 
 import * as pty from 'node-pty';
 import * as os from 'os';
+import * as path from 'path';
+import * as fs from 'fs';
 
 interface PtyInstance {
   id: string;
@@ -17,17 +19,55 @@ class PtyService {
   private instances: Map<string, PtyInstance> = new Map();
 
   /**
+   * CWD 경로 해석 - '~'를 홈 디렉토리로 변환
+   */
+  private resolveCwd(cwd: string): string {
+    const homeDir = os.homedir();
+
+    // '~' 또는 빈 경로를 홈 디렉토리로 변환
+    if (!cwd || cwd === '~') {
+      return homeDir;
+    }
+
+    // '~/'로 시작하는 경로 처리
+    if (cwd.startsWith('~/')) {
+      return path.join(homeDir, cwd.slice(2));
+    }
+
+    // '~\'로 시작하는 경로 처리 (Windows)
+    if (cwd.startsWith('~\\')) {
+      return path.join(homeDir, cwd.slice(2));
+    }
+
+    // 경로 존재 확인, 없으면 홈 디렉토리로 폴백
+    try {
+      if (fs.existsSync(cwd)) {
+        return cwd;
+      }
+    } catch {
+      // 접근 오류 시 홈 디렉토리로 폴백
+    }
+
+    console.warn(`[PtyService] Invalid cwd "${cwd}", falling back to home directory`);
+    return homeDir;
+  }
+
+  /**
    * 새 PTY 인스턴스 생성
    */
   create(cwd: string, cols: number, rows: number): { id: string; pid: number } {
     const shell = process.env.SHELL || (os.platform() === 'win32' ? 'powershell.exe' : '/bin/zsh');
     const id = this.generateId();
 
+    // CWD 경로 해석 - Windows에서 '~'를 홈 디렉토리로 변환
+    const resolvedCwd = this.resolveCwd(cwd);
+    console.log(`[PtyService] Creating PTY with cwd: "${cwd}" -> "${resolvedCwd}"`);
+
     const ptyProcess = pty.spawn(shell, [], {
       name: 'xterm-256color',
       cols,
       rows,
-      cwd,
+      cwd: resolvedCwd,
       env: {
         ...process.env,
         TERM: 'xterm-256color',
