@@ -23,6 +23,11 @@ export function TerminalTabBar({
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+
+  // 스크롤 상태 (좌우 화살표 표시 여부)
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -80,14 +85,72 @@ export function TerminalTabBar({
     }
   }, [editingTabId]);
 
+  // 스크롤 상태 업데이트
+  const updateScrollState = useCallback(() => {
+    const container = tabsContainerRef.current;
+    if (!container) return;
+
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    setCanScrollLeft(scrollLeft > 0);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
+  }, []);
+
+  // 스크롤 이벤트 및 리사이즈 감지
+  useEffect(() => {
+    const container = tabsContainerRef.current;
+    if (!container) return;
+
+    updateScrollState();
+    container.addEventListener('scroll', updateScrollState);
+
+    const resizeObserver = new ResizeObserver(updateScrollState);
+    resizeObserver.observe(container);
+
+    return () => {
+      container.removeEventListener('scroll', updateScrollState);
+      resizeObserver.disconnect();
+    };
+  }, [updateScrollState, tabs.length]);
+
+  // 스크롤 함수
+  const scrollTabs = useCallback((direction: 'left' | 'right') => {
+    const container = tabsContainerRef.current;
+    if (!container) return;
+
+    const scrollAmount = 150;
+    container.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    });
+  }, []);
+
   return (
-    <div className="flex items-center justify-between px-4 py-2 bg-slate-900/50 border-b border-white/5">
-      {/* Tabs */}
-      <div className="flex items-center gap-1">
-        {tabs.map((tab) => (
+    <div className="flex items-center justify-between px-2 py-2 bg-slate-900/50 border-b border-white/5 gap-2">
+      {/* Tabs with horizontal scroll */}
+      <div className="flex items-center gap-1 flex-1 min-w-0">
+        {/* Scroll Left Button */}
+        {canScrollLeft && (
+          <button
+            onClick={() => scrollTabs('left')}
+            className="flex-shrink-0 p-1.5 text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50 rounded transition-colors"
+            title="Scroll left"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
+
+        {/* Scrollable Tabs Container */}
+        <div
+          ref={tabsContainerRef}
+          className="flex items-center gap-1 overflow-x-auto scrollbar-none flex-1 min-w-0"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {tabs.map((tab) => (
           <div
             key={tab.id}
-            className={`group flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg cursor-pointer transition-colors ${
+            className={`group flex-shrink-0 flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg cursor-pointer transition-colors whitespace-nowrap ${
               tab.id === activeTabId
                 ? 'text-cyan-400 bg-cyan-500/10 border-b-2 border-cyan-400'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
@@ -139,11 +202,25 @@ export function TerminalTabBar({
             </button>
           </div>
         ))}
+        </div>
+
+        {/* Scroll Right Button */}
+        {canScrollRight && (
+          <button
+            onClick={() => scrollTabs('right')}
+            className="flex-shrink-0 p-1.5 text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50 rounded transition-colors"
+            title="Scroll right"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        )}
 
         {/* Add Tab Button */}
         <button
           onClick={onTabAdd}
-          className="p-2 text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50 rounded-lg transition-colors"
+          className="flex-shrink-0 p-2 text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50 rounded-lg transition-colors"
           title="New Tab (⌘T)"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
