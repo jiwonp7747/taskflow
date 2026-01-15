@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow Architecture</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #e2e8f0;
+      line-height: 1.6;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    header {
+      background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 50%, #14b8a6 100%);
+      padding: 50px 30px;
+      border-radius: 12px;
+      margin-bottom: 40px;
+      box-shadow: 0 20px 60px rgba(6, 182, 212, 0.2);
+    }
+    
+    h1 {
+      font-size: 3em;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .subtitle {
+      font-size: 1.2em;
+      color: rgba(255, 255, 255, 0.95);
+      opacity: 0.95;
+    }
+    
+    section {
+      margin-bottom: 50px;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(100, 150, 200, 0.2);
+      border-radius: 12px;
+      padding: 35px;
+      backdrop-filter: blur(10px);
+    }
+    
+    h2 {
+      font-size: 2em;
+      color: #0ea5e9;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 3px solid rgba(14, 165, 233, 0.3);
+    }
+    
+    h3 {
+      font-size: 1.3em;
+      color: #06b6d4;
+      margin-top: 25px;
+      margin-bottom: 15px;
+    }
+    
+    .business-context {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .context-card {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 8px;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+    
+    .context-card:hover {
+      border-color: rgba(6, 182, 212, 0.6);
+      box-shadow: 0 8px 20px rgba(6, 182, 212, 0.2);
+    }
+    
+    .context-card h4 {
+      color: #06b6d4;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    
+    .context-card p {
+      font-size: 0.95em;
+      color: #cbd5e1;
+    }
+    
+    .diagram {
+      margin: 30px 0;
+      padding: 20px;
+      background: rgba(10, 20, 40, 0.5);
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    
+    svg {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+    
+    .tech-stack {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin: 25px 0;
+    }
+    
+    .tech-item {
+      background: rgba(20, 30, 60, 0.8);
+      border-left: 4px solid #0ea5e9;
+      padding: 20px;
+      border-radius: 6px;
+      transition: transform 0.3s ease;
+    }
+    
+    .tech-item:hover {
+      transform: translateX(5px);
+      border-left-color: #06b6d4;
+    }
+    
+    .tech-item h4 {
+      color: #0ea5e9;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    
+    .tech-item ul {
+      list-style: none;
+      font-size: 0.9em;
+      color: #cbd5e1;
+    }
+    
+    .tech-item li {
+      padding: 5px 0;
+      padding-left: 20px;
+      position: relative;
+    }
+    
+    .tech-item li:before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: #06b6d4;
+    }
+    
+    .architecture-layers {
+      margin: 30px 0;
+    }
+    
+    .layer {
+      background: rgba(20, 30, 60, 0.6);
+      border: 1px solid rgba(14, 165, 233, 0.2);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 15px;
+      border-left: 5px solid #0ea5e9;
+    }
+    
+    .layer.presentation { border-left-color: #3b82f6; }
+    .layer.application { border-left-color: #0ea5e9; }
+    .layer.domain { border-left-color: #06b6d4; }
+    .layer.infrastructure { border-left-color: #14b8a6; }
+    .layer.external { border-left-color: #8b5cf6; }
+    
+    .layer-title {
+      font-weight: 700;
+      color: #0ea5e9;
+      margin-bottom: 10px;
+      font-size: 1.1em;
+    }
+    
+    .components {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    
+    .component {
+      background: rgba(10, 20, 40, 0.8);
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 0.9em;
+      color: #cbd5e1;
+      border: 1px solid rgba(100, 150, 200, 0.2);
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin: 25px 0;
+    }
+    
+    .feature {
+      background: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 8px;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+    
+    .feature:hover {
+      border-color: rgba(6, 182, 212, 0.6);
+      box-shadow: 0 8px 20px rgba(6, 182, 212, 0.15);
+    }
+    
+    .feature h4 {
+      color: #14b8a6;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .feature p {
+      font-size: 0.95em;
+      color: #cbd5e1;
+    }
+    
+    .data-flow-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 25px 0;
+      background: rgba(10, 20, 40, 0.6);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .data-flow-table th,
+    .data-flow-table td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid rgba(100, 150, 200, 0.2);
+    }
+    
+    .data-flow-table th {
+      background: rgba(14, 165, 233, 0.2);
+      color: #0ea5e9;
+      font-weight: 600;
+    }
+    
+    .data-flow-table tr:hover {
+      background: rgba(14, 165, 233, 0.1);
+    }
+    
+    .endpoint {
+      font-family: 'Courier New', monospace;
+      color: #06b6d4;
+      font-size: 0.9em;
+    }
+    
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      font-weight: 500;
+    }
+    
+    .status.implemented {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+    }
+    
+    .status.in-progress {
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+    }
+    
+    .flow-diagram {
+      background: rgba(10, 20, 40, 0.8);
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    
+    .deployment-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+    }
+    
+    .deployment-info > div {
+      background: rgba(20, 30, 60, 0.6);
+      border: 1px solid rgba(14, 165, 233, 0.2);
+      border-radius: 8px;
+      padding: 20px;
+    }
+    
+    .deployment-info h4 {
+      color: #0ea5e9;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+    
+    .deployment-info p,
+    .deployment-info li {
+      font-size: 0.95em;
+      color: #cbd5e1;
+      margin-bottom: 8px;
+    }
+    
+    .deployment-info li {
+      margin-left: 20px;
+    }
+    
+    @media (max-width: 768px) {
+      h1 { font-size: 2em; }
+      h2 { font-size: 1.5em; }
+      .deployment-info {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .badge {
+      display: inline-block;
+      background: rgba(14, 165, 233, 0.2);
+      color: #0ea5e9;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      font-weight: 500;
+      margin: 2px;
+    }
+    
+    code {
+      background: rgba(10, 20, 40, 0.8);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      color: #06b6d4;
+      font-size: 0.9em;
+    }
+    
+    .arrow-definition {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <svg class="arrow-definition" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arrowblue" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+        <path d="M0,5 L10,5 M10,5 L7,3 M10,5 L7,7" stroke="#4299e1" stroke-width="1.5" fill="none"/>
+      </marker>
+      <marker id="arrowteal" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+        <path d="M0,5 L10,5 M10,5 L7,3 M10,5 L7,7" stroke="#06b6d4" stroke-width="1.5" fill="none"/>
+      </marker>
+      <marker id="arroworange" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+        <path d="M0,5 L10,5 M10,5 L7,3 M10,5 L7,7" stroke="#ed8936" stroke-width="1.5" fill="none"/>
+      </marker>
+    </defs>
+  </svg>
+
+  <div class="container">
+    <header>
+      <h1>TaskFlow Architecture</h1>
+      <p class="subtitle">Local Markdown-based Task Management System with AI Agent Integration</p>
+    </header>
+
+    <!-- Business Context Section -->
+    <section>
+      <h2>🎯 Business Context</h2>
+      <div class="business-context">
+        <div class="context-card">
+          <h4>Purpose</h4>
+          <p>A local file-based task management system that enables AI agents (Claude Code, etc.) to automatically detect, execute, and complete tasks while maintaining full control over task files through Git version control.</p>
+        </div>
+        <div class="context-card">
+          <h4>Target Users</h4>
+          <p><strong>Primary:</strong> AI-assisted individual developers<br><strong>Secondary:</strong> Non-technical users managing tasks with AI assistance</p>
+        </div>
+        <div class="context-card">
+          <h4>Key Value Propositions</h4>
+          <p>• 100% local control (no cloud dependency)<br>• Git-friendly markdown format<br>• Automatic AI task detection & execution<br>• Real-time UI synchronization with file changes</p>
+        </div>
+        <div class="context-card">
+          <h4>Success Metrics (North Star)</h4>
+          <p><strong>AI Agent Auto-Processing Rate:</strong> (Auto-completed tasks) / (AI-assigned tasks) = <strong>Target: 80%</strong></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data Flow Section -->
+    <section>
+      <h2>📊 Data Flow Architecture</h2>
+      
+      <h3>Primary Data Flow Paths</h3>
+      <div class="diagram">
+        <svg viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg">
+          <!-- Title -->
+          <text x="500" y="20" text-anchor="middle" font-size="16" font-weight="bold" fill="#0ea5e9">Task Lifecycle & Data Flow</text>
+          
+          <!-- Path 1: User Creates Task -->
+          <g>
+            <text x="50" y="50" font-size="12" fill="#cbd5e1">Path 1: Task Creation</text>
+            <rect x="30" y="70" width="100" height="60" fill="#4299e1" opacity="0.3" stroke="#4299e1" stroke-width="2" rx="4"/>
+            <text x="80" y="105" text-anchor="middle" font-size="11" font-weight="600" fill="#0ea5e9">User Creates</text>
+            <text x="80" y="120" text-anchor="middle" font-size="10" fill="#cbd5e1">task-xxx.md</text>
+            
+            <line x1="130" y1="100" x2="180" y2="100" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowblue)"/>
+            
+            <rect x="180" y="70" width="100" height="60" fill="#0ea5e9" opacity="0.3" stroke="#0ea5e9" stroke-width="2" rx="4"/>
+            <text x="230" y="105" text-anchor="middle" font-size="11" font-weight="600" fill="#0ea5e9">File System</text>
+            <text x="230" y="120" text-anchor="middle" font-size="10" fill="#cbd5e1">Markdown Files</text>
+            
+            <line x1="280" y1="100" x2="330" y2="100" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowblue)"/>
+            
+            <rect x="330" y="70" width="100" height="60" fill="#06b6d4" opacity="0.3" stroke="#06b6d4" stroke-width="2" rx="4"/>
+            <text x="380" y="105" text-anchor="middle" font-size="11" font-weight="600" fill="#06b6d4">FileWatcher</text>
+            <text x="380" y="120" text-anchor="middle" font-size="10" fill="#cbd5e1">chokidar</text>
+            
+            <line x1="430" y1="100" x2="480" y2="100" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowblue)"/>
+            
+            <rect x="480" y="70" width="100" height="60" fill="#14b8a6" opacity="0.3" stroke="#14b8a6" stroke-width="2" rx="4"/>
+            <text x="530" y="105" text-anchor="middle" font-size="11" font-weight="600" fill="#14b8a6">UI Update</text>
+            <text x="530" y="120" text-anchor="middle" font-size="10" fill="#cbd5e1">Kanban Board</text>
+          </g>
+          
+          <!-- Path 2: AI Agent Processing -->
+          <g>
+            <text x="50" y="200" font-size="12" fill="#cbd5e1">Path 2: AI Agent Processing</text>
+            <rect x="30" y="220" width="100" height="60" fill="#9f7aea" opacity="0.3" stroke="#9f7aea" stroke-width="2" rx="4"/>
+            <text x="80" y="250" text-anchor="middle" font-size="11" font-weight="600" fill="#9f7aea">AI Agent</text>
+            <text x="80" y="265" text-anchor="middle" font-size="10" fill="#cbd5e1">Claude Code</text>
+            
+            <line x1="130" y1="250" x2="180" y2="250" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arroworange)"/>
+            
+            <rect x="180" y="220" width="100" height="60" fill="#ed8936" opacity="0.3" stroke="#ed8936" stroke-width="2" rx="4"/>
+            <text x="230" y="250" text-anchor="middle" font-size="11" font-weight="600" fill="#ed8936">Modify Status</text>
+            <text x="230" y="265" text-anchor="middle" font-size="10" fill="#cbd5e1">→ IN_PROGRESS</text>
+            
+            <line x1="280" y1="250" x2="330" y2="250" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arroworange)"/>
+            
+            <rect x="330" y="220" width="100" height="60" fill="#ed8936" opacity="0.3" stroke="#ed8936" stroke-width="2" rx="4"/>
+            <text x="380" y="250" text-anchor="middle" font-size="11" font-weight="600" fill="#ed8936">Execute Task</text>
+            <text x="380" y="265" text-anchor="middle" font-size="10" fill="#cbd5e1">Work Log Update</text>
+            
+            <line x1="430" y1="250" x2="480" y2="250" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arroworange)"/>
+            
+            <rect x="480" y="220" width="100" height="60" fill="#22c55e" opacity="0.3" stroke="#22c55e" stroke-width="2" rx="4"/>
+            <text x="530" y="250" text-anchor="middle" font-size="11" font-weight="600" fill="#22c55e">Complete Task</text>
+            <text x="530" y="265" text-anchor="middle" font-size="10" fill="#cbd5e1">→ IN_REVIEW</text>
+          </g>
+        </svg>
+      </div>
+
+      <h3>Data Model: Task Structure</h3>
+      <p>Each task is stored as a markdown file with YAML frontmatter:</p>
+      <div style="background: rgba(10, 20, 40, 0.8); padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #06b6d4; overflow-x: auto;">
+        <pre style="color: #06b6d4; font-size: 0.85em; margin: 0;"><code>---
+id: task-001
+title: API Endpoint Implementation
+status: TODO | IN_PROGRESS | IN_REVIEW | NEED_FIX | COMPLETE | ON_HOLD
+priority: LOW | MEDIUM | HIGH | URGENT
+assignee: ai-agent | user
+created_at: 2025-01-11
+updated_at: 2025-01-11
+start_date: 2025-01-11
+due_date: 2025-01-15
+tags: [backend, api]
+---
+
+## Description
+Task details and context...
+
+## Requirements
+- Requirement 1
+- Requirement 2
+
+## Feedback
+(User feedback for NEED_FIX status)
+
+## AI Work Log
+(AI execution results and logs)</code></pre>
+      </div>
+    </section>
+
+    <!-- System Architecture Section -->
+    <section>
+      <h2>🏗️ System Architecture Layers</h2>
+      
+      <div class="architecture-layers">
+        <!-- Presentation Layer -->
+        <div class="layer presentation">
+          <div class="layer-title">📱 Presentation Layer (Frontend UI)</div>
+          <div class="components">
+            <div class="component">TaskBoard (Kanban)</div>
+            <div class="component">TaskSidebar (Details)</div>
+            <div class="component">TaskCard (Draggable)</div>
+            <div class="component">LeftSidebar (Sources)</div>
+            <div class="component">FilterBar</div>
+            <div class="component">AIStatusBar</div>
+            <div class="component">WelcomeScreen</div>
+            <div class="component">ConversationPanel</div>
+          </div>
+        </div>
+        
+        <!-- Application Layer -->
+        <div class="layer application">
+          <div class="layer-title">⚙️ Application Layer (Business Logic)</div>
+          <div class="components">
+            <div class="component">useTasks Hook</div>
+            <div class="component">useConfig Hook</div>
+            <div class="component">useAIWorker Hook</div>
+            <div class="component">useFileWatcher Hook</div>
+            <div class="component">useConversation Hook</div>
+            <div class="component">useTaskFilter Hook</div>
+            <div class="component">ConfigService</div>
+            <div class="component">SourceService</div>
+          </div>
+        </div>
+        
+        <!-- Domain Layer -->
+        <div class="layer domain">
+          <div class="layer-title">🎯 Domain Layer (Core Entities & Business Rules)</div>
+          <div class="components">
+            <div class="component">Task Entity</div>
+            <div class="component">Source Entity</div>
+            <div class="component">Config Entity</div>
+            <div class="component">AIWorkerConfig</div>
+            <div class="component">Task Status Machine</div>
+            <div class="component">Task Priority Rules</div>
+          </div>
+        </div>
+        
+        <!-- Infrastructure Layer -->
+        <div class="layer infrastructure">
+          <div class="layer-title">🔧 Infrastructure Layer (External Communication)</div>
+          <div class="components">
+            <div class="component">Next.js API Routes</div>
+            <div class="component">fileSystem.ts (File I/O)</div>
+            <div class="component">taskParser.ts (gray-matter)</div>
+            <div class="component">aiWorker.ts (AI Orchestration)</div>
+            <div class="component">claudeExecutor.ts (Spawn Process)</div>
+            <div class="component">sessionManager.ts</div>
+            <div class="component">fileWatcher.ts (chokidar)</div>
+            <div class="component">config.ts (Config Persistence)</div>
+          </div>
+        </div>
+        
+        <!-- External Layer -->
+        <div class="layer external">
+          <div class="layer-title">🌍 External Systems & Data Sources</div>
+          <div class="components">
+            <div class="component">Local File System</div>
+            <div class="component">Claude Code CLI</div>
+            <div class="component">.taskflow.config.json</div>
+            <div class="component">Terminal/Shell</div>
+            <div class="component">Process Manager</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tech Stack Section -->
+    <section>
+      <h2>📦 Technology Stack</h2>
+      
+      <div class="tech-stack">
+        <div class="tech-item">
+          <h4>Frontend Framework</h4>
+          <ul>
+            <li>Next.js 16.1.1 (App Router)</li>
+            <li>React 19.2.3 (UI Rendering)</li>
+            <li>TypeScript 5 (Type Safety)</li>
+            <li>Tailwind CSS 4 (Styling)</li>
+          </ul>
+        </div>
+        
+        <div class="tech-item">
+          <h4>UI & Interaction</h4>
+          <ul>
+            <li>@dnd-kit (Drag & Drop)</li>
+            <li>@dnd-kit/sortable (Sortable Lists)</li>
+            <li>@dnd-kit/utilities (DnD Helpers)</li>
+          </ul>
+        </div>
+        
+        <div class="tech-item">
+          <h4>File Processing</h4>
+          <ul>
+            <li>gray-matter (YAML Frontmatter)</li>
+            <li>chokidar 5.0 (File Watching)</li>
+            <li>Node.js fs/promises (File I/O)</li>
+          </ul>
+        </div>
+        
+        <div class="tech-item">
+          <h4>Runtime & Execution</h4>
+          <ul>
+            <li>Node.js 18+ (Server Runtime)</li>
+            <li>Child Process API (AI Execution)</li>
+            <li>better-sqlite3 (Local DB)</li>
+          </ul>
+        </div>
+        
+        <div class="tech-item">
+          <h4>Development Tools</h4>
+          <ul>
+            <li>tsx (TypeScript Execution)</li>
+            <li>ESLint 9 (Code Linting)</li>
+            <li>Next.js Config (Build Config)</li>
+          </ul>
+        </div>
+        
+        <div class="tech-item">
+          <h4>Architecture Patterns</h4>
+          <ul>
+            <li>Hexagonal Architecture (DDD)</li>
+            <li>Repository Pattern</li>
+            <li>Service Layer Pattern</li>
+            <li>Hooks-based State Management</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- API Endpoints Section -->
+    <section>
+      <h2>🔌 API Endpoints</h2>
+      
+      <table class="data-flow-table">
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Endpoint</th>
+            <th>Purpose</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>GET</strong></td>
+            <td class="endpoint">/api/tasks</td>
+            <td>Fetch all tasks from active source</td>
+            <td><span class="status implemented">✓ Implemented</span></td>
+          </tr>
+          <tr>
+            <td><strong>POST</strong></td>
+            <td class="endpoint">/api/tasks</td>
+            <td>Create new task file</td>
+            <td><span class="status implemented">✓ Implemented</span></td>
+          </tr>
+          <tr>
+            <td><strong>GET</strong></td>
+            <td class="endpoint">/api/tasks/[id]</td>
+            <td>Get specific task details</td>
+            <td><span class="status implemented">✓ Implemented</span></td>
+          </tr>
+          <tr>
+            <td><strong>PUT</strong></td>
+            <td class="endpoint">/api/tasks/[id]</td>
+            <td>Update task frontmatter</td>
+            <td><span class="status implemented">✓ Implemented</span></td>
+          </tr>
+          <tr>
+            <td><strong>DELETE</strong></td>
+            <td class="endpoint">/api/tasks/[id]</td>
+            <td>Delete task file</td>
+            <td><span class="status implemented">✓ Implemented</span></td>
+          </tr>
+          <tr>
+            <td><strong>GET</strong></td>
+            <td class="endpoint">/api/watch</td>
+            <td>SSE stream for file changes</td>
+            <td><span class="status implemented">✓ Implemented</span></td>
+          </tr>
+          <tr>
+            <td><strong>GET</strong></td>
+            <td class="endpoint">/api/config</td>
+            <td>Get app configuration</td>
+            <td><span class="status implemented">✓ Implemented</span></td>
+          </tr>
+          <tr>
+            <td><strong>POST</strong></td>
+            <td class="endpoint">/api/config/sources</td>
+            <td>Add new task source</td>
+            <td><span class="status implemented">✓ Implemented</span></td>
+          </tr>
+          <tr>
+            <td><strong>GET</strong></td>
+            <td class="endpoint">/api/ai/status</td>
+            <td>Get AI Worker status</td>
+            <td><span class="status implemented">✓ Implemented</span></td>
+          </tr>
+          <tr>
+            <td><strong>POST</strong></td>
+            <td class="endpoint">/api/ai/start</td>
+            <td>Start AI Worker</td>
+            <td><span class="status implemented">✓ Implemented</span></td>
+          </tr>
+          <tr>
+            <td><strong>POST</strong></td>
+            <td class="endpoint">/api/ai/stop</td>
+            <td>Stop AI Worker</td>
+            <td><span class="status implemented">✓ Implemented</span></td>
+          </tr>
+          <tr>
+            <td><strong>POST</strong></td>
+            <td class="endpoint">/api/ai/pause</td>
+            <td>Pause AI Worker</td>
+            <td><span class="status implemented">✓ Implemented</span></td>
+          </tr>
+          <tr>
+            <td><strong>POST</strong></td>
+            <td class="endpoint">/api/ai/resume</td>
+            <td>Resume AI Worker</td>
+            <td><span class="status implemented">✓ Implemented</span></td>
+          </tr>
+          <tr>
+            <td><strong>GET</strong></td>
+            <td class="endpoint">/api/ai/stream</td>
+            <td>WebSocket SSE stream for live logs</td>
+            <td><span class="status implemented">✓ Implemented</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Features Section -->
+    <section>
+      <h2>✨ Features & Capabilities</h2>
+      
+      <h3>Functional Features</h3>
+      <div class="features-grid">
+        <div class="feature">
+          <h4>✅ Kanban Board UI</h4>
+          <p>Visual task management with 6 status columns (TODO, IN_PROGRESS, IN_REVIEW, NEED_FIX, COMPLETE, ON_HOLD). Drag-and-drop support for easy status transitions.</p>
+        </div>
+        <div class="feature">
+          <h4>📝 Markdown-Based Tasks</h4>
+          <p>YAML frontmatter + markdown content. Fully Git-compatible. Supports rich descriptions, requirements, feedback, and AI work logs.</p>
+        </div>
+        <div class="feature">
+          <h4>🤖 AI Agent Integration</h4>
+          <p>Auto-detects tasks assigned to ai-agent. Executes via Claude Code CLI. Auto-updates status and logs on completion/failure.</p>
+        </div>
+        <div class="feature">
+          <h4>⚡ Real-Time Sync</h4>
+          <p>File watcher with chokidar. SSE streams for live UI updates. Bidirectional sync: UI changes → files, Files → UI.</p>
+        </div>
+        <div class="feature">
+          <h4>🎨 Priority & Tags</h4>
+          <p>Task priorities (LOW, MEDIUM, HIGH, URGENT). Custom tags for categorization. Visual priority indicators in UI.</p>
+        </div>
+        <div class="feature">
+          <h4>📅 Date Management</h4>
+          <p>Support for start_date and due_date fields. Date-based filtering and overdue tracking.</p>
+        </div>
+        <div class="feature">
+          <h4>🔍 Smart Filtering</h4>
+          <p>Filter by status, priority, assignee, tags, and date ranges. Multiple filter combinations supported.</p>
+        </div>
+        <div class="feature">
+          <h4>💬 Conversation Panel</h4>
+          <p>Task-specific conversation sessions. AI feedback and discussion tracking. Message-based interaction patterns.</p>
+        </div>
+      </div>
+
+      <h3>Non-Functional Features</h3>
+      <div class="features-grid">
+        <div class="feature">
+          <h4>⚙️ Architecture</h4>
+          <p><strong>Pattern:</strong> Hexagonal Architecture (Domain-Driven Design)<br><strong>Layers:</strong> Presentation → Application → Domain → Infrastructure</p>
+        </div>
+        <div class="feature">
+          <h4>🔒 Type Safety</h4>
+          <p>Full TypeScript implementation. Type-safe interfaces for all data models. Runtime validation for configuration.</p>
+        </div>
+        <div class="feature">
+          <h4>📊 Performance</h4>
+          <p><strong>Target:</strong> &lt;500ms file change → UI update<br><strong>Support:</strong> 100+ tasks in single folder<br><strong>Debouncing:</strong> File watch events</p>
+        </div>
+        <div class="feature">
+          <h4>🌐 Cross-Platform</h4>
+          <p>Runs on macOS, Linux, Windows. Uses Node.js path utilities for cross-platform compatibility.</p>
+        </div>
+        <div class="feature">
+          <h4>📦 Offline First</h4>
+          <p>100% local operation. No cloud dependencies. Works completely offline. Git version control support.</p>
+        </div>
+        <div class="feature">
+          <h4>🎯 Extensibility</h4>
+          <p>Repository pattern for easy adapter swapping. Service layer for business logic isolation. Modular component structure.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- State Management Section -->
+    <section>
+      <h2>🧠 State Management & Data Flow</h2>
+      
+      <h3>Frontend State Hooks</h3>
+      <table class="data-flow-table">
+        <thead>
+          <tr>
+            <th>Hook</th>
+            <th>Purpose</th>
+            <th>State Items</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>useTasks</code></td>
+            <td>Task CRUD operations</td>
+            <td>tasks[], loading, error, noSource</td>
+          </tr>
+          <tr>
+            <td><code>useConfig</code></td>
+            <td>Application configuration</td>
+            <td>config, sources, theme, activeSourceId</td>
+          </tr>
+          <tr>
+            <td><code>useAIWorker</code></td>
+            <td>AI Worker orchestration</td>
+            <td>status, logs, executionLogs, isConnected</td>
+          </tr>
+          <tr>
+            <td><code>useFileWatcher</code></td>
+            <td>Real-time file monitoring</td>
+            <td>isConnected, lastEvent</td>
+          </tr>
+          <tr>
+            <td><code>useTaskFilter</code></td>
+            <td>Task filtering & search</td>
+            <td>filter, filteredTasks, availableTags</td>
+          </tr>
+          <tr>
+            <td><code>useConversation</code></td>
+            <td>Task conversations</td>
+            <td>messages, isSessionActive</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Server-Side State</h3>
+      <p>The server maintains state for:</p>
+      <ul style="margin: 15px 0 15px 20px; color: #cbd5e1;">
+        <li><strong>AI Worker Status:</strong> isRunning, isPaused, currentTask, queueLength, lastExecution</li>
+        <li><strong>Task Queue:</strong> Tasks pending execution by AI Agent</li>
+        <li><strong>Execution Logs:</strong> Task execution results and error tracking</li>
+        <li><strong>WebSocket Subscribers:</strong> Connected clients for SSE streaming</li>
+      </ul>
+    </section>
+
+    <!-- AI Worker Workflow Section -->
+    <section>
+      <h2>🤖 AI Worker Workflow</h2>
+      
+      <h3>Automatic Task Processing Pipeline</h3>
+      <div class="flow-diagram">
+        <svg viewBox="0 0 1100 400" xmlns="http://www.w3.org/2000/svg">
+          <!-- Flow steps -->
+          <g id="step1">
+            <rect x="20" y="150" width="120" height="80" fill="#4299e1" opacity="0.3" stroke="#4299e1" stroke-width="2" rx="4"/>
+            <text x="80" y="190" text-anchor="middle" font-size="11" font-weight="600" fill="#0ea5e9">1. Poll Tasks</text>
+            <text x="80" y="205" text-anchor="middle" font-size="9" fill="#cbd5e1">Every 30s</text>
+            <text x="80" y="217" text-anchor="middle" font-size="9" fill="#cbd5e1">(configurable)</text>
+          </g>
+          
+          <line x1="140" y1="190" x2="170" y2="190" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowblue)"/>
+          
+          <g id="step2">
+            <rect x="170" y="150" width="120" height="80" fill="#0ea5e9" opacity="0.3" stroke="#0ea5e9" stroke-width="2" rx="4"/>
+            <text x="230" y="190" text-anchor="middle" font-size="11" font-weight="600" fill="#0ea5e9">2. Find Eligible</text>
+            <text x="230" y="205" text-anchor="middle" font-size="9" fill="#cbd5e1">assignee:</text>
+            <text x="230" y="217" text-anchor="middle" font-size="9" fill="#cbd5e1">ai-agent</text>
+          </g>
+          
+          <line x1="290" y1="190" x2="320" y2="190" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowblue)"/>
+          
+          <g id="step3">
+            <rect x="320" y="150" width="120" height="80" fill="#06b6d4" opacity="0.3" stroke="#06b6d4" stroke-width="2" rx="4"/>
+            <text x="380" y="185" text-anchor="middle" font-size="11" font-weight="600" fill="#06b6d4">3. Enqueue</text>
+            <text x="380" y="200" text-anchor="middle" font-size="9" fill="#cbd5e1">Check:</text>
+            <text x="380" y="212" text-anchor="middle" font-size="9" fill="#cbd5e1">TODO/NEED_FIX</text>
+          </g>
+          
+          <line x1="440" y1="190" x2="470" y2="190" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowblue)"/>
+          
+          <g id="step4">
+            <rect x="470" y="150" width="120" height="80" fill="#ed8936" opacity="0.3" stroke="#ed8936" stroke-width="2" rx="4"/>
+            <text x="530" y="190" text-anchor="middle" font-size="11" font-weight="600" fill="#ed8936">4. Set Status</text>
+            <text x="530" y="205" text-anchor="middle" font-size="9" fill="#cbd5e1">→ IN_PROGRESS</text>
+            <text x="530" y="217" text-anchor="middle" font-size="9" fill="#cbd5e1">+ Timestamp</text>
+          </g>
+          
+          <line x1="590" y1="190" x2="620" y2="190" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arroworange)"/>
+          
+          <g id="step5">
+            <rect x="620" y="150" width="120" height="80" fill="#ed8936" opacity="0.3" stroke="#ed8936" stroke-width="2" rx="4"/>
+            <text x="680" y="185" text-anchor="middle" font-size="11" font-weight="600" fill="#ed8936">5. Spawn</text>
+            <text x="680" y="200" text-anchor="middle" font-size="9" fill="#cbd5e1">Claude Code</text>
+            <text x="680" y="212" text-anchor="middle" font-size="9" fill="#cbd5e1">CLI Process</text>
+          </g>
+          
+          <line x1="740" y1="190" x2="770" y2="190" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arroworange)"/>
+          
+          <g id="step6">
+            <rect x="770" y="150" width="120" height="80" fill="#9f7aea" opacity="0.3" stroke="#9f7aea" stroke-width="2" rx="4"/>
+            <text x="830" y="190" text-anchor="middle" font-size="11" font-weight="600" fill="#9f7aea">6. Capture</text>
+            <text x="830" y="205" text-anchor="middle" font-size="9" fill="#cbd5e1">stdout/stderr</text>
+            <text x="830" y="217" text-anchor="middle" font-size="9" fill="#cbd5e1">logs</text>
+          </g>
+          
+          <line x1="890" y1="190" x2="920" y2="190" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arrowteal)"/>
+          
+          <g id="step7">
+            <rect x="920" y="150" width="140" height="80" fill="#22c55e" opacity="0.3" stroke="#22c55e" stroke-width="2" rx="4"/>
+            <text x="990" y="185" text-anchor="middle" font-size="11" font-weight="600" fill="#22c55e">7. Update File</text>
+            <text x="990" y="200" text-anchor="middle" font-size="9" fill="#cbd5e1">status → IN_REVIEW</text>
+            <text x="990" y="212" text-anchor="middle" font-size="9" fill="#cbd5e1">+ Work Log</text>
+          </g>
+          
+          <!-- Error Path -->
+          <line x1="680" y1="230" x2="680" y2="290" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5,5"/>
+          <g id="error">
+            <rect x="620" y="290" width="120" height="80" fill="#dc2626" opacity="0.3" stroke="#dc2626" stroke-width="2" rx="4"/>
+            <text x="680" y="330" text-anchor="middle" font-size="11" font-weight="600" fill="#ef4444">On Error:</text>
+            <text x="680" y="345" text-anchor="middle" font-size="9" fill="#cbd5e1">status → NEED_FIX</text>
+            <text x="680" y="357" text-anchor="middle" font-size="9" fill="#cbd5e1">+ error log</text>
+          </g>
+        </svg>
+      </div>
+
+      <h3>Configuration</h3>
+      <p>AI Worker configured in <code>.taskflow.config.json</code>:</p>
+      <div style="background: rgba(10, 20, 40, 0.8); padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #06b6d4; overflow-x: auto;">
+        <pre style="color: #06b6d4; font-size: 0.85em; margin: 0;"><code>{
+  "aiWorker": {
+    "enabled": true,           // Enable/disable AI Worker
+    "autoStart": false,        // Start on app launch
+    "pollingInterval": 30000,  // 30 seconds (ms)
+    "maxConcurrent": 1,        // Sequential execution
+    "timeout": 600000          // 10 minutes (ms)
+  }
+}</code></pre>
+      </div>
+    </section>
+
+    <!-- Data Storage Section -->
+    <section>
+      <h2>💾 Data Persistence & Storage</h2>
+      
+      <h3>Storage Architecture</h3>
+      <div class="features-grid">
+        <div class="feature">
+          <h4>📁 Task Files</h4>
+          <p><strong>Format:</strong> Markdown (.md)<br><strong>Location:</strong> User-specified directory (per source)<br><strong>Encoding:</strong> UTF-8<br><strong>Structure:</strong> YAML frontmatter + markdown content</p>
+        </div>
+        <div class="feature">
+          <h4>⚙️ Config File</h4>
+          <p><strong>File:</strong> .taskflow.config.json<br><strong>Location:</strong> Frontend root<br><strong>Content:</strong> Sources, theme, sidebar state, AI Worker config<br><strong>Format:</strong> JSON</p>
+        </div>
+        <div class="feature">
+          <h4>📊 Runtime State</h4>
+          <p><strong>Location:</strong> Server memory<br><strong>Content:</strong> AI Worker status, task queue, execution logs<br><strong>Lifetime:</strong> Per server session<br><strong>Note:</strong> Not persisted to disk</p>
+        </div>
+        <div class="feature">
+          <h4>🔄 Synchronization</h4>
+          <p><strong>File Watch:</strong> chokidar monitors task directory<br><strong>Debounce:</strong> 300ms on rapid changes<br><strong>Trigger:</strong> File add/modify/delete<br><strong>Response:</strong> SSE broadcast to all clients</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Integration Points Section -->
+    <section>
+      <h2>🔗 External Integrations</h2>
+      
+      <h3>AI Agent Integration (Claude Code)</h3>
+      <p>TaskFlow integrates with Claude Code CLI for AI task execution:</p>
+      <div class="deployment-info">
+        <div>
+          <h4>Execution Method</h4>
+          <ul>
+            <li><strong>Binary:</strong> <code>claude</code> CLI (must be installed)</li>
+            <li><strong>Working Dir:</strong> Configurable, defaults to cwd</li>
+            <li><strong>Timeout:</strong> 10 minutes (600s) per task</li>
+            <li><strong>Output Capture:</strong> stdout/stderr piped to logs</li>
+            <li><strong>Concurrency:</strong> Sequential (1 at a time)</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Task Handoff</h4>
+          <ul>
+            <li><strong>Input:</strong> Full markdown file content</li>
+            <li><strong>Context:</strong> Task ID, title, requirements</li>
+            <li><strong>Feedback:</strong> "Feedback" section for refinement</li>
+            <li><strong>Output:</strong> Updates "AI Work Log" section</li>
+            <li><strong>Status Change:</strong> TODO → IN_PROGRESS → IN_REVIEW</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Helper Script Integration</h3>
+      <p>CLI commands for AI agents to interact with TaskFlow:</p>
+      <table class="data-flow-table">
+        <thead>
+          <tr>
+            <th>Command</th>
+            <th>Usage</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>npm run ai:list</code></td>
+            <td>Get eligible tasks</td>
+            <td>Lists all tasks with assignee:ai-agent and status:TODO/NEED_FIX</td>
+          </tr>
+          <tr>
+            <td><code>npm run ai -- show [id]</code></td>
+            <td>Show task details</td>
+            <td>Display full task content including requirements and feedback</td>
+          </tr>
+          <tr>
+            <td><code>npm run ai -- start [id]</code></td>
+            <td>Start task</td>
+            <td>Change status from TODO to IN_PROGRESS</td>
+          </tr>
+          <tr>
+            <td><code>npm run ai -- complete [id] "[msg]"</code></td>
+            <td>Complete task</td>
+            <td>Change status to IN_REVIEW and append message to AI Work Log</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Deployment Section -->
+    <section>
+      <h2>🚀 Deployment & Running</h2>
+      
+      <div class="deployment-info">
+        <div>
+          <h4>Prerequisites</h4>
+          <ul>
+            <li>Node.js 18+ installed</li>
+            <li>npm or yarn package manager</li>
+            <li>Claude Code CLI (for AI execution)</li>
+            <li>macOS, Linux, or Windows</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Installation & Setup</h4>
+          <ul>
+            <li><code>cd frontend && npm install</code></li>
+            <li>Configure task source folder in UI</li>
+            <li><code>npm run dev</code> - Start dev server</li>
+            <li><code>npm run build</code> - Production build</li>
+            <li><code>npm start</code> - Run production server</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Environment Variables</h4>
+          <ul>
+            <li><code>TASKS_DIR</code> - Override default tasks directory</li>
+            <li><code>NODE_ENV</code> - development/production</li>
+            <li><code>PORT</code> - Server port (default: 3000)</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Configuration Files</h4>
+          <ul>
+            <li><code>.taskflow.config.json</code> - App config</li>
+            <li><code>tsconfig.json</code> - TypeScript config</li>
+            <li><code>next.config.ts</code> - Next.js config</li>
+            <li><code>tailwind.config.ts</code> - Styling config</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Performance Targets</h3>
+      <table class="data-flow-table">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Target</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>File change → UI update</td>
+            <td>&lt;500ms</td>
+            <td>Includes 300ms debounce</td>
+          </tr>
+          <tr>
+            <td>Task scan (100 files)</td>
+            <td>&lt;1 second</td>
+            <td>Initial load performance</td>
+          </tr>
+          <tr>
+            <td>API response</td>
+            <td>&lt;200ms</td>
+            <td>For task CRUD operations</td>
+          </tr>
+          <tr>
+            <td>AI Worker polling</td>
+            <td>30 seconds</td>
+            <td>Configurable interval</td>
+          </tr>
+          <tr>
+            <td>Task timeout</td>
+            <td>10 minutes</td>
+            <td>Max execution time per task</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Key Directories Section -->
+    <section>
+      <h2>📂 Project Structure</h2>
+      
+      <div style="background: rgba(10, 20, 40, 0.8); padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #06b6d4; font-size: 0.9em;">
+        <pre style="color: #06b6d4; margin: 0;"><code>taskflow/
+├── frontend/                      # Next.js application
+│   ├── app/
+│   │   ├── page.tsx              # Main home component
+│   │   ├── layout.tsx            # Root layout
+│   │   └── api/
+│   │       ├── tasks/            # Task CRUD endpoints
+│   │       ├── config/           # Config management
+│   │       ├── ai/               # AI Worker endpoints
+│   │       └── watch/            # SSE file watch stream
+│   ├── components/
+│   │   ├── kanban/               # Kanban board components
+│   │   ├── sidebar/              # Sidebar components
+│   │   ├── ai/                   # AI Worker UI
+│   │   ├── ui/                   # Shared UI components
+│   │   └── onboarding/           # Welcome screen
+│   ├── hooks/
+│   │   ├── useTasks.ts           # Task state hook
+│   │   ├── useConfig.ts          # Config hook
+│   │   ├── useAIWorker.ts        # AI Worker hook
+│   │   ├── useFileWatcher.ts     # File watch hook
+│   │   ├── useTaskFilter.ts      # Filtering hook
+│   │   └── useConversation.ts    # Conversation hook
+│   ├── lib/
+│   │   ├── taskParser.ts         # Markdown parsing
+│   │   ├── fileSystem.ts         # File I/O
+│   │   ├── fileWatcher.ts        # chokidar setup
+│   │   ├── aiWorker.ts           # AI orchestration
+│   │   ├── claudeExecutor.ts     # Process execution
+│   │   ├── sessionManager.ts     # Session management
+│   │   └── config.ts             # Config loading
+│   ├── infrastructure/
+│   │   ├── container.ts          # DI container
+│   │   └── factory.ts            # Service factory
+│   ├── core/
+│   │   ├── domain/               # Domain entities
+│   │   ├── application/          # Application services
+│   │   └── ports/                # Interfaces
+│   ├── adapters/                 # Repository adapters
+│   ├── types/
+│   │   ├── task.ts               # Task types
+│   │   ├── ai.ts                 # AI types
+│   │   └── config.ts             # Config types
+│   └── package.json
+├── backend/                       # (Minimal - mostly in frontend)
+├── docs/                          # Documentation
+│   ├── PRD.md                     # Product requirements
+│   ├── REQUIREMENTS.md            # Technical requirements
+│   ├── AI_AGENT_GUIDE.md         # AI agent instructions
+│   └── ...
+└── .gitignore</code></pre>
+      </div>
+    </section>
+
+    <!-- Key Dependencies Section -->
+    <section>
+      <h2>📚 Key Dependencies</h2>
+      
+      <table class="data-flow-table">
+        <thead>
+          <tr>
+            <th>Package</th>
+            <th>Version</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>next</strong></td>
+            <td>16.1.1</td>
+            <td>Full-stack React framework with API routes</td>
+          </tr>
+          <tr>
+            <td><strong>react</strong></td>
+            <td>19.2.3</td>
+            <td>UI library and component framework</td>
+          </tr>
+          <tr>
+            <td><strong>typescript</strong></td>
+            <td>5</td>
+            <td>Type-safe JavaScript development</td>
+          </tr>
+          <tr>
+            <td><strong>@dnd-kit/core</strong></td>
+            <td>6.3.1</td>
+            <td>Drag and drop functionality</td>
+          </tr>
+          <tr>
+            <td><strong>gray-matter</strong></td>
+            <td>4.0.3</td>
+            <td>YAML frontmatter parsing</td>
+          </tr>
+          <tr>
+            <td><strong>chokidar</strong></td>
+            <td>5.0.0</td>
+            <td>Efficient file system watching</td>
+          </tr>
+          <tr>
+            <td><strong>tailwindcss</strong></td>
+            <td>4</td>
+            <td>Utility-first CSS framework</td>
+          </tr>
+          <tr>
+            <td><strong>better-sqlite3</strong></td>
+            <td>12.6.0</td>
+            <td>Local SQLite database (optional)</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Summary Section -->
+    <section>
+      <h2>📋 Architecture Summary</h2>
+      
+      <div class="features-grid">
+        <div class="feature">
+          <h4>Design Pattern</h4>
+          <p><strong>Hexagonal Architecture</strong> with Domain-Driven Design principles. Clear separation of concerns across presentation, application, domain, and infrastructure layers.</p>
+        </div>
+        <div class="feature">
+          <h4>Data Model</h4>
+          <p>Git-friendly markdown files with YAML frontmatter. Each task is a self-contained file supporting rich descriptions, requirements, feedback, and AI work logs.</p>
+        </div>
+        <div class="feature">
+          <h4>Integration Model</h4>
+          <p>File-system based integration with Claude Code CLI. Real-time synchronization between file changes and UI. No external databases or APIs required.</p>
+        </div>
+        <div class="feature">
+          <h4>State Management</h4>
+          <p>React hooks for frontend state (useTasks, useConfig, useAIWorker). Server maintains AI Worker state with WebSocket/SSE broadcasting to connected clients.</p>
+        </div>
+        <div class="feature">
+          <h4>Development Workflow</h4>
+          <p>TypeScript + Next.js + React for modern development. Modular component structure with clear separation of concerns. Easy to extend and maintain.</p>
+        </div>
+        <div class="feature">
+          <h4>Deployment Model</h4>
+          <p>Single-user, local-first deployment. Runs on developer's machine via npm run dev. Can be packaged as Electron app in future. No server infrastructure needed.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>
