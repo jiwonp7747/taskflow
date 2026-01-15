@@ -356,7 +356,7 @@ export default function App() {
         {/* Main content */}
         <main className="max-w-[1800px] mx-auto px-6 py-6">
           {/* Welcome Screen */}
-          {noSource && !loading && (
+          {noSource && !loading && !isTerminalMode && (
             <WelcomeScreen
               onAddSource={addSource}
               onSourceAdded={handleSourceChange}
@@ -365,7 +365,7 @@ export default function App() {
           )}
 
           {/* Error state */}
-          {error && !noSource && (
+          {error && !noSource && !isTerminalMode && (
             <div className="mb-6 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-red-400" />
               <span className="text-sm text-red-400">{error}</span>
@@ -379,7 +379,7 @@ export default function App() {
           )}
 
           {/* Loading state */}
-          {loading && tasks.length === 0 && !noSource && (
+          {loading && tasks.length === 0 && !noSource && !isTerminalMode && (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4">
                 <svg
@@ -408,13 +408,23 @@ export default function App() {
             </div>
           )}
 
-          {/* Terminal Mode */}
-          {isTerminalMode ? (
+          {/* Terminal View - 항상 마운트, display로 제어 (Issue #2 fix) */}
+          <div
+            style={{
+              display: isTerminalMode ? 'block' : 'none',
+              visibility: isTerminalMode ? 'visible' : 'hidden',
+              pointerEvents: isTerminalMode ? 'auto' : 'none',
+            }}
+          >
             <TerminalView
               initialCwd={activeSource?.path}
               onClose={() => setIsTerminalMode(false)}
+              isVisible={isTerminalMode}
             />
-          ) : (
+          </div>
+
+          {/* Task Views - 터미널 모드가 아닐 때만 표시 */}
+          {!isTerminalMode && (
             <>
               {/* View toggle and Filter bar */}
               {!noSource && tasks.length > 0 && (

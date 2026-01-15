@@ -14,7 +14,7 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
 
-export function TerminalView({ initialCwd, onClose }: TerminalViewProps) {
+export function TerminalView({ initialCwd, onClose, isVisible = true }: TerminalViewProps) {
   const [tabs, setTabs] = useState<TerminalTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string>('');
   const [activePaneId, setActivePaneId] = useState<string>('');
@@ -179,45 +179,34 @@ export function TerminalView({ initialCwd, onClose }: TerminalViewProps) {
   // 활성 탭 정보
   const activeTab = tabs.find((t) => t.id === activeTabId);
 
-  // Panes 렌더링
-  const renderPanes = () => {
-    if (!activeTab) return null;
+  // 단일 탭의 panes 렌더링 - 일관된 구조 사용
+  const renderTabPanes = (tab: TerminalTab, isTabActive: boolean) => {
+    const { panes, layout } = tab;
 
-    const { panes, layout } = activeTab;
-
-    if (layout.type === 'single' || panes.length === 1) {
-      const pane = panes[0];
-      return (
-        <TerminalPane
-          key={pane.id}
-          paneId={pane.id}
-          cwd={pane.cwd}
-          isActive={pane.id === activePaneId}
-          onPtyCreated={(ptyId) => handlePtyCreated(pane.id, ptyId)}
-          onPtyExited={(exitCode) => handlePtyExited(pane.id, exitCode)}
-          onFocus={() => handlePaneFocus(pane.id)}
-        />
-      );
-    }
-
-    // Split layout
     const isHorizontal = layout.type === 'horizontal';
-    const sizes = 'sizes' in layout ? layout.sizes : panes.map(() => 100 / panes.length);
+    const isSingle = layout.type === 'single' || panes.length === 1;
+    const sizes = isSingle
+      ? [100]
+      : ('sizes' in layout ? layout.sizes : panes.map(() => 100 / panes.length));
 
     return (
       <div className={`flex ${isHorizontal ? 'flex-row' : 'flex-col'} h-full`}>
         {panes.map((pane, index) => (
           <div
             key={pane.id}
-            className="relative"
+            className="relative h-full"
             style={{
               [isHorizontal ? 'width' : 'height']: `${sizes[index]}%`,
+              flex: isSingle ? '1' : 'none',
+              minWidth: isHorizontal ? '200px' : undefined,
+              minHeight: !isHorizontal ? '100px' : undefined,
             }}
           >
             <TerminalPane
               paneId={pane.id}
               cwd={pane.cwd}
-              isActive={pane.id === activePaneId}
+              isActive={pane.id === activePaneId && isTabActive}
+              isVisible={isVisible && isTabActive}
               onPtyCreated={(ptyId) => handlePtyCreated(pane.id, ptyId)}
               onPtyExited={(exitCode) => handlePtyExited(pane.id, exitCode)}
               onFocus={() => handlePaneFocus(pane.id)}
@@ -238,6 +227,31 @@ export function TerminalView({ initialCwd, onClose }: TerminalViewProps) {
     );
   };
 
+  // 모든 탭의 Panes 렌더링 - 탭 전환 시 세션 유지 (Tab switching fix)
+  const renderAllTabs = () => {
+    if (tabs.length === 0) return null;
+
+    return (
+      <>
+        {tabs.map((tab) => {
+          const isTabActive = tab.id === activeTabId;
+          return (
+            <div
+              key={tab.id}
+              className="absolute inset-0"
+              style={{
+                display: isTabActive ? 'block' : 'none',
+                visibility: isTabActive ? 'visible' : 'hidden',
+              }}
+            >
+              {renderTabPanes(tab, isTabActive)}
+            </div>
+          );
+        })}
+      </>
+    );
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)] bg-[#050508] rounded-xl border border-white/5 overflow-hidden">
       {/* Tab Bar */}
@@ -250,10 +264,10 @@ export function TerminalView({ initialCwd, onClose }: TerminalViewProps) {
         onSplitRequest={handleSplitRequest}
       />
 
-      {/* Terminal Content */}
-      <div className="flex-1 overflow-hidden">
-        {activeTab ? (
-          renderPanes()
+      {/* Terminal Content - 모든 탭을 렌더링하고 활성 탭만 표시 */}
+      <div className="flex-1 overflow-hidden relative">
+        {tabs.length > 0 ? (
+          renderAllTabs()
         ) : (
           <div className="h-full flex items-center justify-center text-slate-500">
             No terminal tab open

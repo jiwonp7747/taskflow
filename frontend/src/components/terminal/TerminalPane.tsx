@@ -15,6 +15,7 @@ interface TerminalPaneProps {
   paneId: string;
   cwd: string;
   isActive: boolean;
+  isVisible?: boolean; // 터미널이 실제로 보이는지 여부
   onPtyCreated?: (ptyId: string) => void;
   onPtyExited?: (exitCode: number) => void;
   onFocus?: () => void;
@@ -50,6 +51,7 @@ export function TerminalPane({
   paneId,
   cwd,
   isActive,
+  isVisible = true,
   onPtyCreated,
   onPtyExited,
   onFocus,
@@ -60,110 +62,227 @@ export function TerminalPane({
   const ptyIdRef = useRef<string | null>(null);
   const cleanupDataRef = useRef<(() => void) | null>(null);
   const cleanupExitRef = useRef<(() => void) | null>(null);
+  const initializedRef = useRef(false);
+  const fittedRef = useRef(false);
+  const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingInitRef = useRef(false);
 
-  // 터미널 초기화
+  // 콜백과 props를 ref로 저장하여 useEffect 재실행 방지
+  const onPtyCreatedRef = useRef(onPtyCreated);
+  const onPtyExitedRef = useRef(onPtyExited);
+  const cwdRef = useRef(cwd);
+  const isVisibleRef = useRef(isVisible);
+  onPtyCreatedRef.current = onPtyCreated;
+  onPtyExitedRef.current = onPtyExited;
+  cwdRef.current = cwd;
+  isVisibleRef.current = isVisible;
+
+  // 터미널 초기화 (paneId 기준으로 한 번만 실행)
+  // isVisible은 ref로 체크하여 dependency에 포함하지 않음 (세션 유지를 위해)
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || initializedRef.current) return;
 
-    // xterm 인스턴스 생성
-    const terminal = new Terminal({
-      theme: terminalTheme,
-      fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace',
-      fontSize: 13,
-      lineHeight: 1.4,
-      cursorBlink: true,
-      cursorStyle: 'block',
-      scrollback: 10000,
-      allowProposedApi: true,
-      convertEol: true,
-    });
+    const container = containerRef.current;
+    let terminal: Terminal | null = null;
+    let fitAddon: FitAddon | null = null;
+    let animationFrameId: number | null = null;
+    let initTimeoutId: NodeJS.Timeout | null = null;
 
-    const fitAddon = new FitAddon();
-    const webLinksAddon = new WebLinksAddon();
+    // 컨테이너가 크기를 가지고 visible할 때까지 기다린 후 초기화
+    const initTerminal = () => {
+      if (initializedRef.current) return;
 
-    terminal.loadAddon(fitAddon);
-    terminal.loadAddon(webLinksAddon);
-
-    terminal.open(containerRef.current);
-    fitAddon.fit();
-
-    terminalRef.current = terminal;
-    fitAddonRef.current = fitAddon;
-
-    // PTY 데이터 이벤트 리스너
-    cleanupDataRef.current = onPtyData((event) => {
-      if (event.ptyId === ptyIdRef.current) {
-        terminal.write(event.data);
+      // visibility 체크 (ref 사용으로 dependency 제외)
+      if (!isVisibleRef.current) {
+        // 보이지 않으면 대기, 100ms 후 재시도
+        initTimeoutId = setTimeout(initTerminal, 100);
+        return;
       }
-    });
 
-    // PTY 종료 이벤트 리스너
-    cleanupExitRef.current = onPtyExit((event) => {
-      if (event.ptyId === ptyIdRef.current) {
-        terminal.writeln('');
-        terminal.writeln(`\x1b[90m[Process exited with code ${event.exitCode}]\x1b[0m`);
-        onPtyExited?.(event.exitCode);
+      // 컨테이너 크기 확인
+      const rect = container.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) {
+        // 아직 크기가 없으면 다시 시도
+        animationFrameId = requestAnimationFrame(initTerminal);
+        return;
       }
-    });
 
-    // PTY 생성
-    const initPty = async () => {
-      const { cols, rows } = terminal;
-      const result = await createPty(cwd, cols, rows);
-      if (result) {
-        ptyIdRef.current = result.ptyId;
-        onPtyCreated?.(result.ptyId);
-      } else {
-        terminal.writeln('\x1b[31mFailed to create terminal session\x1b[0m');
-      }
+      // 두 번째 RAF에서 실제 초기화 (DOM 안정화 대기)
+      animationFrameId = requestAnimationFrame(() => {
+        if (initializedRef.current) return;
+
+        initializedRef.current = true;
+        pendingInitRef.current = false;
+        console.log('[TerminalPane] Container ready, initializing terminal');
+
+        // xterm 인스턴스 생성
+        terminal = new Terminal({
+          theme: terminalTheme,
+          fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace',
+          fontSize: 13,
+          lineHeight: 1.4,
+          cursorBlink: true,
+          cursorStyle: 'block',
+          scrollback: 10000,
+          allowProposedApi: true,
+          convertEol: true,
+        });
+
+        fitAddon = new FitAddon();
+        const webLinksAddon = new WebLinksAddon();
+
+        terminal.loadAddon(fitAddon);
+        terminal.loadAddon(webLinksAddon);
+
+        // setTimeout으로 감싸서 xterm.js 내부 초기화 타이밍 문제 해결
+        setTimeout(() => {
+          try {
+            terminal!.open(container);
+            terminalRef.current = terminal;
+            fitAddonRef.current = fitAddon;
+
+            // onRender 이벤트에서 안전하게 첫 fit 수행
+            terminal!.onRender(() => {
+              if (!fittedRef.current && fitAddon && terminal) {
+                try {
+                  fitAddon.fit();
+                  fittedRef.current = true;
+                } catch {
+                  // 아직 준비 안됨, 다음 render에서 재시도
+                }
+              }
+            });
+
+            // PTY 데이터 이벤트 리스너
+            cleanupDataRef.current = onPtyData((event) => {
+              if (event.ptyId === ptyIdRef.current && terminalRef.current) {
+                terminalRef.current.write(event.data);
+              }
+            });
+
+            // PTY 종료 이벤트 리스너
+            cleanupExitRef.current = onPtyExit((event) => {
+              if (event.ptyId === ptyIdRef.current && terminalRef.current) {
+                terminalRef.current.writeln('');
+                terminalRef.current.writeln(`\x1b[90m[Process exited with code ${event.exitCode}]\x1b[0m`);
+                onPtyExitedRef.current?.(event.exitCode);
+              }
+            });
+
+            // PTY 생성
+            const initPty = async () => {
+              if (!terminalRef.current || ptyIdRef.current) return; // 이미 PTY가 있으면 스킵
+              const { cols, rows } = terminalRef.current;
+              console.log('[TerminalPane] Creating PTY with:', { cwd: cwdRef.current, cols, rows });
+              const result = await createPty(cwdRef.current, cols, rows);
+              console.log('[TerminalPane] PTY creation result:', result);
+              if (result) {
+                ptyIdRef.current = result.ptyId;
+                console.log('[TerminalPane] PTY created successfully:', result.ptyId);
+                onPtyCreatedRef.current?.(result.ptyId);
+              } else {
+                console.error('[TerminalPane] Failed to create PTY');
+                terminalRef.current?.writeln('\x1b[31mFailed to create terminal session\x1b[0m');
+              }
+            };
+
+            initPty();
+
+            // 사용자 입력을 PTY로 전달
+            terminal!.onData((data) => {
+              if (ptyIdRef.current) {
+                writePty(ptyIdRef.current, data);
+              }
+            });
+          } catch (e) {
+            console.error('[TerminalPane] Failed to open terminal:', e);
+            initializedRef.current = false;
+          }
+        }, 0);
+      });
     };
 
-    initPty();
+    // 초기화 시작
+    initTerminal();
 
-    // 사용자 입력을 PTY로 전달
-    terminal.onData((data) => {
-      if (ptyIdRef.current) {
-        writePty(ptyIdRef.current, data);
-      }
-    });
-
-    // 클린업
+    // 클린업 - paneId가 변경되거나 컴포넌트가 unmount될 때만 실행
     return () => {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      if (initTimeoutId !== null) {
+        clearTimeout(initTimeoutId);
+      }
       cleanupDataRef.current?.();
       cleanupExitRef.current?.();
       if (ptyIdRef.current) {
         killPty(ptyIdRef.current);
+        ptyIdRef.current = null;
       }
-      terminal.dispose();
+      if (terminalRef.current) {
+        terminalRef.current.dispose();
+        terminalRef.current = null;
+      }
+      initializedRef.current = false;
+      fittedRef.current = false;
     };
-  }, [cwd, onPtyCreated, onPtyExited]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paneId]); // paneId 기준으로만 초기화, isVisible은 ref로 체크
 
-  // 리사이즈 처리
+  // 리사이즈 처리 - ResizeObserver 사용 (Issue #4 fix)
   useEffect(() => {
+    if (!containerRef.current) return;
+
+    const container = containerRef.current;
+
     const handleResize = () => {
-      if (fitAddonRef.current && terminalRef.current && ptyIdRef.current) {
-        fitAddonRef.current.fit();
-        const { cols, rows } = terminalRef.current;
-        resizePty(ptyIdRef.current, cols, rows);
+      if (!fitAddonRef.current || !terminalRef.current || !container) return;
+
+      try {
+        // 컨테이너 크기가 유효한지 확인
+        if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+          fitAddonRef.current.fit();
+          if (ptyIdRef.current) {
+            const { cols, rows } = terminalRef.current;
+            resizePty(ptyIdRef.current, cols, rows);
+          }
+        }
+      } catch {
+        // silent fail - terminal not ready yet
       }
     };
 
-    // 디바운스된 리사이즈 핸들러
-    let resizeTimeout: NodeJS.Timeout;
-    const debouncedResize = () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(handleResize, 100);
+    // ResizeObserver로 컨테이너 크기 변화 감지 (split 포함)
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+          // Debounce fit call
+          if (resizeTimeoutRef.current) {
+            clearTimeout(resizeTimeoutRef.current);
+          }
+          resizeTimeoutRef.current = setTimeout(handleResize, 50);
+        }
+      }
+    });
+
+    resizeObserver.observe(container);
+
+    // window resize도 감지 (창 크기 변경)
+    const debouncedWindowResize = () => {
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
+      resizeTimeoutRef.current = setTimeout(handleResize, 100);
     };
 
-    window.addEventListener('resize', debouncedResize);
-
-    // 초기 fit
-    const initialFitTimeout = setTimeout(handleResize, 100);
+    window.addEventListener('resize', debouncedWindowResize);
 
     return () => {
-      window.removeEventListener('resize', debouncedResize);
-      clearTimeout(resizeTimeout);
-      clearTimeout(initialFitTimeout);
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', debouncedWindowResize);
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
     };
   }, []);
 

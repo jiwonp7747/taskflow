@@ -33,6 +33,8 @@ class PtyService {
         TERM: 'xterm-256color',
         COLORTERM: 'truecolor',
       } as Record<string, string>,
+      // Windows: use winpty instead of ConPTY to avoid AttachConsole issues in Electron
+      useConpty: false,
     });
 
     const instance: PtyInstance = {

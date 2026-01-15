@@ -33,6 +33,7 @@ export interface TerminalTabBarProps {
 export interface TerminalViewProps {
   initialCwd?: string;
   onClose: () => void;
+  isVisible?: boolean;
 }
 
 export interface TerminalPaneProps {
