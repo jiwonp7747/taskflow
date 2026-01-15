@@ -96,10 +96,23 @@ export function TerminalView({ initialCwd, onClose, isVisible = true }: Terminal
       const newTabs = prev.filter((t) => t.id !== tabId);
 
       // 마지막 탭을 닫으면 터미널 모드 종료
-      // setTimeout으로 다음 렌더 사이클에서 호출하여 "setState during render" 에러 방지
+      // 새 탭을 생성해두어 다시 열 때 사용 (기존 탭은 제거)
       if (newTabs.length === 0) {
-        setTimeout(() => onClose(), 0);
-        return prev;
+        const cwd = initialCwd || '~';
+        const newPane = createPane(cwd);
+        const freshTab: TerminalTab = {
+          id: generateId(),
+          name: 'Tab 1',
+          panes: [newPane],
+          layout: { type: 'single' },
+        };
+        // setTimeout으로 다음 렌더 사이클에서 호출하여 "setState during render" 에러 방지
+        setTimeout(() => {
+          setActiveTabId(freshTab.id);
+          setActivePaneId(newPane.id);
+          onClose();
+        }, 0);
+        return [freshTab];
       }
 
       // 활성 탭을 닫았으면 다른 탭 선택
@@ -117,7 +130,7 @@ export function TerminalView({ initialCwd, onClose, isVisible = true }: Terminal
 
       return newTabs;
     });
-  }, [activeTabId, onClose]);
+  }, [activeTabId, onClose, initialCwd, createPane]);
 
   // Split 요청
   const handleSplitRequest = useCallback((direction: 'horizontal' | 'vertical') => {

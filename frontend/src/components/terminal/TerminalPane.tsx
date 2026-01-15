@@ -4,7 +4,7 @@
  * xterm.js 기반 터미널 렌더링 컴포넌트
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
@@ -70,6 +70,9 @@ export function TerminalPane({
   const forceInitRef = useRef(false); // 강제 초기화 플래그 (max retries 후)
   const deferredOpenRef = useRef(false); // open()이 지연된 상태인지
   const MAX_VISIBILITY_RETRIES = 50; // 5초 후 포기 (100ms * 50)
+
+  // 초기화 완료 상태 (visibility useEffect 트리거용)
+  const [initReady, setInitReady] = useState(false);
 
   // 콜백과 props를 ref로 저장하여 useEffect 재실행 방지
   const onPtyCreatedRef = useRef(onPtyCreated);
@@ -187,46 +190,10 @@ export function TerminalPane({
 
         // open이 지연된 경우 처리
         if (shouldDeferOpen) {
-          // 이미 visible이면 바로 open 진행 (탭 생성 직후 바로 활성화된 경우)
-          if (isVisibleRef.current) {
-            console.log('[TerminalPane] Deferred but already visible, opening immediately');
-            // 다음 프레임에서 컨테이너 크기가 확정된 후 open
-            requestAnimationFrame(() => {
-              setTimeout(() => {
-                if (!terminalRef.current || !containerRef.current) return;
-
-                try {
-                  deferredOpenRef.current = false;
-                  terminalRef.current.open(containerRef.current);
-
-                  // fit 및 PTY 생성
-                  if (fitAddonRef.current) {
-                    fitAddonRef.current.fit();
-                    fittedRef.current = true;
-                  }
-
-                  // PTY 생성
-                  if (!ptyIdRef.current) {
-                    const { cols, rows } = terminalRef.current;
-                    console.log('[TerminalPane] Creating PTY (immediate) with:', { cwd: cwdRef.current, cols, rows });
-                    createPty(cwdRef.current, cols, rows).then((result) => {
-                      if (result) {
-                        ptyIdRef.current = result.ptyId;
-                        console.log('[TerminalPane] PTY created successfully:', result.ptyId);
-                        onPtyCreatedRef.current?.(result.ptyId);
-                      }
-                    });
-                  }
-
-                  terminalRef.current.focus();
-                } catch (e) {
-                  console.error('[TerminalPane] Failed to open deferred terminal:', e);
-                }
-              }, 50);
-            });
-          } else {
-            console.log('[TerminalPane] Terminal instance created, waiting for visibility to open');
-          }
+          deferredOpenRef.current = true;
+          // initReady를 true로 설정하여 visibility useEffect가 실행되도록 함
+          setInitReady(true);
+          console.log('[TerminalPane] Terminal instance created with deferred open, initReady set');
           return;
         }
 
@@ -299,52 +266,53 @@ export function TerminalPane({
       retryCountRef.current = 0;
       forceInitRef.current = false;
       deferredOpenRef.current = false;
+      setInitReady(false);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paneId]); // paneId 기준으로만 초기화, isVisible은 ref로 체크
 
-  // isVisible이 true로 변경될 때 터미널 fit 및 포커스
+  // isVisible 또는 initReady 변경 시 터미널 처리
   useEffect(() => {
-    if (!isVisible || !terminalRef.current || !fitAddonRef.current || !containerRef.current) return;
+    // deferred open이 필요한 경우: isVisible이 true이고 initReady가 true이고 deferredOpenRef가 true
+    const needsDeferredOpen = isVisible && initReady && deferredOpenRef.current;
+    // 일반 visibility 변경: 이미 열린 터미널이 visible이 된 경우
+    const needsVisibilityUpdate = isVisible && terminalRef.current && !deferredOpenRef.current;
 
-    console.log('[TerminalPane] Visibility changed to true, deferredOpen:', deferredOpenRef.current);
+    if (!needsDeferredOpen && !needsVisibilityUpdate) return;
+
+    console.log('[TerminalPane] Effect triggered - isVisible:', isVisible, 'initReady:', initReady, 'deferredOpen:', deferredOpenRef.current);
 
     // requestAnimationFrame으로 DOM 업데이트 후 실행
     const rafId = requestAnimationFrame(() => {
       // 추가 지연으로 레이아웃 안정화
       setTimeout(() => {
-        if (!terminalRef.current || !fitAddonRef.current || !containerRef.current) return;
+        if (!containerRef.current) return;
 
         const container = containerRef.current;
 
         try {
           // 지연된 open 처리
-          if (deferredOpenRef.current) {
+          if (deferredOpenRef.current && terminalRef.current) {
             console.log('[TerminalPane] Opening deferred terminal');
             deferredOpenRef.current = false;
 
             terminalRef.current.open(container);
 
-            // onRender 이벤트에서 안전하게 첫 fit 수행
-            terminalRef.current.onRender(() => {
-              if (!fittedRef.current && fitAddonRef.current && terminalRef.current) {
-                try {
-                  fitAddonRef.current.fit();
-                  fittedRef.current = true;
-                } catch {
-                  // 아직 준비 안됨, 다음 render에서 재시도
-                }
+            // fit 수행
+            if (fitAddonRef.current) {
+              try {
+                fitAddonRef.current.fit();
+                fittedRef.current = true;
+              } catch {
+                // silent
               }
-            });
+            }
 
-            // PTY 생성 (지연된 경우에만)
+            // PTY 생성
             if (!ptyIdRef.current) {
-              const initPty = async () => {
-                if (!terminalRef.current || ptyIdRef.current) return;
-                const { cols, rows } = terminalRef.current;
-                console.log('[TerminalPane] Creating PTY (deferred) with:', { cwd: cwdRef.current, cols, rows });
-                const result = await createPty(cwdRef.current, cols, rows);
-                console.log('[TerminalPane] PTY creation result:', result);
+              const { cols, rows } = terminalRef.current;
+              console.log('[TerminalPane] Creating PTY (deferred) with:', { cwd: cwdRef.current, cols, rows });
+              createPty(cwdRef.current, cols, rows).then((result) => {
                 if (result) {
                   ptyIdRef.current = result.ptyId;
                   console.log('[TerminalPane] PTY created successfully:', result.ptyId);
@@ -353,33 +321,38 @@ export function TerminalPane({
                   console.error('[TerminalPane] Failed to create PTY');
                   terminalRef.current?.writeln('\x1b[31mFailed to create terminal session\x1b[0m');
                 }
-              };
-              initPty();
+              });
             }
+
+            // 포커스 설정
+            terminalRef.current.focus();
+            return;
           }
 
-          console.log('[TerminalPane] Fitting terminal after visibility change');
-          fitAddonRef.current.fit();
+          // 일반 visibility 변경 처리 (이미 열린 터미널)
+          if (terminalRef.current && fitAddonRef.current) {
+            console.log('[TerminalPane] Fitting terminal after visibility change');
+            fitAddonRef.current.fit();
 
-          // 터미널 강제 새로고침 (렌더링 보장)
-          terminalRef.current.refresh(0, terminalRef.current.rows - 1);
+            // 터미널 강제 새로고침 (렌더링 보장)
+            terminalRef.current.refresh(0, terminalRef.current.rows - 1);
 
-          if (ptyIdRef.current) {
-            const { cols, rows } = terminalRef.current;
-            console.log('[TerminalPane] Resizing PTY to', cols, 'x', rows);
-            resizePty(ptyIdRef.current, cols, rows);
+            if (ptyIdRef.current) {
+              const { cols, rows } = terminalRef.current;
+              resizePty(ptyIdRef.current, cols, rows);
+            }
+
+            // 포커스 설정
+            terminalRef.current.focus();
           }
-
-          // 포커스 설정
-          terminalRef.current.focus();
         } catch (e) {
-          console.warn('[TerminalPane] Failed to handle visibility change:', e);
+          console.warn('[TerminalPane] Failed to handle visibility/init change:', e);
         }
       }, 50);
     });
 
     return () => cancelAnimationFrame(rafId);
-  }, [isVisible]);
+  }, [isVisible, initReady]);
 
   // 리사이즈 처리 - ResizeObserver 사용 (Issue #4 fix)
   useEffect(() => {
