@@ -12,6 +12,7 @@ import type {
   LogLine,
   TaskExecutionLog,
 } from '../../types/ai';
+import { safeLog, safeError } from '../lib/safeConsole';
 
 // Active execution state
 interface ActiveExecution {
@@ -59,8 +60,12 @@ ${taskContent}`;
 function sendLogToWindows(taskId: string, line: LogLine): void {
   const windows = BrowserWindow.getAllWindows();
   windows.forEach((window) => {
-    if (!window.isDestroyed()) {
-      window.webContents.send('ai:log', { taskId, line });
+    try {
+      if (!window.isDestroyed() && !window.webContents.isDestroyed()) {
+        window.webContents.send('ai:log', { taskId, line });
+      }
+    } catch {
+      // Window or webContents may have been destroyed between check and send
     }
   });
 }
@@ -112,12 +117,12 @@ export async function executeClaudeCode(
       },
     });
 
-    console.log('[ClaudeExecutor] Process spawned, PID:', childProcess.pid);
+    safeLog('[ClaudeExecutor] Process spawned, PID:', childProcess.pid);
 
     // Write prompt to stdin
     childProcess.stdin?.write(prompt);
     childProcess.stdin?.end();
-    console.log('[ClaudeExecutor] Prompt written to stdin, length:', prompt.length);
+    safeLog('[ClaudeExecutor] Prompt written to stdin, length:', prompt.length);
 
     // Set up active execution state
     activeExecution = {
@@ -188,7 +193,7 @@ export async function executeClaudeCode(
 
     // Handle process exit
     childProcess.on('close', (code) => {
-      console.log('[ClaudeExecutor] Process closed with code:', code);
+      safeLog('[ClaudeExecutor] Process closed with code:', code);
       clearTimeout(timeoutId);
 
       const duration = Date.now() - startTime;
@@ -227,7 +232,7 @@ export async function executeClaudeCode(
 
     // Handle process error
     childProcess.on('error', (error) => {
-      console.error('[ClaudeExecutor] Process error:', error.message);
+      safeError('[ClaudeExecutor] Process error:', error.message);
       clearTimeout(timeoutId);
 
       const duration = Date.now() - startTime;

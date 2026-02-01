@@ -8,6 +8,7 @@
 import Database from 'better-sqlite3';
 import { app } from 'electron';
 import path from 'path';
+import { safeLog } from '../lib/safeConsole';
 
 const DB_FILENAME = 'taskflow.db';
 
@@ -91,7 +92,7 @@ export function getDatabase(): Database.Database {
   if (!db) {
     const dbPath = getDatabasePath();
 
-    console.log('[DatabaseService] Initializing database at:', dbPath);
+    safeLog('[DatabaseService] Initializing database at:', dbPath);
 
     db = new Database(dbPath);
 
@@ -104,7 +105,7 @@ export function getDatabase(): Database.Database {
     // 스키마 초기화
     initializeSchema(db);
 
-    console.log('[DatabaseService] Database initialized successfully');
+    safeLog('[DatabaseService] Database initialized successfully');
   }
 
   return db;
@@ -115,7 +116,7 @@ export function getDatabase(): Database.Database {
  */
 export function closeDatabase(): void {
   if (db) {
-    console.log('[DatabaseService] Closing database connection');
+    safeLog('[DatabaseService] Closing database connection');
     db.close();
     db = null;
   }

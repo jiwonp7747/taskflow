@@ -5,6 +5,7 @@
  */
 
 import { app, Menu, shell, BrowserWindow, MenuItemConstructorOptions } from 'electron';
+import { safeLog } from './lib/safeConsole';
 
 const isMac = process.platform === 'darwin';
 
@@ -23,8 +24,12 @@ export function createApplicationMenu(): void {
                 accelerator: 'CmdOrCtrl+,',
                 click: () => {
                   const win = BrowserWindow.getFocusedWindow();
-                  if (win) {
-                    win.webContents.send('menu:openSettings');
+                  try {
+                    if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) {
+                      win.webContents.send('menu:openSettings');
+                    }
+                  } catch {
+                    // Window may have been destroyed
                   }
                 },
               },
@@ -50,8 +55,12 @@ export function createApplicationMenu(): void {
           accelerator: 'CmdOrCtrl+N',
           click: () => {
             const win = BrowserWindow.getFocusedWindow();
-            if (win) {
-              win.webContents.send('menu:newTask');
+            try {
+              if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) {
+                win.webContents.send('menu:newTask');
+              }
+            } catch {
+              // Window may have been destroyed
             }
           },
         },
@@ -61,8 +70,12 @@ export function createApplicationMenu(): void {
           accelerator: 'CmdOrCtrl+R',
           click: () => {
             const win = BrowserWindow.getFocusedWindow();
-            if (win) {
-              win.webContents.send('menu:refreshTasks');
+            try {
+              if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) {
+                win.webContents.send('menu:refreshTasks');
+              }
+            } catch {
+              // Window may have been destroyed
             }
           },
         },
@@ -100,8 +113,12 @@ export function createApplicationMenu(): void {
           accelerator: 'CmdOrCtrl+B',
           click: () => {
             const win = BrowserWindow.getFocusedWindow();
-            if (win) {
-              win.webContents.send('menu:toggleSidebar');
+            try {
+              if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) {
+                win.webContents.send('menu:toggleSidebar');
+              }
+            } catch {
+              // Window may have been destroyed
             }
           },
         },
@@ -111,8 +128,12 @@ export function createApplicationMenu(): void {
           accelerator: 'CmdOrCtrl+1',
           click: () => {
             const win = BrowserWindow.getFocusedWindow();
-            if (win) {
-              win.webContents.send('menu:setView', 'board');
+            try {
+              if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) {
+                win.webContents.send('menu:setView', 'board');
+              }
+            } catch {
+              // Window may have been destroyed
             }
           },
         },
@@ -121,8 +142,12 @@ export function createApplicationMenu(): void {
           accelerator: 'CmdOrCtrl+2',
           click: () => {
             const win = BrowserWindow.getFocusedWindow();
-            if (win) {
-              win.webContents.send('menu:setView', 'calendar');
+            try {
+              if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) {
+                win.webContents.send('menu:setView', 'calendar');
+              }
+            } catch {
+              // Window may have been destroyed
             }
           },
         },
@@ -148,8 +173,12 @@ export function createApplicationMenu(): void {
           accelerator: 'CmdOrCtrl+Shift+A',
           click: () => {
             const win = BrowserWindow.getFocusedWindow();
-            if (win) {
-              win.webContents.send('menu:aiStart');
+            try {
+              if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) {
+                win.webContents.send('menu:aiStart');
+              }
+            } catch {
+              // Window may have been destroyed
             }
           },
         },
@@ -158,8 +187,12 @@ export function createApplicationMenu(): void {
           accelerator: 'CmdOrCtrl+Shift+S',
           click: () => {
             const win = BrowserWindow.getFocusedWindow();
-            if (win) {
-              win.webContents.send('menu:aiStop');
+            try {
+              if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) {
+                win.webContents.send('menu:aiStop');
+              }
+            } catch {
+              // Window may have been destroyed
             }
           },
         },
@@ -169,8 +202,12 @@ export function createApplicationMenu(): void {
           accelerator: 'CmdOrCtrl+Shift+P',
           click: () => {
             const win = BrowserWindow.getFocusedWindow();
-            if (win) {
-              win.webContents.send('menu:toggleAIPanel');
+            try {
+              if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) {
+                win.webContents.send('menu:toggleAIPanel');
+              }
+            } catch {
+              // Window may have been destroyed
             }
           },
         },
@@ -210,8 +247,12 @@ export function createApplicationMenu(): void {
           label: 'About TaskFlow',
           click: () => {
             const win = BrowserWindow.getFocusedWindow();
-            if (win) {
-              win.webContents.send('menu:showAbout');
+            try {
+              if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) {
+                win.webContents.send('menu:showAbout');
+              }
+            } catch {
+              // Window may have been destroyed
             }
           },
         },

@@ -21,6 +21,7 @@ import {
   killActiveExecution,
   isExecuting,
 } from './claudeExecutor.service';
+import { safeLog, safeError } from '../lib/safeConsole';
 
 // Worker state
 let workerStatus: AIWorkerStatus = { ...INITIAL_AI_WORKER_STATUS };
@@ -35,8 +36,12 @@ let executionLogs: Map<string, TaskExecutionLog> = new Map();
 function sendToAllWindows(channel: string, data: unknown): void {
   const windows = BrowserWindow.getAllWindows();
   windows.forEach((window) => {
-    if (!window.isDestroyed()) {
-      window.webContents.send(channel, data);
+    try {
+      if (!window.isDestroyed() && !window.webContents.isDestroyed()) {
+        window.webContents.send(channel, data);
+      }
+    } catch {
+      // Window or webContents may have been destroyed between check and send
     }
   });
 }
@@ -111,10 +116,10 @@ async function findEligibleTasks(): Promise<Task[]> {
   }
 
   const allTasks = await getAllTasks(tasksDir);
-  console.log('[AIWorker] Finding eligible tasks...');
+  safeLog('[AIWorker] Finding eligible tasks...');
 
   const eligible = allTasks.filter(isEligibleForAI);
-  console.log(
+  safeLog(
     '[AIWorker] Eligible tasks:',
     eligible.map((t) => ({ id: t.id, title: t.title }))
   );
@@ -144,7 +149,7 @@ function addToQueue(task: Task): void {
  * Execute a single task
  */
 async function executeTask(task: Task): Promise<void> {
-  console.log('[AIWorker] Executing task:', {
+  safeLog('[AIWorker] Executing task:', {
     id: task.id,
     title: task.title,
     status: task.status,
@@ -205,7 +210,7 @@ async function executeTask(task: Task): Promise<void> {
 
     // Update task status based on result
     if (result.success) {
-      const aiWorkLogEntry = `\n### ${new Date().toISOString()}\n\n작업이 완료되었습니다. (${result.duration}ms)\n\n실행 결과:\n\`\`\`\n${result.stdout.slice(0, 2000)}${result.stdout.length > 2000 ? '\n...(truncated)' : ''}\n\`\`\`\n`;
+      const workLogEntry = `\n\n### AI Work Log - ${new Date().toISOString()}\n\n작업이 완료되었습니다. (${result.duration}ms)\n\n실행 결과:\n\`\`\`\n${result.stdout.slice(0, 2000)}${result.stdout.length > 2000 ? '\n...(truncated)' : ''}\n\`\`\`\n`;
 
       const currentTask = await getAllTasks(tasksDir).then((tasks) =>
         tasks.find((t) => t.id === task.id)
@@ -216,7 +221,7 @@ async function executeTask(task: Task): Promise<void> {
           task.id,
           {
             status: 'IN_REVIEW',
-            aiWorkLog: (currentTask.aiWorkLog || '') + aiWorkLogEntry,
+            content: (currentTask.content || '') + workLogEntry,
           },
           tasksDir
         );
@@ -230,7 +235,7 @@ async function executeTask(task: Task): Promise<void> {
         success: true,
       });
     } else {
-      const aiWorkLogEntry = `\n### ${new Date().toISOString()}\n\n작업 실패 (종료 코드: ${result.exitCode}, ${result.duration}ms)\n\n에러:\n\`\`\`\n${result.error || result.stderr}\n\`\`\`\n`;
+      const workLogEntry = `\n\n### AI Work Log - ${new Date().toISOString()}\n\n작업 실패 (종료 코드: ${result.exitCode}, ${result.duration}ms)\n\n에러:\n\`\`\`\n${result.error || result.stderr}\n\`\`\`\n`;
 
       const currentTask = await getAllTasks(tasksDir).then((tasks) =>
         tasks.find((t) => t.id === task.id)
@@ -241,7 +246,7 @@ async function executeTask(task: Task): Promise<void> {
           task.id,
           {
             status: 'NEED_FIX',
-            aiWorkLog: (currentTask.aiWorkLog || '') + aiWorkLogEntry,
+            content: (currentTask.content || '') + workLogEntry,
           },
           tasksDir
         );
@@ -264,7 +269,7 @@ async function executeTask(task: Task): Promise<void> {
       error: errorMessage,
     });
 
-    console.error(`Error executing task ${task.id}:`, error);
+    safeError(`Error executing task ${task.id}:`, error);
   } finally {
     workerStatus.currentTask = null;
     workerStatus.currentTaskTitle = undefined;
@@ -307,7 +312,7 @@ async function pollForTasks(): Promise<void> {
 
     await processQueue();
   } catch (error) {
-    console.error('[AIWorker] Error polling for tasks:', error);
+    safeError('[AIWorker] Error polling for tasks:', error);
   }
 }
 
@@ -386,7 +391,7 @@ export async function startWorker(
   pollForTasks();
 
   sendToAllWindows('ai:statusChanged', workerStatus);
-  console.log('[AIWorker] Worker started');
+  safeLog('[AIWorker] Worker started');
 
   return workerStatus;
 }
@@ -419,7 +424,7 @@ export function stopWorker(): AIWorkerStatus {
   };
 
   sendToAllWindows('ai:statusChanged', workerStatus);
-  console.log('[AIWorker] Worker stopped');
+  safeLog('[AIWorker] Worker stopped');
 
   return workerStatus;
 }
@@ -434,7 +439,7 @@ export function pauseWorker(): AIWorkerStatus {
 
   workerStatus.isPaused = true;
   sendToAllWindows('ai:statusChanged', workerStatus);
-  console.log('[AIWorker] Worker paused');
+  safeLog('[AIWorker] Worker paused');
 
   return workerStatus;
 }
@@ -451,7 +456,7 @@ export function resumeWorker(): AIWorkerStatus {
   pollForTasks();
 
   sendToAllWindows('ai:statusChanged', workerStatus);
-  console.log('[AIWorker] Worker resumed');
+  safeLog('[AIWorker] Worker resumed');
 
   return workerStatus;
 }

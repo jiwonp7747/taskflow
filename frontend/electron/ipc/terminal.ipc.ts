@@ -6,6 +6,7 @@
 
 import { ipcMain, BrowserWindow } from 'electron';
 import { ptyService } from '../services/pty.service';
+import { safeError } from '../lib/safeConsole';
 
 // PTY ID별 이벤트 리스너 정리 함수 저장
 const cleanupMap = new Map<string, (() => void)[]>();
@@ -25,15 +26,23 @@ export function registerTerminalIPC(): void {
 
       // 데이터 이벤트 리스너 등록
       const cleanupData = ptyService.onData(id, (data) => {
-        if (win && !win.isDestroyed()) {
-          win.webContents.send('terminal:data', { ptyId: id, data });
+        try {
+          if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) {
+            win.webContents.send('terminal:data', { ptyId: id, data });
+          }
+        } catch {
+          // Window may have been destroyed between check and send
         }
       });
 
       // 종료 이벤트 리스너 등록
       const cleanupExit = ptyService.onExit(id, (exitCode, signal) => {
-        if (win && !win.isDestroyed()) {
-          win.webContents.send('terminal:exit', { ptyId: id, exitCode, signal });
+        try {
+          if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) {
+            win.webContents.send('terminal:exit', { ptyId: id, exitCode, signal });
+          }
+        } catch {
+          // Window may have been destroyed between check and send
         }
         // 정리 함수 제거
         const cleanups = cleanupMap.get(id);
@@ -50,7 +59,7 @@ export function registerTerminalIPC(): void {
 
       return { success: true, ptyId: id, pid };
     } catch (error) {
-      console.error('Failed to create PTY:', error);
+      safeError('Failed to create PTY:', error);
       return { success: false, error: (error as Error).message };
     }
   });

@@ -16,6 +16,7 @@ import {
   getTaskQueue,
   getExecutionLog,
 } from '../services/aiWorker.service';
+import { safeLog, safeError } from '../lib/safeConsole';
 
 /**
  * Register AI Worker IPC handlers
@@ -31,7 +32,7 @@ export function registerAIWorkerIPC(): void {
       try {
         return await startWorker(config || undefined);
       } catch (error) {
-        console.error('[AI-IPC] Failed to start worker:', error);
+        safeError('[AI-IPC] Failed to start worker:', error);
         throw error;
       }
     }
@@ -42,7 +43,7 @@ export function registerAIWorkerIPC(): void {
     try {
       return stopWorker();
     } catch (error) {
-      console.error('[AI-IPC] Failed to stop worker:', error);
+      safeError('[AI-IPC] Failed to stop worker:', error);
       throw error;
     }
   });
@@ -52,7 +53,7 @@ export function registerAIWorkerIPC(): void {
     try {
       return pauseWorker();
     } catch (error) {
-      console.error('[AI-IPC] Failed to pause worker:', error);
+      safeError('[AI-IPC] Failed to pause worker:', error);
       throw error;
     }
   });
@@ -62,7 +63,7 @@ export function registerAIWorkerIPC(): void {
     try {
       return resumeWorker();
     } catch (error) {
-      console.error('[AI-IPC] Failed to resume worker:', error);
+      safeError('[AI-IPC] Failed to resume worker:', error);
       throw error;
     }
   });
@@ -72,7 +73,7 @@ export function registerAIWorkerIPC(): void {
     try {
       return getWorkerStatus();
     } catch (error) {
-      console.error('[AI-IPC] Failed to get status:', error);
+      safeError('[AI-IPC] Failed to get status:', error);
       throw error;
     }
   });
@@ -82,7 +83,7 @@ export function registerAIWorkerIPC(): void {
     try {
       return getTaskQueue();
     } catch (error) {
-      console.error('[AI-IPC] Failed to get queue:', error);
+      safeError('[AI-IPC] Failed to get queue:', error);
       throw error;
     }
   });
@@ -97,11 +98,11 @@ export function registerAIWorkerIPC(): void {
       try {
         return getExecutionLog(taskId);
       } catch (error) {
-        console.error(`[AI-IPC] Failed to get logs for task ${taskId}:`, error);
+        safeError(`[AI-IPC] Failed to get logs for task ${taskId}:`, error);
         throw error;
       }
     }
   );
 
-  console.log('[AI-IPC] Handlers registered');
+  safeLog('[AI-IPC] Handlers registered');
 }

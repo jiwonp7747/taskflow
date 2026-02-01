@@ -11,12 +11,13 @@ import { registerDialogIPC } from './dialog.ipc';
 import { registerAIWorkerIPC } from './ai.ipc';
 import { registerWindowIPC } from './window.ipc';
 import { registerTerminalIPC, cleanupAllPty } from './terminal.ipc';
+import { safeLog } from '../lib/safeConsole';
 
 /**
  * Register all IPC handlers
  */
 export function registerAllIPC(): void {
-  console.log('[IPC] Registering all handlers...');
+  safeLog('[IPC] Registering all handlers...');
 
   registerTasksIPC();
   registerConfigIPC();
@@ -26,7 +27,7 @@ export function registerAllIPC(): void {
   registerWindowIPC();
   registerTerminalIPC();
 
-  console.log('[IPC] All handlers registered');
+  safeLog('[IPC] All handlers registered');
 }
 
 export { registerTasksIPC } from './tasks.ipc';

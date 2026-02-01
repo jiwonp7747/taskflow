@@ -6,6 +6,7 @@
 
 import { app, Tray, Menu, nativeImage, BrowserWindow } from 'electron';
 import path from 'path';
+import { safeLog } from './lib/safeConsole';
 
 let tray: Tray | null = null;
 
@@ -129,9 +130,15 @@ function updateTrayMenu(mainWindow: BrowserWindow): void {
     {
       label: currentState.aiWorkerRunning ? 'Stop AI Worker' : 'Start AI Worker',
       click: () => {
-        mainWindow.webContents.send(
-          currentState.aiWorkerRunning ? 'menu:aiStop' : 'menu:aiStart'
-        );
+        try {
+          if (!mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
+            mainWindow.webContents.send(
+              currentState.aiWorkerRunning ? 'menu:aiStop' : 'menu:aiStart'
+            );
+          }
+        } catch {
+          // Window may have been destroyed
+        }
       },
     },
     { type: 'separator' },

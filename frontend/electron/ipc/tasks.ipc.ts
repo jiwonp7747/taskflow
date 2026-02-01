@@ -14,6 +14,7 @@ import {
   updateTask,
   deleteTask,
 } from '../lib/fileSystem';
+import { safeLog, safeError } from '../lib/safeConsole';
 
 /**
  * Get active source directory from database
@@ -61,7 +62,7 @@ export function registerTasksIPC(): void {
     try {
       return await getAllTasks(dir);
     } catch (error) {
-      console.error('[TasksIPC] Failed to get all tasks:', error);
+      safeError('[TasksIPC] Failed to get all tasks:', error);
       throw error;
     }
   });
@@ -75,7 +76,7 @@ export function registerTasksIPC(): void {
       try {
         return await getTaskById(id, dir);
       } catch (error) {
-        console.error(`[TasksIPC] Failed to get task ${id}:`, error);
+        safeError(`[TasksIPC] Failed to get task ${id}:`, error);
         throw error;
       }
     }
@@ -89,10 +90,10 @@ export function registerTasksIPC(): void {
 
       try {
         const task = await createTask(data, dir);
-        console.log('[TasksIPC] Task created:', task.id);
+        safeLog('[TasksIPC] Task created:', task.id);
         return task;
       } catch (error) {
-        console.error('[TasksIPC] Failed to create task:', error);
+        safeError('[TasksIPC] Failed to create task:', error);
         throw error;
       }
     }
@@ -109,10 +110,10 @@ export function registerTasksIPC(): void {
 
       try {
         const task = await updateTask(id, data, dir);
-        console.log('[TasksIPC] Task updated:', task.id);
+        safeLog('[TasksIPC] Task updated:', task.id);
         return task;
       } catch (error) {
-        console.error(`[TasksIPC] Failed to update task ${id}:`, error);
+        safeError(`[TasksIPC] Failed to update task ${id}:`, error);
         throw error;
       }
     }
@@ -126,13 +127,13 @@ export function registerTasksIPC(): void {
 
       try {
         await deleteTask(id, dir);
-        console.log('[TasksIPC] Task deleted:', id);
+        safeLog('[TasksIPC] Task deleted:', id);
       } catch (error) {
-        console.error(`[TasksIPC] Failed to delete task ${id}:`, error);
+        safeError(`[TasksIPC] Failed to delete task ${id}:`, error);
         throw error;
       }
     }
   );
 
-  console.log('[TasksIPC] Handlers registered');
+  safeLog('[TasksIPC] Handlers registered');
 }

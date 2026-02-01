@@ -8,6 +8,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import type { Task } from '../../types/task';
 import { parseTaskContent, generateTaskContent, updateTaskFrontmatter } from './taskParser';
+import { safeError } from './safeConsole';
 
 /**
  * Validate path to prevent directory traversal
@@ -44,15 +45,27 @@ export async function directoryExists(dir: string): Promise<boolean> {
 }
 
 /**
- * Scan directory for markdown files
+ * Scan directory recursively for markdown files
  */
 export async function scanTaskDirectory(dir: string): Promise<string[]> {
   await ensureDirectory(dir);
 
-  const files = await fs.readdir(dir);
-  return files
-    .filter((file) => file.endsWith('.md'))
-    .map((file) => path.join(dir, file));
+  const mdFiles: string[] = [];
+
+  async function scanDir(currentDir: string): Promise<void> {
+    const entries = await fs.readdir(currentDir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        await scanDir(fullPath);
+      } else if (entry.name.endsWith('.md')) {
+        mdFiles.push(fullPath);
+      }
+    }
+  }
+
+  await scanDir(dir);
+  return mdFiles;
 }
 
 /**
@@ -102,7 +115,7 @@ export async function getAllTasks(dir: string): Promise<Task[]> {
       const task = parseTaskContent(content, filePath);
       tasks.push(task);
     } catch (error) {
-      console.error(`[FileSystem] Failed to parse task file: ${filePath}`, error);
+      safeError(`[FileSystem] Failed to parse task file: ${filePath}`, error);
     }
   }
 

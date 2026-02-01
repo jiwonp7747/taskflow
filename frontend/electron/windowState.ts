@@ -6,6 +6,7 @@
 
 import { BrowserWindow, screen } from 'electron';
 import { getDatabase } from './services/database.service';
+import { safeLog, safeError } from './lib/safeConsole';
 
 interface WindowState {
   x?: number;
@@ -57,7 +58,7 @@ export function loadWindowState(): WindowState {
       }
     }
   } catch (error) {
-    console.error('[WindowState] Failed to load window state:', error);
+    safeError('[WindowState] Failed to load window state:', error);
   }
 
   return DEFAULT_STATE;
@@ -78,9 +79,9 @@ export function saveWindowState(window: BrowserWindow): void {
       WHERE id = 1
     `).run(bounds.x, bounds.y, bounds.width, bounds.height, isMaximized);
 
-    console.log('[WindowState] Saved window state');
+    safeLog('[WindowState] Saved window state');
   } catch (error) {
-    console.error('[WindowState] Failed to save window state:', error);
+    safeError('[WindowState] Failed to save window state:', error);
   }
 }
 

@@ -5,6 +5,7 @@
  */
 
 import { ipcMain, BrowserWindow } from 'electron';
+import { safeLog } from '../lib/safeConsole';
 
 /**
  * Register window control IPC handlers
@@ -76,5 +77,5 @@ export function registerWindowIPC(): void {
     return false;
   });
 
-  console.log('[WindowIPC] Handlers registered');
+  safeLog('[WindowIPC] Handlers registered');
 }

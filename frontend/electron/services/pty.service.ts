@@ -8,6 +8,7 @@ import * as pty from 'node-pty';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
+import { safeLog } from '../lib/safeConsole';
 
 interface PtyInstance {
   id: string;
@@ -48,7 +49,7 @@ class PtyService {
       // 접근 오류 시 홈 디렉토리로 폴백
     }
 
-    console.warn(`[PtyService] Invalid cwd "${cwd}", falling back to home directory`);
+    safeLog(`[PtyService] Invalid cwd "${cwd}", falling back to home directory`);
     return homeDir;
   }
 
@@ -61,7 +62,7 @@ class PtyService {
 
     // CWD 경로 해석 - Windows에서 '~'를 홈 디렉토리로 변환
     const resolvedCwd = this.resolveCwd(cwd);
-    console.log(`[PtyService] Creating PTY with cwd: "${cwd}" -> "${resolvedCwd}"`);
+    safeLog(`[PtyService] Creating PTY with cwd: "${cwd}" -> "${resolvedCwd}"`);
 
     const ptyProcess = pty.spawn(shell, [], {
       name: 'xterm-256color',

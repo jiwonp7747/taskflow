@@ -7,12 +7,13 @@
 import { getDatabase } from './database.service';
 import { startWatching, stopWatching } from './fileWatcher.service';
 import { cleanupWorker, startWorker, getWorkerStatus } from './aiWorker.service';
+import { safeLog, safeError } from '../lib/safeConsole';
 
 /**
  * Initialize all services
  */
 export function initializeServices(): void {
-  console.log('[Services] Initializing services...');
+  safeLog('[Services] Initializing services...');
 
   // Start file watcher for active source if any
   initializeFileWatcher();
@@ -20,14 +21,14 @@ export function initializeServices(): void {
   // Auto-start AI worker if configured
   initializeAIWorker();
 
-  console.log('[Services] Services initialized');
+  safeLog('[Services] Services initialized');
 }
 
 /**
  * Cleanup all services
  */
 export function cleanupServices(): void {
-  console.log('[Services] Cleaning up services...');
+  safeLog('[Services] Cleaning up services...');
 
   // Stop file watcher
   stopWatching();
@@ -35,7 +36,7 @@ export function cleanupServices(): void {
   // Cleanup AI worker
   cleanupWorker();
 
-  console.log('[Services] Services cleaned up');
+  safeLog('[Services] Services cleaned up');
 }
 
 /**
@@ -50,7 +51,7 @@ function initializeFileWatcher(): void {
       .get() as { active_source_id: string | null };
 
     if (!config?.active_source_id) {
-      console.log('[Services] No active source, skipping file watcher');
+      safeLog('[Services] No active source, skipping file watcher');
       return;
     }
 
@@ -59,11 +60,11 @@ function initializeFileWatcher(): void {
       .get(config.active_source_id) as { path: string } | undefined;
 
     if (source?.path) {
-      console.log('[Services] Starting file watcher for active source:', source.path);
+      safeLog('[Services] Starting file watcher for active source:', source.path);
       startWatching(source.path);
     }
   } catch (error) {
-    console.error('[Services] Failed to initialize file watcher:', error);
+    safeError('[Services] Failed to initialize file watcher:', error);
   }
 }
 
@@ -79,15 +80,15 @@ function initializeAIWorker(): void {
       .get() as { enabled: number; auto_start: number };
 
     if (aiConfig.enabled === 1 && aiConfig.auto_start === 1) {
-      console.log('[Services] Auto-starting AI worker...');
+      safeLog('[Services] Auto-starting AI worker...');
       startWorker().catch((error) => {
-        console.error('[Services] Failed to auto-start AI worker:', error);
+        safeError('[Services] Failed to auto-start AI worker:', error);
       });
     } else {
-      console.log('[Services] AI worker auto-start disabled');
+      safeLog('[Services] AI worker auto-start disabled');
     }
   } catch (error) {
-    console.error('[Services] Failed to initialize AI worker:', error);
+    safeError('[Services] Failed to initialize AI worker:', error);
   }
 }
 

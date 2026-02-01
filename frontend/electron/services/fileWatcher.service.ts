@@ -8,6 +8,7 @@ import chokidar, { FSWatcher } from 'chokidar';
 import path from 'path';
 import { BrowserWindow } from 'electron';
 import type { FileWatchEvent } from '../../types/task';
+import { safeLog, safeError } from '../lib/safeConsole';
 
 /**
  * Debounce utility
@@ -38,8 +39,12 @@ function extractTaskId(filePath: string): string {
 function sendToAllWindows(channel: string, data: unknown): void {
   const windows = BrowserWindow.getAllWindows();
   windows.forEach((window) => {
-    if (!window.isDestroyed()) {
-      window.webContents.send(channel, data);
+    try {
+      if (!window.isDestroyed() && !window.webContents.isDestroyed()) {
+        window.webContents.send(channel, data);
+      }
+    } catch {
+      // Window or webContents may have been destroyed between check and send
     }
   });
 }
@@ -67,7 +72,7 @@ class FileWatcherService {
    */
   start(directory: string): void {
     if (this.isWatching && this.watchedDirectory === directory) {
-      console.log('[FileWatcher] Already watching:', directory);
+      safeLog('[FileWatcher] Already watching:', directory);
       return;
     }
 
@@ -77,9 +82,9 @@ class FileWatcherService {
     }
 
     this.watchedDirectory = directory;
-    console.log('[FileWatcher] Starting file watcher for:', directory);
+    safeLog('[FileWatcher] Starting file watcher for:', directory);
 
-    this.watcher = chokidar.watch(path.join(directory, '*.md'), {
+    this.watcher = chokidar.watch(path.join(directory, '**/*.md'), {
       persistent: true,
       ignoreInitial: true,
       awaitWriteFinish: {
@@ -92,7 +97,7 @@ class FileWatcherService {
     const debouncedBroadcast = debounce(
       (type: 'add' | 'change' | 'unlink', filePath: string) => {
         const taskId = extractTaskId(filePath);
-        console.log(`[FileWatcher] File event: ${type} - ${taskId}`);
+        safeLog(`[FileWatcher] File event: ${type} - ${taskId}`);
 
         const event: FileWatchEvent = {
           type,
@@ -112,11 +117,11 @@ class FileWatcherService {
       .on('change', (filePath) => debouncedBroadcast('change', filePath))
       .on('unlink', (filePath) => debouncedBroadcast('unlink', filePath))
       .on('error', (error) => {
-        console.error('[FileWatcher] Error:', error);
+        safeError('[FileWatcher] Error:', error);
       });
 
     this.isWatching = true;
-    console.log('[FileWatcher] File watcher started successfully');
+    safeLog('[FileWatcher] File watcher started successfully');
   }
 
   /**
@@ -124,7 +129,7 @@ class FileWatcherService {
    */
   stop(): void {
     if (this.watcher) {
-      console.log('[FileWatcher] Stopping file watcher');
+      safeLog('[FileWatcher] Stopping file watcher');
       this.watcher.close();
       this.watcher = null;
     }

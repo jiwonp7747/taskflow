@@ -5,6 +5,7 @@
  */
 
 import { ipcMain, dialog, app, BrowserWindow } from 'electron';
+import { safeLog } from '../lib/safeConsole';
 
 /**
  * Register Dialog IPC handlers
@@ -24,7 +25,7 @@ export function registerDialogIPC(): void {
       return null;
     }
 
-    console.log('[DialogIPC] Folder selected:', result.filePaths[0]);
+    safeLog('[DialogIPC] Folder selected:', result.filePaths[0]);
     return result.filePaths[0];
   });
 
@@ -33,5 +34,5 @@ export function registerDialogIPC(): void {
     return app.getVersion();
   });
 
-  console.log('[DialogIPC] Handlers registered');
+  safeLog('[DialogIPC] Handlers registered');
 }

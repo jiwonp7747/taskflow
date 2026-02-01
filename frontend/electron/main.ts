@@ -12,6 +12,7 @@ import { registerAllIPC } from './ipc';
 import { createApplicationMenu } from './menu';
 import { createTray, destroyTray, updateTrayState } from './tray';
 import { loadWindowState, trackWindowState, applyWindowState } from './windowState';
+import { safeLog } from './lib/safeConsole';
 
 // 환경 변수
 const isDev = !app.isPackaged;
@@ -90,19 +91,19 @@ function createWindow(): void {
  */
 app.whenReady().then(() => {
   // 데이터베이스 초기화
-  console.log('[Main] Initializing database...');
+  safeLog('[Main] Initializing database...');
   getDatabase();
 
   // IPC 핸들러 등록
-  console.log('[Main] Registering IPC handlers...');
+  safeLog('[Main] Registering IPC handlers...');
   registerAllIPC();
 
   // 서비스 초기화 (FileWatcher 등)
-  console.log('[Main] Initializing services...');
+  safeLog('[Main] Initializing services...');
   initializeServices();
 
   // 애플리케이션 메뉴 생성
-  console.log('[Main] Creating application menu...');
+  safeLog('[Main] Creating application menu...');
   createApplicationMenu();
 
   // 메인 윈도우 생성
@@ -130,7 +131,7 @@ app.on('window-all-closed', () => {
  * 앱 종료 전 정리
  */
 app.on('before-quit', () => {
-  console.log('[Main] Cleaning up before quit...');
+  safeLog('[Main] Cleaning up before quit...');
 
   // 트레이 정리
   destroyTray();
@@ -157,4 +158,18 @@ app.on('web-contents-created', (_, contents) => {
       event.preventDefault();
     }
   });
+});
+
+/**
+ * Handle uncaught EPIPE errors gracefully
+ * EPIPE occurs when writing to a closed pipe (e.g., renderer process closed)
+ */
+process.on('uncaughtException', (error) => {
+  if ((error as NodeJS.ErrnoException).code === 'EPIPE') {
+    // Silently ignore EPIPE errors - they occur when renderer closes during IPC
+    return;
+  }
+  // Log and exit for non-EPIPE errors
+  try { console.error('[Main] Uncaught exception:', error); } catch {}
+  app.exit(1);
 });

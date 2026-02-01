@@ -10,6 +10,7 @@ import type { SourceConfig, UpdateSourceRequest } from '../../types/config';
 import { getDatabase } from '../services/database.service';
 import { ensureDirectory, directoryExists } from '../lib/fileSystem';
 import { startWatching, stopWatching } from '../services/fileWatcher.service';
+import { safeLog, safeError } from '../lib/safeConsole';
 
 /**
  * Convert database row to SourceConfig
@@ -99,7 +100,7 @@ async function addSource(data: {
     last_accessed: string | null;
   };
 
-  console.log('[SourcesIPC] Source added:', id, data.name);
+  safeLog('[SourcesIPC] Source added:', id, data.name);
   return rowToSourceConfig(row);
 }
 
@@ -152,7 +153,7 @@ function updateSource(
     last_accessed: string | null;
   };
 
-  console.log('[SourcesIPC] Source updated:', id);
+  safeLog('[SourcesIPC] Source updated:', id);
   return rowToSourceConfig(row);
 }
 
@@ -181,7 +182,7 @@ function deleteSource(id: string): void {
   }
 
   db.prepare('DELETE FROM sources WHERE id = ?').run(id);
-  console.log('[SourcesIPC] Source deleted:', id);
+  safeLog('[SourcesIPC] Source deleted:', id);
 }
 
 /**
@@ -213,7 +214,7 @@ function setActiveSource(id: string): void {
   // Start file watcher for the new active source
   startWatching(existing.path);
 
-  console.log('[SourcesIPC] Active source set:', id);
+  safeLog('[SourcesIPC] Active source set:', id);
 }
 
 /**
@@ -225,7 +226,7 @@ export function registerSourcesIPC(): void {
     try {
       return getAllSources();
     } catch (error) {
-      console.error('[SourcesIPC] Failed to get sources:', error);
+      safeError('[SourcesIPC] Failed to get sources:', error);
       throw error;
     }
   });
@@ -240,7 +241,7 @@ export function registerSourcesIPC(): void {
       try {
         return await addSource(data);
       } catch (error) {
-        console.error('[SourcesIPC] Failed to add source:', error);
+        safeError('[SourcesIPC] Failed to add source:', error);
         throw error;
       }
     }
@@ -256,7 +257,7 @@ export function registerSourcesIPC(): void {
       try {
         return updateSource(id, data);
       } catch (error) {
-        console.error(`[SourcesIPC] Failed to update source ${id}:`, error);
+        safeError(`[SourcesIPC] Failed to update source ${id}:`, error);
         throw error;
       }
     }
@@ -269,7 +270,7 @@ export function registerSourcesIPC(): void {
       try {
         deleteSource(id);
       } catch (error) {
-        console.error(`[SourcesIPC] Failed to delete source ${id}:`, error);
+        safeError(`[SourcesIPC] Failed to delete source ${id}:`, error);
         throw error;
       }
     }
@@ -282,11 +283,11 @@ export function registerSourcesIPC(): void {
       try {
         setActiveSource(id);
       } catch (error) {
-        console.error(`[SourcesIPC] Failed to set active source ${id}:`, error);
+        safeError(`[SourcesIPC] Failed to set active source ${id}:`, error);
         throw error;
       }
     }
   );
 
-  console.log('[SourcesIPC] Handlers registered');
+  safeLog('[SourcesIPC] Handlers registered');
 }

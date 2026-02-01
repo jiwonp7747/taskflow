@@ -8,6 +8,7 @@ import { ipcMain } from 'electron';
 import type { AppConfig, SourceConfig } from '../../types/config';
 import type { AIWorkerConfig } from '../../types/ai';
 import { getDatabase } from '../services/database.service';
+import { safeLog, safeError } from '../lib/safeConsole';
 
 /**
  * Load full app config from database
@@ -169,7 +170,7 @@ export function registerConfigIPC(): void {
     try {
       return loadConfig();
     } catch (error) {
-      console.error('[ConfigIPC] Failed to get config:', error);
+      safeError('[ConfigIPC] Failed to get config:', error);
       throw error;
     }
   });
@@ -180,14 +181,14 @@ export function registerConfigIPC(): void {
     async (_event, updates: Partial<AppConfig>): Promise<AppConfig> => {
       try {
         const config = updateConfig(updates);
-        console.log('[ConfigIPC] Config updated');
+        safeLog('[ConfigIPC] Config updated');
         return config;
       } catch (error) {
-        console.error('[ConfigIPC] Failed to update config:', error);
+        safeError('[ConfigIPC] Failed to update config:', error);
         throw error;
       }
     }
   );
 
-  console.log('[ConfigIPC] Handlers registered');
+  safeLog('[ConfigIPC] Handlers registered');
 }
