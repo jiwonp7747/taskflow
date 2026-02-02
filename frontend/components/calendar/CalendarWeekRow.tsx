@@ -152,6 +152,7 @@ export function CalendarWeekRow({
             <CalendarDayCell
               key={index}
               date={date}
+              dateKey={dateKey}
               tasks={dayTasks}
               onTaskClick={onTaskClick}
               isToday={isToday(date)}

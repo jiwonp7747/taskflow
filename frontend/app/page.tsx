@@ -370,6 +370,7 @@ export default function Home() {
               <CalendarView
                 tasks={filteredTasks}
                 onTaskClick={handleTaskClick}
+                onTaskUpdate={handleTaskUpdate}
                 workingTaskIds={workingTaskIds}
                 onDateDoubleClick={handleDateDoubleClick}
               />

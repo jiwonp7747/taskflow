@@ -1,5 +1,6 @@
 'use client';
 
+import { useDraggable } from '@dnd-kit/core';
 import type { Task } from '@/types/task';
 import { PRIORITY_CONFIG, COLUMNS } from '@/types/task';
 
@@ -12,6 +13,12 @@ interface CalendarTaskChipProps {
 export function CalendarTaskChip({ task, onClick, isAiWorking = false }: CalendarTaskChipProps) {
   const priorityConfig = PRIORITY_CONFIG[task.priority];
   const statusConfig = COLUMNS.find(col => col.id === task.status);
+
+  // Make this chip draggable
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: task.id,
+    data: { task },
+  });
 
   // Get priority dot color
   const getPriorityDotColor = () => {
@@ -39,6 +46,9 @@ export function CalendarTaskChip({ task, onClick, isAiWorking = false }: Calenda
 
   return (
     <button
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
       onClick={onClick}
       className={`
         w-full group flex items-center gap-1 px-1.5 py-1 rounded
@@ -47,6 +57,7 @@ export function CalendarTaskChip({ task, onClick, isAiWorking = false }: Calenda
         hover:border-cyan-500/30 hover:bg-slate-700/60
         transition-all duration-200
         ${isAiWorking ? 'border-cyan-400/50 animate-pulse' : ''}
+        ${isDragging ? 'opacity-30 scale-95' : ''}
       `}
       title={`${task.title} (${priorityConfig.label} / ${task.status})`}
     >

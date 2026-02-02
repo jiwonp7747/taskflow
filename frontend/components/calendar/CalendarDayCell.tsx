@@ -1,10 +1,12 @@
 'use client';
 
+import { useDroppable } from '@dnd-kit/core';
 import type { Task } from '@/types/task';
 import { CalendarTaskChip } from './CalendarTaskChip';
 
 interface CalendarDayCellProps {
   date: Date;
+  dateKey: string;
   tasks: Task[];
   onTaskClick: (task: Task) => void;
   isToday: boolean;
@@ -17,6 +19,7 @@ const MAX_VISIBLE_TASKS = 3;
 
 export function CalendarDayCell({
   date,
+  dateKey,
   tasks,
   onTaskClick,
   isToday,
@@ -28,14 +31,23 @@ export function CalendarDayCell({
   const hasMore = tasks.length > MAX_VISIBLE_TASKS;
   const visibleTasks = tasks.slice(0, MAX_VISIBLE_TASKS);
 
+  // Make this cell a droppable zone using the dateKey as id
+  const { isOver, setNodeRef } = useDroppable({
+    id: dateKey,
+  });
+
   return (
     <div
+      ref={setNodeRef}
       className={`
         flex flex-col min-h-[120px] p-1.5 border-r border-b border-white/5
-        transition-colors
+        transition-all duration-200
         ${isCurrentMonth ? 'bg-slate-900/20' : 'bg-slate-950/50'}
         ${isToday ? 'bg-cyan-950/30 ring-1 ring-inset ring-cyan-500/30' : ''}
-        hover:bg-slate-800/30
+        ${isOver
+          ? 'bg-cyan-950/40 ring-2 ring-inset ring-cyan-500/50 shadow-inner shadow-cyan-500/10'
+          : 'hover:bg-slate-800/30'
+        }
       `}
       onDoubleClick={(e) => {
         // Only trigger if clicking the cell background, not a task chip
