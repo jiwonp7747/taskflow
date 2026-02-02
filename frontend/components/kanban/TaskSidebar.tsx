@@ -5,6 +5,8 @@ import type { Task, TaskStatus, TaskPriority, TaskUpdateRequest } from '@/types/
 import type { ConversationMessage } from '@/lib/sessionManager';
 import { COLUMNS, PRIORITY_CONFIG } from '@/types/task';
 import { DatePicker } from '@/components/ui/DatePicker';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 type TabType = 'settings' | 'chat';
 
@@ -39,8 +41,10 @@ export function TaskSidebar({
   const [activeTab, setActiveTab] = useState<TabType>('settings');
   const [chatInput, setChatInput] = useState('');
   const [isStartingSession, setIsStartingSession] = useState(false);
+  const [isContentEditing, setIsContentEditing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Reset form and tab when task changes
   useEffect(() => {
@@ -56,6 +60,7 @@ export function TaskSidebar({
         content: task.content,
       });
       setHasChanges(false);
+      setIsContentEditing(false);
       setActiveTab('settings'); // Always start with settings tab
       setChatInput('');
     }
@@ -148,6 +153,47 @@ export function TaskSidebar({
     onStopSession(task.id);
   }, [task, onStopSession]);
 
+  // Wrap selected text in content textarea with markdown syntax
+  const wrapSelection = useCallback((wrapper: string) => {
+    const textarea = contentTextareaRef.current;
+    if (!textarea) return;
+
+    const { selectionStart, selectionEnd, value } = textarea;
+    const selected = value.slice(selectionStart, selectionEnd);
+
+    // If selection is already wrapped, unwrap it
+    const before = value.slice(Math.max(0, selectionStart - wrapper.length), selectionStart);
+    const after = value.slice(selectionEnd, selectionEnd + wrapper.length);
+    if (before === wrapper && after === wrapper) {
+      const newValue =
+        value.slice(0, selectionStart - wrapper.length) +
+        selected +
+        value.slice(selectionEnd + wrapper.length);
+      handleChange('content', newValue);
+      requestAnimationFrame(() => {
+        textarea.selectionStart = selectionStart - wrapper.length;
+        textarea.selectionEnd = selectionEnd - wrapper.length;
+        textarea.focus();
+      });
+      return;
+    }
+
+    const wrapped = `${wrapper}${selected}${wrapper}`;
+    const newValue = value.slice(0, selectionStart) + wrapped + value.slice(selectionEnd);
+    handleChange('content', newValue);
+    requestAnimationFrame(() => {
+      if (selected) {
+        textarea.selectionStart = selectionStart + wrapper.length;
+        textarea.selectionEnd = selectionEnd + wrapper.length;
+      } else {
+        // No selection: place cursor between wrappers
+        textarea.selectionStart = selectionStart + wrapper.length;
+        textarea.selectionEnd = selectionStart + wrapper.length;
+      }
+      textarea.focus();
+    });
+  }, [handleChange]);
+
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -156,12 +202,28 @@ export function TaskSidebar({
       } else if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
+      } else if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        // Always capture Cmd+B when sidebar is open to prevent main app sidebar toggle
+        e.preventDefault();
+        e.stopPropagation();
+        if (isContentEditing) {
+          wrapSelection('**');
+        }
+      } else if ((e.metaKey || e.ctrlKey) && e.key === 'i') {
+        e.preventDefault();
+        if (isContentEditing) {
+          wrapSelection('*');
+        }
+      } else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'e') {
+        // Cmd+Shift+E: toggle edit/view mode (must come before Cmd+E check)
+        e.preventDefault();
+        setIsContentEditing(prev => !prev);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, handleSave]);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [onClose, handleSave, isContentEditing, wrapSelection]);
 
   if (!task) return null;
 
@@ -177,365 +239,435 @@ export function TaskSidebar({
       />
 
       {/* Sidebar */}
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-xl z-50 flex flex-col bg-slate-950 border-l border-white/5 shadow-2xl shadow-black/50">
-        {/* Header */}
-        <div className="border-b border-white/5 bg-gradient-to-r from-slate-900/80 to-slate-950">
-          {/* Top row with status and close button */}
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${column?.color.replace('text-', 'bg-')} animate-pulse`} />
-              <span className={`text-xs font-mono uppercase tracking-wider ${column?.color}`}>
-                {column?.title}
-              </span>
-              {/* Session status for chat */}
-              {activeTab === 'chat' && (
-                <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                  isSessionActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'
-                }`}>
-                  {isSessionActive ? '● 세션 활성' : '○ 세션 종료'}
-                </span>
-              )}
-            </div>
+      <div className="fixed right-0 top-8 bottom-0 w-full max-w-[72rem] z-50 flex flex-row bg-slate-950 border-l border-white/5 shadow-2xl shadow-black/50">
 
-            <div className="flex items-center gap-2">
-              {/* Unsaved indicator */}
-              {hasChanges && activeTab === 'settings' && (
-                <span className="px-2 py-0.5 text-[10px] font-mono text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-full uppercase tracking-wider">
-                  Unsaved
-                </span>
-              )}
-
-              {/* Stop session button (only in chat tab when session is active) */}
-              {activeTab === 'chat' && isSessionActive && (
-                <button
-                  onClick={handleStopSession}
-                  className="px-3 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
-                >
-                  세션 종료
-                </button>
-              )}
-
-              {/* Close button */}
-              <button
-                onClick={onClose}
-                className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* Tab navigation */}
-          <div className="flex px-6 gap-1">
-            <button
-              onClick={() => setActiveTab('settings')}
-              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
-                activeTab === 'settings'
-                  ? 'bg-slate-950 text-white border-t border-x border-white/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                설정
-              </span>
-            </button>
-            <button
-              onClick={() => setActiveTab('chat')}
-              className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
-                activeTab === 'chat'
-                  ? 'bg-slate-950 text-white border-t border-x border-white/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                채팅
-                {conversationMessages.length > 0 && (
-                  <span className="px-1.5 py-0.5 text-[10px] bg-cyan-500/20 text-cyan-400 rounded-full">
-                    {conversationMessages.length}
-                  </span>
-                )}
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Content - Settings Tab */}
-        {activeTab === 'settings' && (
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-700/50">
-          {/* Title */}
-          <div>
-            <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
-              Task Title
-            </label>
-            <input
-              type="text"
-              value={editedTask.title || ''}
-              onChange={(e) => handleChange('title', e.target.value)}
-              className="w-full px-4 py-3 bg-slate-900/50 border border-white/5 rounded-lg text-lg font-medium text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
-              placeholder="Task title..."
-            />
-          </div>
-
-          {/* Status & Priority row */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Status */}
-            <div>
-              <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
-                Status
-              </label>
-              <select
-                value={editedTask.status || task.status}
-                onChange={(e) => handleChange('status', e.target.value as TaskStatus)}
-                className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all appearance-none cursor-pointer"
-              >
-                {COLUMNS.map((col) => (
-                  <option key={col.id} value={col.id}>
-                    {col.icon} {col.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Priority */}
-            <div>
-              <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
-                Priority
-              </label>
-              <select
-                value={editedTask.priority || task.priority}
-                onChange={(e) => handleChange('priority', e.target.value as TaskPriority)}
-                className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all appearance-none cursor-pointer"
-              >
-                {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
-                  <option key={key} value={key}>
-                    {config.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Assignee */}
-          <div>
-            <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
-              Assignee
-            </label>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => handleChange('assignee', 'user')}
-                className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-mono transition-all ${
-                  editedTask.assignee === 'user'
-                    ? 'bg-cyan-500/10 border-cyan-500/50 text-cyan-400'
-                    : 'bg-slate-900/50 border-white/5 text-slate-400 hover:border-white/10'
-                }`}
-              >
-                👤 User
-              </button>
-              <button
-                type="button"
-                onClick={() => handleChange('assignee', 'ai-agent')}
-                className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-mono transition-all ${
-                  editedTask.assignee === 'ai-agent'
-                    ? 'bg-violet-500/10 border-violet-500/50 text-violet-400'
-                    : 'bg-slate-900/50 border-white/5 text-slate-400 hover:border-white/10'
-                }`}
-              >
-                🤖 AI Agent
-              </button>
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div>
-            <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
-              Tags (comma separated)
-            </label>
-            <input
-              type="text"
-              value={(editedTask.tags || []).join(', ')}
-              onChange={(e) => handleChange('tags', e.target.value.split(',').map((t) => t.trim()).filter(Boolean))}
-              className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all"
-              placeholder="backend, api, auth..."
-            />
-          </div>
-
-          {/* Date Fields */}
-          <div className="grid grid-cols-2 gap-4">
-            <DatePicker
-              label="Start Date"
-              value={editedTask.start_date}
-              onChange={(date) => handleChange('start_date', date)}
-              maxDate={editedTask.due_date}
-            />
-            <DatePicker
-              label="Due Date"
-              value={editedTask.due_date}
-              onChange={(date) => handleChange('due_date', date)}
-              minDate={editedTask.start_date}
-            />
-          </div>
-
-          {/* Content */}
-          <div>
-            <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
+        {/* Left Panel: Content */}
+        <div className="flex-1 flex flex-col border-r border-white/5 min-w-0">
+          {/* Content Panel Header */}
+          <div className="flex items-center justify-between px-8 py-4 border-b border-white/5">
+            <label className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
               Content
             </label>
+            <button
+              onClick={() => setIsContentEditing(!isContentEditing)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-lg transition-all ${
+                isContentEditing
+                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+              title="Toggle edit mode (⌘⇧E)"
+            >
+              {isContentEditing ? (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Done
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Content Body */}
+          {isContentEditing ? (
             <textarea
+              ref={contentTextareaRef}
               value={editedTask.content || ''}
               onChange={(e) => handleChange('content', e.target.value)}
-              rows={8}
-              className="w-full px-4 py-3 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all resize-none"
-              placeholder="Task content..."
+              className="flex-1 w-full px-8 py-6 bg-transparent text-sm text-slate-300 leading-relaxed placeholder-slate-600 focus:outline-none resize-none font-mono"
+              placeholder="Write task content here..."
+              autoFocus
             />
-          </div>
-
-          {/* File path */}
-          <div className="pt-4 border-t border-white/5">
-            <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span className="truncate">{task.filePath}</span>
-            </div>
-            <div className="flex items-center gap-4 mt-2 text-[10px] font-mono text-slate-600">
-              <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
-              <span>Updated: {new Date(task.updated_at).toLocaleDateString()}</span>
-            </div>
-          </div>
-        </div>
-        )}
-
-        {/* Content - Chat Tab */}
-        {activeTab === 'chat' && (
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {conversationMessages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-950/50 to-slate-900 border border-cyan-500/20 flex items-center justify-center mb-4">
-                  <span className="text-3xl">💬</span>
+          ) : (
+            <div className="flex-1 overflow-y-auto px-8 py-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-700/50">
+              {editedTask.content ? (
+                <div className="prose prose-invert prose-sm max-w-none
+                  prose-headings:text-slate-200 prose-headings:font-semibold
+                  prose-h1:text-xl prose-h1:border-b prose-h1:border-white/10 prose-h1:pb-2 prose-h1:mb-4
+                  prose-h2:text-lg prose-h2:mt-6
+                  prose-h3:text-base
+                  prose-p:text-slate-300 prose-p:leading-relaxed
+                  prose-a:text-cyan-400 prose-a:no-underline hover:prose-a:underline
+                  prose-strong:text-white prose-strong:font-bold
+                  prose-code:text-cyan-300 prose-code:bg-slate-800/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                  prose-pre:bg-slate-900/80 prose-pre:border prose-pre:border-white/5 prose-pre:rounded-lg
+                  prose-blockquote:border-cyan-500/30 prose-blockquote:text-slate-400
+                  prose-ul:text-slate-300 prose-ol:text-slate-300
+                  prose-li:marker:text-slate-500
+                  prose-hr:border-white/10
+                  prose-th:text-slate-300 prose-td:text-slate-400
+                  prose-img:rounded-lg
+                ">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      code({ children, className, ...props }) {
+                        return <code className={className} {...props}>{String(children).replace(/\n$/, '')}</code>;
+                      },
+                    }}
+                  >{editedTask.content.trim()}</ReactMarkdown>
                 </div>
-                <h3 className="text-lg font-medium text-white mb-2">대화 시작하기</h3>
-                <p className="text-sm text-slate-500 mb-6 max-w-sm">
-                  Claude와 대화형으로 태스크를 수행합니다.
-                  세션을 시작하면 이전 대화를 이어서 진행할 수 있습니다.
-                </p>
-                <button
-                  onClick={handleStartSession}
-                  disabled={isStartingSession}
-                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-lg shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all disabled:opacity-50"
-                >
-                  {isStartingSession ? (
-                    <>
-                      <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      <span>시작 중...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>▶</span>
-                      <span>세션 시작</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            ) : (
-              <>
-                {conversationMessages.map((message) => (
-                  <MessageBubble key={message.id} message={message} />
-                ))}
-                <div ref={messagesEndRef} />
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Footer - Settings Tab */}
-        {activeTab === 'settings' && (
-        <div className="flex items-center justify-between px-6 py-4 border-t border-white/5 bg-slate-900/50">
-          {/* Delete button */}
-          <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="px-4 py-2 text-sm font-mono text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 rounded-lg transition-all disabled:opacity-50"
-          >
-            {isDeleting ? 'Deleting...' : 'Delete Task'}
-          </button>
-
-          {/* Save button */}
-          <button
-            onClick={handleSave}
-            disabled={isSaving || !hasChanges}
-            className={`
-              px-6 py-2 rounded-lg text-sm font-mono font-medium
-              transition-all
-              ${hasChanges
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40'
-                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-              }
-              disabled:opacity-50
-            `}
-          >
-            {isSaving ? (
-              <span className="flex items-center gap-2">
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Saving...
-              </span>
-            ) : (
-              'Save Changes'
-            )}
-          </button>
+              ) : (
+                <span className="text-slate-600 italic">No content yet...</span>
+              )}
+            </div>
+          )}
         </div>
-        )}
 
-        {/* Footer - Chat Tab */}
-        {activeTab === 'chat' && (isSessionActive || conversationMessages.length > 0) && (
-          <div className="border-t border-white/10 p-4 bg-slate-900/50">
-            {!isSessionActive && conversationMessages.length > 0 ? (
-              <button
-                onClick={handleStartSession}
-                disabled={isStartingSession}
-                className="w-full py-3 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 font-medium rounded-lg border border-cyan-500/30 hover:border-cyan-500/50 transition-all disabled:opacity-50"
-              >
-                {isStartingSession ? '세션 재시작 중...' : '세션 재시작 (이전 대화 이어가기)'}
-              </button>
-            ) : isSessionActive ? (
-              <div className="flex gap-3">
-                <textarea
-                  ref={textareaRef}
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={handleChatKeyDown}
-                  placeholder="메시지를 입력하세요... (Enter로 전송, Shift+Enter로 줄바꿈)"
-                  className="flex-1 px-4 py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent"
-                  rows={2}
-                />
+        {/* Right Panel: Settings / Chat */}
+        <div className="w-[28rem] flex flex-col min-w-0">
+          {/* Header */}
+          <div className="border-b border-white/5 bg-gradient-to-r from-slate-900/80 to-slate-950">
+            {/* Top row with status and close button */}
+            <div className="flex items-center justify-between px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full ${column?.color.replace('text-', 'bg-')} animate-pulse`} />
+                <span className={`text-xs font-mono uppercase tracking-wider ${column?.color}`}>
+                  {column?.title}
+                </span>
+                {/* Session status for chat */}
+                {activeTab === 'chat' && (
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                    isSessionActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'
+                  }`}>
+                    {isSessionActive ? '● 세션 활성' : '○ 세션 종료'}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Unsaved indicator */}
+                {hasChanges && activeTab === 'settings' && (
+                  <span className="px-2 py-0.5 text-[10px] font-mono text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-full uppercase tracking-wider">
+                    Unsaved
+                  </span>
+                )}
+
+                {/* Stop session button (only in chat tab when session is active) */}
+                {activeTab === 'chat' && isSessionActive && (
+                  <button
+                    onClick={handleStopSession}
+                    className="px-3 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                  >
+                    세션 종료
+                  </button>
+                )}
+
+                {/* Close button */}
                 <button
-                  onClick={handleSendMessage}
-                  disabled={!chatInput.trim()}
-                  className="px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={onClose}
+                  className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-            ) : null}
+            </div>
+
+            {/* Tab navigation */}
+            <div className="flex px-6 gap-1">
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                  activeTab === 'settings'
+                    ? 'bg-slate-950 text-white border-t border-x border-white/10'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  설정
+                </span>
+              </button>
+              <button
+                onClick={() => setActiveTab('chat')}
+                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                  activeTab === 'chat'
+                    ? 'bg-slate-950 text-white border-t border-x border-white/10'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  채팅
+                  {conversationMessages.length > 0 && (
+                    <span className="px-1.5 py-0.5 text-[10px] bg-cyan-500/20 text-cyan-400 rounded-full">
+                      {conversationMessages.length}
+                    </span>
+                  )}
+                </span>
+              </button>
+            </div>
           </div>
-        )}
+
+          {/* Settings Tab Content */}
+          {activeTab === 'settings' && (
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-700/50">
+            {/* Title */}
+            <div>
+              <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
+                Task Title
+              </label>
+              <input
+                type="text"
+                value={editedTask.title || ''}
+                onChange={(e) => handleChange('title', e.target.value)}
+                className="w-full px-4 py-3 bg-slate-900/50 border border-white/5 rounded-lg text-lg font-medium text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
+                placeholder="Task title..."
+              />
+            </div>
+
+            {/* Status & Priority row */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Status */}
+              <div>
+                <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
+                  Status
+                </label>
+                <select
+                  value={editedTask.status || task.status}
+                  onChange={(e) => handleChange('status', e.target.value as TaskStatus)}
+                  className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all appearance-none cursor-pointer"
+                >
+                  {COLUMNS.map((col) => (
+                    <option key={col.id} value={col.id}>
+                      {col.icon} {col.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Priority */}
+              <div>
+                <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
+                  Priority
+                </label>
+                <select
+                  value={editedTask.priority || task.priority}
+                  onChange={(e) => handleChange('priority', e.target.value as TaskPriority)}
+                  className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all appearance-none cursor-pointer"
+                >
+                  {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
+                    <option key={key} value={key}>
+                      {config.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Assignee */}
+            <div>
+              <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
+                Assignee
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleChange('assignee', 'user')}
+                  className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-mono transition-all ${
+                    editedTask.assignee === 'user'
+                      ? 'bg-cyan-500/10 border-cyan-500/50 text-cyan-400'
+                      : 'bg-slate-900/50 border-white/5 text-slate-400 hover:border-white/10'
+                  }`}
+                >
+                  👤 User
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChange('assignee', 'ai-agent')}
+                  className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-mono transition-all ${
+                    editedTask.assignee === 'ai-agent'
+                      ? 'bg-violet-500/10 border-violet-500/50 text-violet-400'
+                      : 'bg-slate-900/50 border-white/5 text-slate-400 hover:border-white/10'
+                  }`}
+                >
+                  🤖 AI Agent
+                </button>
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div>
+              <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
+                Tags (comma separated)
+              </label>
+              <input
+                type="text"
+                value={(editedTask.tags || []).join(', ')}
+                onChange={(e) => handleChange('tags', e.target.value.split(',').map((t) => t.trim()).filter(Boolean))}
+                className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all"
+                placeholder="backend, api, auth..."
+              />
+            </div>
+
+            {/* Date Fields */}
+            <div className="grid grid-cols-2 gap-4">
+              <DatePicker
+                label="Start Date"
+                value={editedTask.start_date}
+                onChange={(date) => handleChange('start_date', date)}
+                maxDate={editedTask.due_date}
+              />
+              <DatePicker
+                label="Due Date"
+                value={editedTask.due_date}
+                onChange={(date) => handleChange('due_date', date)}
+                minDate={editedTask.start_date}
+              />
+            </div>
+
+            {/* File path */}
+            <div className="pt-4 border-t border-white/5">
+              <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span className="truncate">{task.filePath}</span>
+              </div>
+              <div className="flex items-center gap-4 mt-2 text-[10px] font-mono text-slate-600">
+                <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
+                <span>Updated: {new Date(task.updated_at).toLocaleDateString()}</span>
+              </div>
+            </div>
+          </div>
+          )}
+
+          {/* Chat Tab Content */}
+          {activeTab === 'chat' && (
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {conversationMessages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-950/50 to-slate-900 border border-cyan-500/20 flex items-center justify-center mb-4">
+                    <span className="text-3xl">💬</span>
+                  </div>
+                  <h3 className="text-lg font-medium text-white mb-2">대화 시작하기</h3>
+                  <p className="text-sm text-slate-500 mb-6 max-w-sm">
+                    Claude와 대화형으로 태스크를 수행합니다.
+                    세션을 시작하면 이전 대화를 이어서 진행할 수 있습니다.
+                  </p>
+                  <button
+                    onClick={handleStartSession}
+                    disabled={isStartingSession}
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-lg shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all disabled:opacity-50"
+                  >
+                    {isStartingSession ? (
+                      <>
+                        <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        <span>시작 중...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>▶</span>
+                        <span>세션 시작</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {conversationMessages.map((message) => (
+                    <MessageBubble key={message.id} message={message} />
+                  ))}
+                  <div ref={messagesEndRef} />
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Footer - Settings Tab */}
+          {activeTab === 'settings' && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-white/5 bg-slate-900/50">
+            {/* Delete button */}
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="px-4 py-2 text-sm font-mono text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 rounded-lg transition-all disabled:opacity-50"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Task'}
+            </button>
+
+            {/* Save button */}
+            <button
+              onClick={handleSave}
+              disabled={isSaving || !hasChanges}
+              className={`
+                px-6 py-2 rounded-lg text-sm font-mono font-medium
+                transition-all
+                ${hasChanges
+                  ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40'
+                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                }
+                disabled:opacity-50
+              `}
+            >
+              {isSaving ? (
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Saving...
+                </span>
+              ) : (
+                'Save Changes'
+              )}
+            </button>
+          </div>
+          )}
+
+          {/* Footer - Chat Tab */}
+          {activeTab === 'chat' && (isSessionActive || conversationMessages.length > 0) && (
+            <div className="border-t border-white/10 p-4 bg-slate-900/50">
+              {!isSessionActive && conversationMessages.length > 0 ? (
+                <button
+                  onClick={handleStartSession}
+                  disabled={isStartingSession}
+                  className="w-full py-3 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 font-medium rounded-lg border border-cyan-500/30 hover:border-cyan-500/50 transition-all disabled:opacity-50"
+                >
+                  {isStartingSession ? '세션 재시작 중...' : '세션 재시작 (이전 대화 이어가기)'}
+                </button>
+              ) : isSessionActive ? (
+                <div className="flex gap-3">
+                  <textarea
+                    ref={textareaRef}
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={handleChatKeyDown}
+                    placeholder="메시지를 입력하세요... (Enter로 전송, Shift+Enter로 줄바꿈)"
+                    className="flex-1 px-4 py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent"
+                    rows={2}
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={!chatInput.trim()}
+                    className="px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          )}
+        </div>
       </div>
     </>
   );
