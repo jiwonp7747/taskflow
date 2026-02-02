@@ -37,10 +37,10 @@ interface Task {
   created_at: string;
   updated_at: string;
   tags: string[];
-  description: string;
-  requirements: string;
-  feedback: string;
-  aiWorkLog: string;
+  content: string;
+  task_size?: string;
+  total_hours?: number;
+  notion_id?: string;
   filePath: string;
 }
 
@@ -99,11 +99,6 @@ function getAllSources(): SourceConfig[] {
   return [];
 }
 
-function extractSection(content: string, heading: string): string {
-  const regex = new RegExp(`## ${heading}\\s*\\n([\\s\\S]*?)(?=\\n## |$)`, 'i');
-  const match = content.match(regex);
-  return match ? match[1].trim() : '';
-}
 
 function parseTaskFile(filePath: string): Task | null {
   try {
@@ -121,10 +116,10 @@ function parseTaskFile(filePath: string): Task | null {
       created_at: data.created_at || new Date().toISOString(),
       updated_at: data.updated_at || new Date().toISOString(),
       tags: Array.isArray(data.tags) ? data.tags : [],
-      description: extractSection(markdownContent, 'Description'),
-      requirements: extractSection(markdownContent, 'Requirements'),
-      feedback: extractSection(markdownContent, 'Feedback'),
-      aiWorkLog: extractSection(markdownContent, 'AI Work Log'),
+      content: markdownContent.trim(),
+      task_size: data.task_size,
+      total_hours: typeof data.total_hours === 'number' ? data.total_hours : undefined,
+      notion_id: data.notion_id,
       filePath,
     };
   } catch (error) {
@@ -171,18 +166,8 @@ function updateTaskStatus(task: Task, newStatus: TaskStatus, workLog?: string): 
   // Add work log if provided
   if (workLog) {
     const timestamp = new Date().toISOString().split('T')[0];
-    const logEntry = `\n### ${timestamp}\n${workLog}\n`;
-
-    // Find AI Work Log section and append
-    const aiWorkLogMatch = updatedMarkdown.match(/## AI Work Log\s*\n/i);
-    if (aiWorkLogMatch) {
-      const insertIndex = aiWorkLogMatch.index! + aiWorkLogMatch[0].length;
-      updatedMarkdown =
-        updatedMarkdown.slice(0, insertIndex) + logEntry + updatedMarkdown.slice(insertIndex);
-    } else {
-      // Add section if not exists
-      updatedMarkdown += `\n## AI Work Log\n${logEntry}`;
-    }
+    const logEntry = `\n\n### AI Work Log - ${timestamp}\n${workLog}\n`;
+    updatedMarkdown = updatedMarkdown + logEntry;
   }
 
   const newContent = matter.stringify(updatedMarkdown, data);
@@ -275,8 +260,8 @@ function cmdList(dir: string, jsonOutput: boolean, searchAll: boolean = false): 
     console.log(
       `  ${statusColor}${task.status}${colors.reset} | ${priorityColor}${task.priority}${colors.reset} | Tags: ${task.tags.join(', ') || 'none'}`
     );
-    if (task.status === 'NEED_FIX' && task.feedback) {
-      console.log(`  ${colors.magenta}Feedback:${colors.reset} ${task.feedback.slice(0, 100)}...`);
+    if (task.status === 'NEED_FIX' && task.content) {
+      console.log(`  ${colors.magenta}Content:${colors.reset} ${task.content.slice(0, 100)}...`);
     }
     console.log('');
   }
@@ -303,14 +288,7 @@ function cmdShow(dir: string, taskId: string, jsonOutput: boolean): void {
   console.log(`${colors.bright}Assignee:${colors.reset} ${task.assignee}`);
   console.log(`${colors.bright}Tags:${colors.reset}     ${task.tags.join(', ') || 'none'}`);
   console.log(`${colors.bright}Updated:${colors.reset}  ${task.updated_at}`);
-  console.log(`\n${colors.bright}Description:${colors.reset}\n${task.description || '(empty)'}`);
-  console.log(`\n${colors.bright}Requirements:${colors.reset}\n${task.requirements || '(empty)'}`);
-  if (task.feedback) {
-    console.log(`\n${colors.bright}Feedback:${colors.reset}\n${task.feedback}`);
-  }
-  if (task.aiWorkLog) {
-    console.log(`\n${colors.bright}AI Work Log:${colors.reset}\n${task.aiWorkLog}`);
-  }
+  console.log(`\n${colors.bright}Content:${colors.reset}\n${task.content || '(empty)'}`);
   console.log(`\n${colors.dim}File: ${task.filePath}${colors.reset}`);
 }
 

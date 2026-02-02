@@ -40,12 +40,12 @@ export interface Task {
   start_date?: string;  // ISO date string, optional
   due_date?: string;    // ISO date string, optional
   tags: string[];
+  task_size?: string;
+  total_hours?: number;
+  notion_id?: string;
 
-  // Content fields (markdown sections)
-  description: string;
-  requirements: string;
-  feedback: string;
-  aiWorkLog: string;
+  // Content field (unified markdown)
+  content: string;
 
   // Metadata
   filePath: string;
@@ -71,9 +71,10 @@ export interface TaskUpdateRequest {
   tags?: string[];
   start_date?: string;
   due_date?: string;
-  description?: string;
-  requirements?: string;
-  feedback?: string;
+  content?: string;
+  task_size?: string;
+  total_hours?: number;
+  notion_id?: string;
 }
 
 export interface TaskCreateRequest {
@@ -83,8 +84,10 @@ export interface TaskCreateRequest {
   tags?: string[];
   start_date?: string;
   due_date?: string;
-  description?: string;
-  requirements?: string;
+  content?: string;
+  task_size?: string;
+  total_hours?: number;
+  notion_id?: string;
 }
 
 export interface FileWatchEvent {

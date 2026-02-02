@@ -1,16 +1,17 @@
 {
   "sources": [
     {
-      "id": "source-1768219415432",
-      "name": "todo",
-      "path": "/Users/jiwonp/project/docs/todo",
+      "id": "source-1769932833469",
+      "name": "schedule",
+      "path": "/Users/jiwonp/project/docs/schedule",
       "isActive": true,
-      "createdAt": "2026-01-12T12:03:35.432Z"
+      "createdAt": "2026-02-01T08:00:33.469Z",
+      "lastAccessed": "2026-02-01T08:36:05.162Z"
     }
   ],
-  "activeSourceId": "source-1768219415432",
+  "activeSourceId": "source-1769932833469",
   "theme": "dark",
-  "sidebarCollapsed": false,
+  "sidebarCollapsed": true,
   "aiWorker": {
     "enabled": true,
     "autoStart": false,

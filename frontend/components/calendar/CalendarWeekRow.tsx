@@ -13,6 +13,7 @@ interface CalendarWeekRowProps {
   isCurrentMonth: (date: Date) => boolean;
   workingTaskIds: string[];
   formatDateKey: (date: Date) => string;
+  onDateDoubleClick?: (date: Date) => void;
 }
 
 // Calculate how a spanning task appears in a given week
@@ -96,6 +97,7 @@ export function CalendarWeekRow({
   isCurrentMonth,
   workingTaskIds,
   formatDateKey,
+  onDateDoubleClick,
 }: CalendarWeekRowProps) {
   const spanningTasksInWeek = getSpanningTasksInWeek(weekDays, spanningTasks);
   const spanningTaskIds = new Set(spanningTasks.map(s => s.task.id));
@@ -155,6 +157,7 @@ export function CalendarWeekRow({
               isToday={isToday(date)}
               isCurrentMonth={isCurrentMonth(date)}
               workingTaskIds={workingTaskIds}
+              onDateDoubleClick={onDateDoubleClick}
             />
           );
         })}

@@ -14,6 +14,7 @@ import { CreateTaskModal } from '@/components/kanban/CreateTaskModal';
 import { FilterBar } from '@/components/kanban/FilterBar';
 import { ViewToggle, type ViewType } from '@/components/kanban/ViewToggle';
 import { CalendarView } from '@/components/calendar';
+import { TimelineView } from '@/components/timeline';
 import { LeftSidebar } from '@/components/sidebar/LeftSidebar';
 import { AIStatusBar } from '@/components/ai/AIStatusBar';
 import { WelcomeScreen } from '@/components/onboarding/WelcomeScreen';
@@ -54,6 +55,7 @@ export default function Home() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [workingTaskIds, setWorkingTaskIds] = useState<string[]>([]);
   const [activeView, setActiveView] = useState<ViewType>('kanban');
+  const [timelineDate, setTimelineDate] = useState<Date>(new Date());
 
   // Conversation hook - now based on selectedTask
   const {
@@ -97,6 +99,12 @@ export default function Home() {
 
     setWorkingTaskIds(workingIds);
   }, [aiStatus.isRunning, aiStatus.currentTask, aiStatus.isPaused]);
+
+  // Handle calendar date double-click → switch to timeline
+  const handleDateDoubleClick = useCallback((date: Date) => {
+    setTimelineDate(date);
+    setActiveView('timeline');
+  }, []);
 
   // Handle task click - always open TaskSidebar with tabs
   const handleTaskClick = useCallback((task: Task) => {
@@ -349,7 +357,7 @@ export default function Home() {
             />
           )}
 
-          {/* Kanban board or Calendar view */}
+          {/* Kanban board, Calendar, or Timeline view */}
           {!noSource && (!loading || tasks.length > 0) ? (
             activeView === 'kanban' ? (
               <TaskBoard
@@ -358,10 +366,19 @@ export default function Home() {
                 onTaskClick={handleTaskClick}
                 workingTaskIds={workingTaskIds}
               />
-            ) : (
+            ) : activeView === 'calendar' ? (
               <CalendarView
                 tasks={filteredTasks}
                 onTaskClick={handleTaskClick}
+                workingTaskIds={workingTaskIds}
+                onDateDoubleClick={handleDateDoubleClick}
+              />
+            ) : (
+              <TimelineView
+                tasks={filteredTasks}
+                date={timelineDate}
+                onTaskClick={handleTaskClick}
+                onDateChange={setTimelineDate}
                 workingTaskIds={workingTaskIds}
               />
             )

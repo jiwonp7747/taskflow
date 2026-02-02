@@ -14,25 +14,6 @@ const VALID_STATUSES: TaskStatus[] = [
 // Valid priority values
 const VALID_PRIORITIES: TaskPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 
-// Known section headers - only these are used as boundaries
-// Can be moved to external config if needed
-const SECTION_HEADERS = ['Description', 'Requirements', 'Feedback', 'AI Work Log'];
-
-// Extract a markdown section by heading (only splits on known headers)
-function extractSection(content: string, heading: string): string {
-  // Build regex pattern that only matches known section headers as boundaries
-  const otherHeaders = SECTION_HEADERS.filter(h => h.toLowerCase() !== heading.toLowerCase());
-  const boundaryPattern = otherHeaders.map(h => `## ${h}`).join('|');
-
-  // Handle both Unix (\n) and Windows (\r\n) line endings
-  const regex = new RegExp(
-    `## ${heading}[ \\t]*\\r?\\n([\\s\\S]*?)(?=\\r?\\n(?:${boundaryPattern})[ \\t]*\\r?\\n|$)`,
-    'i'
-  );
-  const match = content.match(regex);
-  return match ? match[1].trim() : '';
-}
-
 // Validate and parse status
 function parseStatus(value: unknown): TaskStatus {
   if (typeof value === 'string' && VALID_STATUSES.includes(value as TaskStatus)) {
@@ -111,10 +92,10 @@ export function parseTaskContent(content: string, filePath: string): Task {
     start_date: parseOptionalDate(data.start_date),
     due_date: parseOptionalDate(data.due_date),
     tags: parseTags(data.tags),
-    description: extractSection(markdownContent, 'Description'),
-    requirements: extractSection(markdownContent, 'Requirements'),
-    feedback: extractSection(markdownContent, 'Feedback'),
-    aiWorkLog: extractSection(markdownContent, 'AI Work Log'),
+    task_size: typeof data.task_size === 'string' ? data.task_size : undefined,
+    total_hours: typeof data.total_hours === 'number' ? data.total_hours : (typeof data.total_hours === 'string' ? parseFloat(data.total_hours) || undefined : undefined),
+    notion_id: typeof data.notion_id === 'string' ? data.notion_id : undefined,
+    content: markdownContent.trim(),
     filePath,
     rawContent: content,
   };
@@ -133,9 +114,11 @@ export function generateTaskContent(task: Partial<Task>): string {
     start_date: task.start_date,
     due_date: task.due_date,
     tags: task.tags || [],
+    task_size: task.task_size,
+    total_hours: task.total_hours,
+    notion_id: task.notion_id,
   };
 
-  // Build frontmatter string with optional date fields
   const dateParts = [
     `id: ${frontmatter.id}`,
     `title: ${frontmatter.title}`,
@@ -155,28 +138,22 @@ export function generateTaskContent(task: Partial<Task>): string {
 
   dateParts.push(`tags: [${frontmatter.tags.join(', ')}]`);
 
-  const content = `---
+  if (frontmatter.task_size) {
+    dateParts.push(`task_size: ${frontmatter.task_size}`);
+  }
+  if (frontmatter.total_hours !== undefined) {
+    dateParts.push(`total_hours: ${frontmatter.total_hours}`);
+  }
+  if (frontmatter.notion_id) {
+    dateParts.push(`notion_id: ${frontmatter.notion_id}`);
+  }
+
+  return `---
 ${dateParts.join('\n')}
 ---
 
-## Description
-
-${task.description || ''}
-
-## Requirements
-
-${task.requirements || ''}
-
-## Feedback
-
-${task.feedback || ''}
-
-## AI Work Log
-
-${task.aiWorkLog || ''}
+${task.content || ''}
 `;
-
-  return content;
 }
 
 // Update frontmatter in existing content
@@ -186,20 +163,10 @@ export function updateTaskFrontmatter(
 ): string {
   const { data, content } = matter(originalContent);
 
-  // Handle AI Work Log update in markdown body
-  let updatedContent = content;
-  if (updates.aiWorkLog !== undefined) {
-    // Find the AI Work Log section and update it
-    const aiWorkLogRegex = /(## AI Work Log\s*\n)[\s\S]*$/;
-    if (aiWorkLogRegex.test(updatedContent)) {
-      updatedContent = updatedContent.replace(aiWorkLogRegex, `$1\n${updates.aiWorkLog}\n`);
-    } else {
-      // If section doesn't exist, append it
-      updatedContent += `\n## AI Work Log\n\n${updates.aiWorkLog}\n`;
-    }
-  }
+  // If content field is being updated, replace the body
+  let updatedContent = updates.content !== undefined ? updates.content : content;
 
-  // Merge updates
+  // Merge updates into frontmatter
   const updatedData = {
     ...data,
     ...updates,
@@ -207,10 +174,7 @@ export function updateTaskFrontmatter(
   };
 
   // Remove non-frontmatter fields
-  delete updatedData.description;
-  delete updatedData.requirements;
-  delete updatedData.feedback;
-  delete updatedData.aiWorkLog;
+  delete updatedData.content;
   delete updatedData.filePath;
   delete updatedData.rawContent;
 

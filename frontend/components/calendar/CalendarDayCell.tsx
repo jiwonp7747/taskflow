@@ -10,6 +10,7 @@ interface CalendarDayCellProps {
   isToday: boolean;
   isCurrentMonth: boolean;
   workingTaskIds: string[];
+  onDateDoubleClick?: (date: Date) => void;
 }
 
 const MAX_VISIBLE_TASKS = 3;
@@ -21,6 +22,7 @@ export function CalendarDayCell({
   isToday,
   isCurrentMonth,
   workingTaskIds,
+  onDateDoubleClick,
 }: CalendarDayCellProps) {
   const dayNumber = date.getDate();
   const hasMore = tasks.length > MAX_VISIBLE_TASKS;
@@ -35,6 +37,11 @@ export function CalendarDayCell({
         ${isToday ? 'bg-cyan-950/30 ring-1 ring-inset ring-cyan-500/30' : ''}
         hover:bg-slate-800/30
       `}
+      onDoubleClick={(e) => {
+        // Only trigger if clicking the cell background, not a task chip
+        if ((e.target as HTMLElement).closest('button')) return;
+        onDateDoubleClick?.(date);
+      }}
     >
       {/* Day number */}
       <div className="flex items-center justify-center mb-1">

@@ -71,8 +71,7 @@ export async function POST(
         priority: body.priority || 'MEDIUM',
         assignee: body.assignee || 'user',
         tags: body.tags || [],
-        description: body.description || '',
-        requirements: body.requirements || '',
+        content: body.content || '',
         status: 'TODO',
       },
       directory

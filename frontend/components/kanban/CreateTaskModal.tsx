@@ -18,8 +18,7 @@ export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalPr
   const [tags, setTags] = useState('');
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
   const [dueDate, setDueDate] = useState<string | undefined>(undefined);
-  const [description, setDescription] = useState('');
-  const [requirements, setRequirements] = useState('');
+  const [content, setContent] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
   const handleCreate = useCallback(async () => {
@@ -34,8 +33,7 @@ export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalPr
         tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
         start_date: startDate,
         due_date: dueDate,
-        description,
-        requirements,
+        content,
       });
 
       // Reset form
@@ -45,13 +43,12 @@ export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalPr
       setTags('');
       setStartDate(undefined);
       setDueDate(undefined);
-      setDescription('');
-      setRequirements('');
+      setContent('');
       onClose();
     } finally {
       setIsCreating(false);
     }
-  }, [title, priority, assignee, tags, startDate, dueDate, description, requirements, onCreate, onClose]);
+  }, [title, priority, assignee, tags, startDate, dueDate, content, onCreate, onClose]);
 
   if (!isOpen) return null;
 
@@ -184,31 +181,17 @@ export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalPr
               />
             </div>
 
-            {/* Description */}
+            {/* Content */}
             <div>
               <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
-                Description
+                Content
               </label>
               <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={6}
                 className="w-full px-4 py-3 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all resize-none"
-                placeholder="Describe the task..."
-              />
-            </div>
-
-            {/* Requirements */}
-            <div>
-              <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
-                Requirements
-              </label>
-              <textarea
-                value={requirements}
-                onChange={(e) => setRequirements(e.target.value)}
-                rows={3}
-                className="w-full px-4 py-3 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all resize-none font-mono text-xs"
-                placeholder="- Requirement 1&#10;- Requirement 2"
+                placeholder="Task content..."
               />
             </div>
           </div>

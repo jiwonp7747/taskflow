@@ -36,15 +36,25 @@ export function getTasksDirectory(): string {
   return DEFAULT_TASKS_DIR;
 }
 
-// Scan directory for markdown files
+// Scan directory recursively for markdown files
 export async function scanTaskDirectory(dir: string = DEFAULT_TASKS_DIR): Promise<string[]> {
   await ensureTasksDirectory(dir);
 
-  const files = await fs.readdir(dir);
-  const mdFiles = files
-    .filter((file) => file.endsWith('.md'))
-    .map((file) => path.join(dir, file));
+  const mdFiles: string[] = [];
 
+  async function scanDir(currentDir: string): Promise<void> {
+    const entries = await fs.readdir(currentDir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        await scanDir(fullPath);
+      } else if (entry.name.endsWith('.md')) {
+        mdFiles.push(fullPath);
+      }
+    }
+  }
+
+  await scanDir(dir);
   return mdFiles;
 }
 

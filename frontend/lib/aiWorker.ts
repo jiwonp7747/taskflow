@@ -176,7 +176,7 @@ async function executeTask(task: Task): Promise<void> {
     // Update task status based on result
     if (result.success) {
       // Add AI Work Log entry
-      const aiWorkLogEntry = `\n### ${new Date().toISOString()}\n\n작업이 완료되었습니다. (${result.duration}ms)\n\n실행 결과:\n\`\`\`\n${result.stdout.slice(0, 2000)}${result.stdout.length > 2000 ? '\n...(truncated)' : ''}\n\`\`\`\n`;
+      const workLogEntry = `\n\n### AI Work Log - ${new Date().toISOString()}\n\n작업이 완료되었습니다. (${result.duration}ms)\n\n실행 결과:\n\`\`\`\n${result.stdout.slice(0, 2000)}${result.stdout.length > 2000 ? '\n...(truncated)' : ''}\n\`\`\`\n`;
 
       const currentTask = await getAllTasks(tasksDir).then(tasks =>
         tasks.find(t => t.id === task.id)
@@ -187,7 +187,7 @@ async function executeTask(task: Task): Promise<void> {
           task.id,
           {
             status: 'IN_REVIEW',
-            aiWorkLog: (currentTask.aiWorkLog || '') + aiWorkLogEntry,
+            content: (currentTask.content || '') + workLogEntry,
           },
           tasksDir
         );
@@ -204,7 +204,7 @@ async function executeTask(task: Task): Promise<void> {
       });
     } else {
       // Add error to AI Work Log
-      const aiWorkLogEntry = `\n### ${new Date().toISOString()}\n\n작업 실패 (종료 코드: ${result.exitCode}, ${result.duration}ms)\n\n에러:\n\`\`\`\n${result.error || result.stderr}\n\`\`\`\n`;
+      const workLogEntry = `\n\n### AI Work Log - ${new Date().toISOString()}\n\n작업 실패 (종료 코드: ${result.exitCode}, ${result.duration}ms)\n\n에러:\n\`\`\`\n${result.error || result.stderr}\n\`\`\`\n`;
 
       const currentTask = await getAllTasks(tasksDir).then(tasks =>
         tasks.find(t => t.id === task.id)
@@ -215,7 +215,7 @@ async function executeTask(task: Task): Promise<void> {
           task.id,
           {
             status: 'NEED_FIX',
-            aiWorkLog: (currentTask.aiWorkLog || '') + aiWorkLogEntry,
+            content: (currentTask.content || '') + workLogEntry,
           },
           tasksDir
         );

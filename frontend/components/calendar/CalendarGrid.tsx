@@ -14,6 +14,7 @@ interface CalendarGridProps {
   isToday: (date: Date) => boolean;
   isCurrentMonth: (date: Date) => boolean;
   workingTaskIds: string[];
+  onDateDoubleClick?: (date: Date) => void;
 }
 
 export function CalendarGrid({
@@ -24,6 +25,7 @@ export function CalendarGrid({
   isToday,
   isCurrentMonth,
   workingTaskIds,
+  onDateDoubleClick,
 }: CalendarGridProps) {
   // Helper to format date to YYYY-MM-DD for lookup
   const formatDateKey = (date: Date): string => {
@@ -66,6 +68,7 @@ export function CalendarGrid({
             isCurrentMonth={isCurrentMonth}
             workingTaskIds={workingTaskIds}
             formatDateKey={formatDateKey}
+            onDateDoubleClick={onDateDoubleClick}
           />
         ))}
       </div>

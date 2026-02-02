@@ -1,6 +1,6 @@
 'use client';
 
-export type ViewType = 'kanban' | 'calendar';
+export type ViewType = 'kanban' | 'calendar' | 'timeline';
 
 interface ViewToggleProps {
   activeView: ViewType;
@@ -42,6 +42,23 @@ export function ViewToggle({ activeView, onViewChange }: ViewToggleProps) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
         <span>Calendar</span>
+      </button>
+
+      {/* Timeline view button */}
+      <button
+        onClick={() => onViewChange('timeline')}
+        className={`flex items-center gap-2 px-3 py-1.5 text-sm font-mono rounded-md transition-all ${
+          activeView === 'timeline'
+            ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+            : 'text-slate-400 hover:text-white hover:bg-slate-800/50 border border-transparent'
+        }`}
+        title="Timeline View"
+      >
+        {/* Clock icon */}
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Timeline</span>
       </button>
     </div>
   );

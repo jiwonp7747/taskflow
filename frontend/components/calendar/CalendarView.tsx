@@ -11,12 +11,14 @@ interface CalendarViewProps {
   tasks: Task[];
   onTaskClick: (task: Task) => void;
   workingTaskIds?: string[];
+  onDateDoubleClick?: (date: Date) => void;
 }
 
 export function CalendarView({
   tasks,
   onTaskClick,
   workingTaskIds = [],
+  onDateDoubleClick,
 }: CalendarViewProps) {
   const {
     calendarDays,
@@ -131,6 +133,7 @@ export function CalendarView({
         isToday={isToday}
         isCurrentMonth={isCurrentMonth}
         workingTaskIds={workingTaskIds}
+        onDateDoubleClick={onDateDoubleClick}
       />
 
       {/* Footer with tasks without date indicator */}

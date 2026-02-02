@@ -53,9 +53,7 @@ export function TaskSidebar({
         tags: task.tags,
         start_date: task.start_date,
         due_date: task.due_date,
-        description: task.description,
-        requirements: task.requirements,
-        feedback: task.feedback,
+        content: task.content,
       });
       setHasChanges(false);
       setActiveTab('settings'); // Always start with settings tab
@@ -387,61 +385,19 @@ export function TaskSidebar({
             />
           </div>
 
-          {/* Description */}
+          {/* Content */}
           <div>
             <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
-              Description
+              Content
             </label>
             <textarea
-              value={editedTask.description || ''}
-              onChange={(e) => handleChange('description', e.target.value)}
-              rows={4}
+              value={editedTask.content || ''}
+              onChange={(e) => handleChange('content', e.target.value)}
+              rows={8}
               className="w-full px-4 py-3 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all resize-none"
-              placeholder="Describe the task..."
+              placeholder="Task content..."
             />
           </div>
-
-          {/* Requirements */}
-          <div>
-            <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
-              Requirements
-            </label>
-            <textarea
-              value={editedTask.requirements || ''}
-              onChange={(e) => handleChange('requirements', e.target.value)}
-              rows={4}
-              className="w-full px-4 py-3 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all resize-none font-mono text-xs"
-              placeholder="- Requirement 1&#10;- Requirement 2"
-            />
-          </div>
-
-          {/* Feedback (for NEED_FIX) */}
-          {(task.status === 'NEED_FIX' || task.status === 'IN_REVIEW') && (
-            <div>
-              <label className="block text-[10px] font-mono text-orange-400 uppercase tracking-wider mb-2">
-                Feedback
-              </label>
-              <textarea
-                value={editedTask.feedback || ''}
-                onChange={(e) => handleChange('feedback', e.target.value)}
-                rows={3}
-                className="w-full px-4 py-3 bg-orange-900/10 border border-orange-500/20 rounded-lg text-sm text-white placeholder-orange-400/50 focus:outline-none focus:border-orange-500/50 transition-all resize-none"
-                placeholder="Provide feedback for the AI agent..."
-              />
-            </div>
-          )}
-
-          {/* AI Work Log (read-only, scrollable) */}
-          {task.aiWorkLog && (
-            <div>
-              <label className="block text-[10px] font-mono text-violet-400 uppercase tracking-wider mb-2">
-                AI Work Log
-              </label>
-              <div className="max-h-64 overflow-y-auto px-4 py-3 bg-violet-900/10 border border-violet-500/20 rounded-lg text-sm text-slate-300 font-mono whitespace-pre-wrap scrollbar-thin scrollbar-track-transparent scrollbar-thumb-violet-700/50">
-                {task.aiWorkLog}
-              </div>
-            </div>
-          )}
 
           {/* File path */}
           <div className="pt-4 border-t border-white/5">
