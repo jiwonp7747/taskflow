@@ -214,8 +214,8 @@ export function TaskSidebar({
         if (isContentEditing) {
           wrapSelection('*');
         }
-      } else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'e') {
-        // Cmd+Shift+E: toggle edit/view mode (must come before Cmd+E check)
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'e') {
+        // Cmd+E: toggle edit/view mode
         e.preventDefault();
         setIsContentEditing(prev => !prev);
       }
@@ -255,7 +255,7 @@ export function TaskSidebar({
                   ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
-              title="Toggle edit mode (⌘⇧E)"
+              title="Toggle edit mode (⌘E)"
             >
               {isContentEditing ? (
                 <>
@@ -298,6 +298,7 @@ export function TaskSidebar({
                   prose-strong:text-white prose-strong:font-bold
                   prose-code:text-cyan-300 prose-code:bg-slate-800/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
                   prose-pre:bg-slate-900/80 prose-pre:border prose-pre:border-white/5 prose-pre:rounded-lg
+                  [&_pre_code]:p-0 [&_pre_code]:bg-transparent [&_pre_code]:rounded-none [&_pre_code]:text-sm
                   prose-blockquote:border-cyan-500/30 prose-blockquote:text-slate-400
                   prose-ul:text-slate-300 prose-ol:text-slate-300
                   prose-li:marker:text-slate-500
