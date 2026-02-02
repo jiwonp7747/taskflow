@@ -9,5 +9,14 @@ tmpclaude-*
 .DS_Store
 Thumbs.db
 
+# Build output
+frontend/dist/
+frontend/dist-electron/
+frontend/release/
+
+# OMC state
+.omc/
+frontend/.omc/
+
 # Test files (optional)
 # frontend/test-tasks/
