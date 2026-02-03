@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { execSync } from 'child_process';
+import { errorResponse, ErrorCodes } from '@/lib/api/errors';
 
 // Test Claude CLI using execSync
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -36,14 +37,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   } catch (error: any) {
     console.error('[Test Claude] Error:', error.message);
-    return NextResponse.json({
-      success: false,
-      error: error.message,
-      stdout: error.stdout?.toString().substring(0, 500) || '',
-      stderr: error.stderr?.toString().substring(0, 500) || '',
-      status: error.status,
-      platform: process.platform,
-      cwd: process.cwd(),
-    });
+    return errorResponse(
+      'CLAUDE_EXEC_ERROR',
+      error.message,
+      500,
+      {
+        stdout: error.stdout?.toString().substring(0, 500) || '',
+        stderr: error.stderr?.toString().substring(0, 500) || '',
+        status: error.status,
+        platform: process.platform,
+        cwd: process.cwd(),
+      }
+    );
   }
 }

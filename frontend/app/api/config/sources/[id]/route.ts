@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSourceService } from '@/infrastructure/container';
 import type { SourceConfig, UpdateSourceRequest } from '@/types/config';
-import type { Source } from '@/domain/entities/Source';
-
-interface ApiError {
-  error: {
-    code: string;
-    message: string;
-    details?: Record<string, unknown>;
-  };
-}
+import type { Source } from '@/core/domain/entities/Source';
+import { errorResponse, ErrorCodes, type ApiError } from '@/lib/api/errors';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -38,29 +31,21 @@ export async function GET(
     const source = sources.find(s => s.id === id);
 
     if (!source) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'NOT_FOUND',
-            message: 'Source not found',
-          },
-        },
-        { status: 404 }
+      return errorResponse(
+        ErrorCodes.SOURCE_NOT_FOUND,
+        'Source not found',
+        404
       );
     }
 
     return NextResponse.json({ source: sourceToConfig(source) });
   } catch (error) {
     console.error('Failed to get source:', error);
-    return NextResponse.json(
-      {
-        error: {
-          code: 'SOURCE_GET_ERROR',
-          message: 'Failed to get source',
-          details: { error: String(error) },
-        },
-      },
-      { status: 500 }
+    return errorResponse(
+      ErrorCodes.SOURCE_GET_ERROR,
+      'Failed to get source',
+      500,
+      { error: String(error) }
     );
   }
 }
@@ -80,14 +65,10 @@ export async function PUT(
     if (body.path) {
       const validation = await sourceService.validatePath(body.path);
       if (!validation.valid) {
-        return NextResponse.json(
-          {
-            error: {
-              code: 'INVALID_PATH',
-              message: validation.error || 'Invalid source path',
-            },
-          },
-          { status: 400 }
+        return errorResponse(
+          ErrorCodes.INVALID_PATH,
+          validation.error || 'Invalid source path',
+          400
         );
       }
     }
@@ -99,14 +80,10 @@ export async function PUT(
     return NextResponse.json({ source: sourceToConfig(source) });
   } catch (error) {
     console.error('Failed to update source:', error);
-    return NextResponse.json(
-      {
-        error: {
-          code: 'SOURCE_UPDATE_ERROR',
-          message: String(error),
-        },
-      },
-      { status: 500 }
+    return errorResponse(
+      ErrorCodes.SOURCE_UPDATE_ERROR,
+      String(error),
+      500
     );
   }
 }
@@ -124,14 +101,10 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to delete source:', error);
-    return NextResponse.json(
-      {
-        error: {
-          code: 'SOURCE_DELETE_ERROR',
-          message: String(error),
-        },
-      },
-      { status: 500 }
+    return errorResponse(
+      ErrorCodes.SOURCE_DELETE_ERROR,
+      String(error),
+      500
     );
   }
 }
@@ -149,14 +122,10 @@ export async function PATCH(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to set active source:', error);
-    return NextResponse.json(
-      {
-        error: {
-          code: 'SET_ACTIVE_ERROR',
-          message: String(error),
-        },
-      },
-      { status: 500 }
+    return errorResponse(
+      ErrorCodes.SET_ACTIVE_ERROR,
+      String(error),
+      500
     );
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getExecutionLog } from '@/lib/aiWorker';
 import type { AILogsResponse } from '@/types/ai';
+import { errorResponse, ErrorCodes } from '@/lib/api/errors';
 
 interface RouteParams {
   params: Promise<{ taskId: string }>;
@@ -20,9 +21,10 @@ export async function GET(request: Request, { params }: RouteParams) {
     return NextResponse.json(response);
   } catch (error) {
     console.error('Error getting execution log:', error);
-    return NextResponse.json(
-      { error: 'Failed to get execution log' },
-      { status: 500 }
+    return errorResponse(
+      ErrorCodes.AI_LOGS_ERROR,
+      'Failed to get execution log',
+      500
     );
   }
 }
