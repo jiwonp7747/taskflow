@@ -462,6 +462,7 @@ export default function Home() {
         onStartSession={startSession}
         onSendMessage={sendMessage}
         onStopSession={stopSession}
+        availableTags={availableTags}
       />
 
       {/* Create task modal */}
@@ -469,6 +470,7 @@ export default function Home() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={createTask}
+        availableTags={availableTags}
       />
 
       {/* Last event indicator (for debugging) */}

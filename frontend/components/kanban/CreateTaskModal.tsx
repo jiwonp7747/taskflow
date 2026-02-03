@@ -9,9 +9,10 @@ interface CreateTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (data: TaskCreateRequest) => Promise<unknown>;
+  availableTags?: string[];
 }
 
-export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalProps) {
+export function CreateTaskModal({ isOpen, onClose, onCreate, availableTags = [] }: CreateTaskModalProps) {
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState<TaskPriority>('MEDIUM');
   const [assignee, setAssignee] = useState<'user' | 'ai-agent'>('user');
@@ -163,6 +164,43 @@ export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalPr
                 className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all"
                 placeholder="backend, api, auth..."
               />
+              {/* Tag suggestions - horizontal scrollable */}
+              {availableTags.length > 0 && (() => {
+                const currentTags = tags.split(',').map((t) => t.trim()).filter(Boolean);
+                return (
+                <div className="mt-2 overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-700/50">
+                  <div className="flex gap-1.5 pb-1" style={{ minWidth: 'max-content' }}>
+                    {availableTags.map((tag) => {
+                      const isSelected = currentTags.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              // Remove tag
+                              const newTags = currentTags.filter((t) => t !== tag);
+                              setTags(newTags.join(', '));
+                            } else {
+                              // Add tag
+                              const newTags = [...currentTags, tag];
+                              setTags(newTags.join(', '));
+                            }
+                          }}
+                          className={`px-2.5 py-1 text-xs font-mono rounded-md border transition-all whitespace-nowrap ${
+                            isSelected
+                              ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
+                              : 'bg-slate-800/50 border-white/5 text-slate-400 hover:border-white/10 hover:text-slate-300'
+                          }`}
+                        >
+                          #{tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                );
+              })()}
             </div>
 
             {/* Date Fields */}
