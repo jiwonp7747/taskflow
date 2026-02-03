@@ -35,16 +35,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       cwd: process.cwd(),
     });
 
-  } catch (error: any) {
-    console.error('[Test Claude] Error:', error.message);
+  } catch (error: unknown) {
+    const err = error as { message?: string; stdout?: Buffer; stderr?: Buffer; status?: number };
+    console.error('[Test Claude] Error:', err.message);
     return errorResponse(
       'CLAUDE_EXEC_ERROR',
-      error.message,
+      err.message || 'Unknown error',
       500,
       {
-        stdout: error.stdout?.toString().substring(0, 500) || '',
-        stderr: error.stderr?.toString().substring(0, 500) || '',
-        status: error.status,
+        stdout: err.stdout?.toString().substring(0, 500) || '',
+        stderr: err.stderr?.toString().substring(0, 500) || '',
+        status: err.status,
         platform: process.platform,
         cwd: process.cwd(),
       }

@@ -4,7 +4,7 @@
  * IPC 기반 Electron 앱 루트 컴포넌트
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { Task } from '../types/task';
 import { useTasks } from './hooks/useTasks';
 import { useConfig } from './hooks/useConfig';
@@ -59,7 +59,6 @@ export default function App() {
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [workingTaskIds, setWorkingTaskIds] = useState<string[]>([]);
   const [activeView, setActiveView] = useState<ViewType>('kanban');
   const [timelineDate, setTimelineDate] = useState<Date>(new Date());
   const [isTerminalMode, setIsTerminalMode] = useState(false);
@@ -90,12 +89,12 @@ export default function App() {
   // useTasks 훅에서 이미 구독 중이므로 별도의 FileWatcher 훅 불필요
 
   // Track AI working tasks
-  useEffect(() => {
-    const workingIds: string[] = [];
-    if (aiStatus.isRunning && aiStatus.currentTask && !aiStatus.isPaused) {
-      workingIds.push(aiStatus.currentTask);
+  const workingTaskIds = useMemo(() => {
+    const ids: string[] = [];
+    if (aiStatus.isRunning && !aiStatus.isPaused && aiStatus.currentTask) {
+      ids.push(aiStatus.currentTask);
     }
-    setWorkingTaskIds(workingIds);
+    return ids;
   }, [aiStatus.isRunning, aiStatus.currentTask, aiStatus.isPaused]);
 
   // Handle calendar date double-click → switch to timeline

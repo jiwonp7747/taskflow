@@ -23,7 +23,7 @@ export function createSourceRepository(
 ): ISourceRepository {
   switch (type) {
     case 'file':
-      return new FileSourceRepository(options?.configFilePath);
+      return new FileSourceRepository();
 
     case 'sqlite':
       return new SqliteSourceRepository(options?.dbPath);
@@ -45,7 +45,7 @@ export function createConfigRepository(
 ): IConfigRepository {
   switch (type) {
     case 'file':
-      return new FileConfigRepository(options?.configFilePath);
+      return new FileConfigRepository();
 
     case 'sqlite':
       return new SqliteConfigRepository(options?.dbPath);

@@ -32,6 +32,7 @@ export function useFileWatcher(options: UseFileWatcherOptions = {}): UseFileWatc
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const connectRef = useRef<(() => void) | null>(null);
 
   // Cleanup function
   const cleanup = useCallback(() => {
@@ -105,7 +106,7 @@ export function useFileWatcher(options: UseFileWatcherOptions = {}): UseFileWatc
           console.log(`[FileWatcher] SSE reconnecting... (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts}, delay: ${delay}ms)`);
 
           reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
+            connectRef.current?.();
           }, delay);
         } else {
           console.error('[FileWatcher] SSE max reconnection attempts reached');
@@ -117,6 +118,11 @@ export function useFileWatcher(options: UseFileWatcherOptions = {}): UseFileWatc
     }
   }, [cleanup, onConnect, onDisconnect, onFileChange, reconnectDelay, maxReconnectAttempts]);
 
+  // Store connect function in ref for recursive calls
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
+
   // Manual reconnect
   const reconnect = useCallback(() => {
     reconnectAttemptsRef.current = 0;
@@ -125,12 +131,17 @@ export function useFileWatcher(options: UseFileWatcherOptions = {}): UseFileWatc
 
   // Setup connection on mount
   useEffect(() => {
-    connect();
+    // Call connect on mount only
+    const timeoutId = setTimeout(() => {
+      connect();
+    }, 0);
 
     return () => {
+      clearTimeout(timeoutId);
       cleanup();
     };
-  }, [connect, cleanup]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     isConnected,

@@ -147,7 +147,7 @@ export function WelcomeScreen({ onAddSource, onSourceAdded, onSelectFolder }: We
                 </div>
               </div>
               <span className="text-sm text-slate-400 group-hover:text-slate-300 transition-colors">
-                Create folder if it doesn't exist
+                Create folder if it doesn&apos;t exist
               </span>
             </label>
 

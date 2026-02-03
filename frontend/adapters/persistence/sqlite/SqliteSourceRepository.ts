@@ -5,9 +5,12 @@
  */
 
 import type { ISourceRepository } from '@/core/ports/out/ISourceRepository';
+import type { SourceValidationResult } from '@/core/ports/in/ISourceService';
 import { Source } from '@/core/domain/entities/Source';
 import { getDatabase } from './database';
 import type Database from 'better-sqlite3';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 interface SourceRow {
   id: string;
@@ -119,5 +122,50 @@ export class SqliteSourceRepository implements ISourceRepository {
     const stmt = this.db.prepare('SELECT 1 FROM sources WHERE id = ? LIMIT 1');
     const row = stmt.get(id);
     return !!row;
+  }
+
+  async validatePath(sourcePath: string): Promise<SourceValidationResult> {
+    const result: SourceValidationResult = {
+      valid: false,
+      path: sourcePath,
+      exists: false,
+      isDirectory: false,
+      taskCount: 0,
+    };
+
+    try {
+      const stats = await fs.stat(sourcePath);
+      result.exists = true;
+      result.isDirectory = stats.isDirectory();
+
+      if (!result.isDirectory) {
+        result.error = 'Path is not a directory';
+        return result;
+      }
+
+      const files = await fs.readdir(sourcePath);
+      const mdFiles = files.filter(f => f.endsWith('.md'));
+      result.taskCount = mdFiles.length;
+      result.valid = true;
+
+      return result;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        result.error = 'Directory does not exist';
+      } else if ((error as NodeJS.ErrnoException).code === 'EACCES') {
+        result.error = 'Permission denied';
+      } else {
+        result.error = String(error);
+      }
+      return result;
+    }
+  }
+
+  async createDirectory(sourcePath: string): Promise<void> {
+    await fs.mkdir(sourcePath, { recursive: true });
+  }
+
+  getDefaultTasksPath(): string {
+    return path.join(process.cwd(), 'tasks');
   }
 }

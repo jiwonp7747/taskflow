@@ -1,6 +1,7 @@
 // AI Worker Configuration Types
 // Re-export AIWorkerConfig types from domain entity
-export type { AIWorkerConfigProps as AIWorkerConfig } from '../core/domain/entities/AIWorkerConfig';
+import type { AIWorkerConfigProps } from '../core/domain/entities/AIWorkerConfig';
+export type AIWorkerConfig = AIWorkerConfigProps;
 export { DEFAULT_AI_WORKER_CONFIG_VALUES as DEFAULT_AI_WORKER_CONFIG } from '../core/domain/entities/AIWorkerConfig';
 
 // AI Worker Status
