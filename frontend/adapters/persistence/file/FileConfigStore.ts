@@ -7,7 +7,7 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { DEFAULT_AI_WORKER_CONFIG_VALUES } from '@/core/domain/entities/AIWorkerConfig';
+import { DEFAULT_AI_WORKER_CONFIG_VALUES, type AIWorkerConfigProps } from '@/core/domain/entities/AIWorkerConfig';
 
 /**
  * Persisted source data structure (Date fields stored as ISO strings)
@@ -29,7 +29,7 @@ export interface FileConfig {
   activeSourceId: string | null;
   theme: 'dark' | 'light';
   sidebarCollapsed: boolean;
-  aiWorker?: Record<string, unknown>;
+  aiWorker?: AIWorkerConfigProps;
 }
 
 /**

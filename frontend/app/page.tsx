@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { Task, FileWatchEvent } from '@/types/task';
 import { useTasks } from '@/hooks/useTasks';
 import { useFileWatcher } from '@/hooks/useFileWatcher';
@@ -53,7 +53,6 @@ export default function Home() {
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [workingTaskIds, setWorkingTaskIds] = useState<string[]>([]);
   const [activeView, setActiveView] = useState<ViewType>('kanban');
   const [timelineDate, setTimelineDate] = useState<Date>(new Date());
 
@@ -89,15 +88,15 @@ export default function Home() {
   });
 
   // Track AI working tasks - only show "Executing" for the currently active task
-  useEffect(() => {
-    const workingIds: string[] = [];
+  const workingTaskIds = useMemo(() => {
+    const ids: string[] = [];
 
     // Only include the current task if AI Worker is running and actively processing
-    if (aiStatus.isRunning && aiStatus.currentTask && !aiStatus.isPaused) {
-      workingIds.push(aiStatus.currentTask);
+    if (aiStatus.isRunning && !aiStatus.isPaused && aiStatus.currentTask) {
+      ids.push(aiStatus.currentTask);
     }
 
-    setWorkingTaskIds(workingIds);
+    return ids;
   }, [aiStatus.isRunning, aiStatus.currentTask, aiStatus.isPaused]);
 
   // Handle calendar date double-click → switch to timeline

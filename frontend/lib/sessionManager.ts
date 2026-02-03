@@ -201,11 +201,12 @@ class SessionManager extends EventEmitter {
         taskId,
         messageId: assistantMessageId,
       } as SessionEvent);
-    } catch (error: any) {
-      console.error('[SessionManager] Command failed:', error.message);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('[SessionManager] Command failed:', errorMessage);
 
       // Update assistant message with error
-      assistantMessage.content = `오류 발생: ${error.message}`;
+      assistantMessage.content = `오류 발생: ${errorMessage}`;
       assistantMessage.isStreaming = false;
 
       this.emit('event', {
@@ -221,7 +222,7 @@ class SessionManager extends EventEmitter {
         messageId: assistantMessageId,
       } as SessionEvent);
 
-      this.emit('event', { type: 'error', taskId, error: error.message } as SessionEvent);
+      this.emit('event', { type: 'error', taskId, error: errorMessage } as SessionEvent);
     } finally {
       this.runningTasks.delete(taskId);
       session.lastActivityAt = new Date().toISOString();

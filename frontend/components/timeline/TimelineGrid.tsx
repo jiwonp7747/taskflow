@@ -79,7 +79,6 @@ export function TimelineGrid({
   onTaskClick,
   workingTaskIds,
 }: TimelineGridProps) {
-  const [currentTimeOffset, setCurrentTimeOffset] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const hasScrolled = useRef(false);
 
@@ -93,21 +92,24 @@ export function TimelineGrid({
     );
   }, [date]);
 
-  // Update current time line position
+  // Calculate current time offset - updates every minute via state
+  const [tick, setTick] = useState(0);
+
+  const currentTimeOffset = useMemo(() => {
+    if (!isToday) return null;
+    const now = new Date();
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    return minutes * (HOUR_HEIGHT / 60);
+  }, [isToday, tick]);
+
+  // Set up interval to trigger recalculation every minute
   useEffect(() => {
-    if (!isToday) {
-      setCurrentTimeOffset(null);
-      return;
-    }
+    if (!isToday) return;
 
-    const update = () => {
-      const now = new Date();
-      const minutes = now.getHours() * 60 + now.getMinutes();
-      setCurrentTimeOffset(minutes * (HOUR_HEIGHT / 60));
-    };
+    const interval = setInterval(() => {
+      setTick(t => t + 1);
+    }, 60000);
 
-    update();
-    const interval = setInterval(update, 60000); // update every minute
     return () => clearInterval(interval);
   }, [isToday]);
 

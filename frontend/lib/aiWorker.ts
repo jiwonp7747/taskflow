@@ -10,7 +10,7 @@ let workerStatus: AIWorkerStatus = { ...INITIAL_AI_WORKER_STATUS };
 let workerConfig: AIWorkerConfig = { ...DEFAULT_AI_WORKER_CONFIG };
 let pollingInterval: NodeJS.Timeout | null = null;
 let taskQueue: Array<{ task: Task; queuedAt: string }> = [];
-let executionLogs: Map<string, TaskExecutionLog> = new Map();
+const executionLogs: Map<string, TaskExecutionLog> = new Map();
 
 // Event subscribers (for WebSocket broadcasting)
 type WSSubscriber = (message: WSMessage) => void;
