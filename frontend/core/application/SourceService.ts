@@ -4,8 +4,6 @@
  * Source 관련 비즈니스 로직을 처리하는 서비스
  */
 
-import { promises as fs } from 'fs';
-import path from 'path';
 import { Source } from '@/core/domain/entities/Source';
 import type { ISourceRepository } from '@/core/ports/out/ISourceRepository';
 import type { IConfigRepository } from '@/core/ports/out/IConfigRepository';
@@ -40,7 +38,7 @@ export class SourceService implements ISourceService {
       return activeSource.path;
     }
     // 기본 tasks 디렉토리 반환
-    return path.join(process.cwd(), 'tasks');
+    return this.sourceRepository.getDefaultTasksPath();
   }
 
   async addSource(dto: AddSourceDTO): Promise<Source> {
@@ -148,44 +146,10 @@ export class SourceService implements ISourceService {
   }
 
   async validatePath(sourcePath: string): Promise<SourceValidationResult> {
-    const result: SourceValidationResult = {
-      valid: false,
-      path: sourcePath,
-      exists: false,
-      isDirectory: false,
-      taskCount: 0,
-    };
-
-    try {
-      const stats = await fs.stat(sourcePath);
-      result.exists = true;
-      result.isDirectory = stats.isDirectory();
-
-      if (!result.isDirectory) {
-        result.error = 'Path is not a directory';
-        return result;
-      }
-
-      // 마크다운 파일 수 카운트
-      const files = await fs.readdir(sourcePath);
-      const mdFiles = files.filter(f => f.endsWith('.md'));
-      result.taskCount = mdFiles.length;
-      result.valid = true;
-
-      return result;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        result.error = 'Directory does not exist';
-      } else if ((error as NodeJS.ErrnoException).code === 'EACCES') {
-        result.error = 'Permission denied';
-      } else {
-        result.error = String(error);
-      }
-      return result;
-    }
+    return this.sourceRepository.validatePath(sourcePath);
   }
 
   async createSourceDirectory(sourcePath: string): Promise<void> {
-    await fs.mkdir(sourcePath, { recursive: true });
+    await this.sourceRepository.createDirectory(sourcePath);
   }
 }

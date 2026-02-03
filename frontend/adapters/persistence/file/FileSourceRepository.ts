@@ -4,8 +4,11 @@
  * .taskflow.config.json 파일에 Source 데이터를 저장하는 구현체
  */
 
+import { promises as fs } from 'fs';
+import path from 'path';
 import { Source, SourceProps } from '@/core/domain/entities/Source';
 import type { ISourceRepository } from '@/core/ports/out/ISourceRepository';
+import type { SourceValidationResult } from '@/core/ports/in/ISourceService';
 import { getFileConfigStore, type PersistedSource } from './FileConfigStore';
 
 export class FileSourceRepository implements ISourceRepository {
@@ -112,5 +115,51 @@ export class FileSourceRepository implements ISourceRepository {
   async existsById(id: string): Promise<boolean> {
     const config = await this.store.read();
     return config.sources.some(s => s.id === id);
+  }
+
+  async validatePath(sourcePath: string): Promise<SourceValidationResult> {
+    const result: SourceValidationResult = {
+      valid: false,
+      path: sourcePath,
+      exists: false,
+      isDirectory: false,
+      taskCount: 0,
+    };
+
+    try {
+      const stats = await fs.stat(sourcePath);
+      result.exists = true;
+      result.isDirectory = stats.isDirectory();
+
+      if (!result.isDirectory) {
+        result.error = 'Path is not a directory';
+        return result;
+      }
+
+      // 마크다운 파일 수 카운트
+      const files = await fs.readdir(sourcePath);
+      const mdFiles = files.filter(f => f.endsWith('.md'));
+      result.taskCount = mdFiles.length;
+      result.valid = true;
+
+      return result;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        result.error = 'Directory does not exist';
+      } else if ((error as NodeJS.ErrnoException).code === 'EACCES') {
+        result.error = 'Permission denied';
+      } else {
+        result.error = String(error);
+      }
+      return result;
+    }
+  }
+
+  async createDirectory(sourcePath: string): Promise<void> {
+    await fs.mkdir(sourcePath, { recursive: true });
+  }
+
+  getDefaultTasksPath(): string {
+    return path.join(process.cwd(), 'tasks');
   }
 }
