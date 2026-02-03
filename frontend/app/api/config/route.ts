@@ -1,19 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  loadConfig,
-  saveConfig,
-  addSource,
-  validateSourcePath,
-  setActiveSource,
-  createSourceDirectory,
-} from '@/lib/config';
-import type { AppConfig, AddSourceRequest, SourceValidationResult } from '@/types/config';
+import { getSourceService, getConfigService } from '@/infrastructure/container';
+import type { AppConfig, AddSourceRequest, SourceValidationResult, SourceConfig } from '@/types/config';
+import type { Source } from '@/core/domain/entities/Source';
 import { errorResponse, ErrorCodes, type ApiError } from '@/lib/api/errors';
+
+// Helper function to convert Source entity to SourceConfig
+const sourceToConfig = (s: Source): SourceConfig => ({
+  id: s.id,
+  name: s.name,
+  path: s.path,
+  isActive: s.isActive,
+  createdAt: s.createdAt.toISOString(),
+  lastAccessed: s.lastAccessed?.toISOString(),
+});
 
 // GET /api/config - Get current configuration
 export async function GET(): Promise<NextResponse<{ config: AppConfig } | ApiError>> {
   try {
-    const config = await loadConfig();
+    const configService = getConfigService();
+    const sourceService = getSourceService();
+
+    const appConfig = await configService.getAppConfig();
+    const sources = await sourceService.getAllSources();
+
+    const config: AppConfig = {
+      sources: sources.map(sourceToConfig),
+      activeSourceId: appConfig.activeSourceId,
+      theme: appConfig.theme,
+      sidebarCollapsed: appConfig.sidebarCollapsed,
+      aiWorker: appConfig.aiWorker,
+    };
+
     return NextResponse.json({ config });
   } catch (error) {
     console.error('Failed to load config:', error);
@@ -50,13 +67,14 @@ export async function POST(
     }
 
     // Validate the path
-    let validation = await validateSourcePath(body.path);
+    const sourceService = getSourceService();
+    let validation = await sourceService.validatePath(body.path);
 
     // If directory doesn't exist and createIfNotExist is true, create it
     if (!validation.exists && body.createIfNotExist) {
       try {
-        await createSourceDirectory(body.path);
-        validation = await validateSourcePath(body.path);
+        await sourceService.createSourceDirectory(body.path);
+        validation = await sourceService.validatePath(body.path);
       } catch (createError) {
         return errorResponse(
           ErrorCodes.DIRECTORY_CREATE_ERROR,
@@ -84,9 +102,10 @@ export async function POST(
       );
     }
 
-    const source = await addSource(body.name.trim(), body.path.trim());
+    const source = await sourceService.addSource({ name: body.name.trim(), path: body.path.trim() });
+    const sourceConfig = sourceToConfig(source);
 
-    return NextResponse.json({ source, validation }, { status: 201 });
+    return NextResponse.json({ source: sourceConfig, validation }, { status: 201 });
   } catch (error) {
     console.error('Failed to add source:', error);
     return errorResponse(
@@ -103,23 +122,42 @@ export async function PUT(
 ): Promise<NextResponse<{ config: AppConfig } | ApiError>> {
   try {
     const body = (await request.json()) as Partial<AppConfig>;
-    const config = await loadConfig();
+    const configService = getConfigService();
+    const sourceService = getSourceService();
 
     // Update allowed fields
+    const updates: {
+      theme?: AppConfig['theme'];
+      sidebarCollapsed?: boolean;
+      activeSourceId?: string | null;
+    } = {};
+
     if (body.theme !== undefined) {
-      config.theme = body.theme;
+      updates.theme = body.theme;
     }
     if (body.sidebarCollapsed !== undefined) {
-      config.sidebarCollapsed = body.sidebarCollapsed;
+      updates.sidebarCollapsed = body.sidebarCollapsed;
     }
     if (body.activeSourceId !== undefined && body.activeSourceId !== null) {
-      await setActiveSource(body.activeSourceId);
+      await sourceService.setActiveSource(body.activeSourceId);
+      updates.activeSourceId = body.activeSourceId;
     }
 
-    await saveConfig(config);
+    await configService.updateConfig(updates);
 
-    const updatedConfig = await loadConfig();
-    return NextResponse.json({ config: updatedConfig });
+    // Get updated config
+    const appConfig = await configService.getAppConfig();
+    const sources = await sourceService.getAllSources();
+
+    const config: AppConfig = {
+      sources: sources.map(sourceToConfig),
+      activeSourceId: appConfig.activeSourceId,
+      theme: appConfig.theme,
+      sidebarCollapsed: appConfig.sidebarCollapsed,
+      aiWorker: appConfig.aiWorker,
+    };
+
+    return NextResponse.json({ config });
   } catch (error) {
     console.error('Failed to update config:', error);
     return errorResponse(

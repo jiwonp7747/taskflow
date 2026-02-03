@@ -6,6 +6,7 @@
  */
 
 import type { Source } from '@/core/domain/entities/Source';
+import type { SourceValidationResult } from '@/core/ports/in/ISourceService';
 
 export interface ISourceRepository {
   /**
@@ -42,4 +43,19 @@ export interface ISourceRepository {
    * 특정 ID의 Source가 존재하는지 확인
    */
   existsById(id: string): Promise<boolean>;
+
+  /**
+   * 경로 유효성 검증 (파일시스템 작업)
+   */
+  validatePath(path: string): Promise<SourceValidationResult>;
+
+  /**
+   * 디렉토리 생성 (파일시스템 작업)
+   */
+  createDirectory(path: string): Promise<void>;
+
+  /**
+   * 기본 tasks 디렉토리 경로 반환 (파일시스템 작업)
+   */
+  getDefaultTasksPath(): string;
 }

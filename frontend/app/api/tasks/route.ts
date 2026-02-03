@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllTasks, createTask, getTasksDirectoryAsync } from '@/lib/fileSystem';
-import { loadConfig } from '@/lib/config';
+import { getSourceService } from '@/infrastructure/container';
 import type { TaskListResponse, TaskCreateRequest } from '@/types/task';
 import { errorResponse, ErrorCodes, type ApiError } from '@/lib/api/errors';
 
@@ -8,8 +8,9 @@ import { errorResponse, ErrorCodes, type ApiError } from '@/lib/api/errors';
 export async function GET(): Promise<NextResponse<TaskListResponse | ApiError>> {
   try {
     // Check if any source is configured
-    const config = await loadConfig();
-    if (config.sources.length === 0) {
+    const sourceService = getSourceService();
+    const sources = await sourceService.getAllSources();
+    if (sources.length === 0) {
       return errorResponse(
         ErrorCodes.NO_SOURCE_CONFIGURED,
         'No task source folder configured. Please add a source folder to get started.',

@@ -1,17 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  loadConfig,
-  updateSource,
-  deleteSource,
-  setActiveSource,
-  validateSourcePath,
-} from '@/lib/config';
+import { getSourceService } from '@/infrastructure/container';
 import type { SourceConfig, UpdateSourceRequest } from '@/types/config';
+import type { Source } from '@/core/domain/entities/Source';
 import { errorResponse, ErrorCodes, type ApiError } from '@/lib/api/errors';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
 }
+
+// Helper function to convert Source entity to SourceConfig
+const sourceToConfig = (s: Source): SourceConfig => ({
+  id: s.id,
+  name: s.name,
+  path: s.path,
+  isActive: s.isActive,
+  createdAt: s.createdAt.toISOString(),
+  lastAccessed: s.lastAccessed?.toISOString(),
+});
 
 // GET /api/config/sources/[id] - Get a specific source
 export async function GET(
@@ -21,8 +26,9 @@ export async function GET(
   const { id } = await context.params;
 
   try {
-    const config = await loadConfig();
-    const source = config.sources.find(s => s.id === id);
+    const sourceService = getSourceService();
+    const sources = await sourceService.getAllSources();
+    const source = sources.find(s => s.id === id);
 
     if (!source) {
       return errorResponse(
@@ -32,11 +38,11 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ source });
+    return NextResponse.json({ source: sourceToConfig(source) });
   } catch (error) {
     console.error('Failed to get source:', error);
     return errorResponse(
-      'SOURCE_GET_ERROR',
+      ErrorCodes.SOURCE_GET_ERROR,
       'Failed to get source',
       500,
       { error: String(error) }
@@ -53,10 +59,11 @@ export async function PUT(
 
   try {
     const body = (await request.json()) as UpdateSourceRequest;
+    const sourceService = getSourceService();
 
     // If path is being updated, validate it first
     if (body.path) {
-      const validation = await validateSourcePath(body.path);
+      const validation = await sourceService.validatePath(body.path);
       if (!validation.valid) {
         return errorResponse(
           ErrorCodes.INVALID_PATH,
@@ -66,12 +73,15 @@ export async function PUT(
       }
     }
 
-    const source = await updateSource(id, body);
-    return NextResponse.json({ source });
+    const source = await sourceService.updateSource(id, {
+      name: body.name,
+      path: body.path,
+    });
+    return NextResponse.json({ source: sourceToConfig(source) });
   } catch (error) {
     console.error('Failed to update source:', error);
     return errorResponse(
-      'SOURCE_UPDATE_ERROR',
+      ErrorCodes.SOURCE_UPDATE_ERROR,
       String(error),
       500
     );
@@ -86,7 +96,8 @@ export async function DELETE(
   const { id } = await context.params;
 
   try {
-    await deleteSource(id);
+    const sourceService = getSourceService();
+    await sourceService.deleteSource(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to delete source:', error);
@@ -106,12 +117,13 @@ export async function PATCH(
   const { id } = await context.params;
 
   try {
-    await setActiveSource(id);
+    const sourceService = getSourceService();
+    await sourceService.setActiveSource(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to set active source:', error);
     return errorResponse(
-      'SET_ACTIVE_ERROR',
+      ErrorCodes.SET_ACTIVE_ERROR,
       String(error),
       500
     );
