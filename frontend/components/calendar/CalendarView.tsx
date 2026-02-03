@@ -82,7 +82,8 @@ export function CalendarView({
 
     // Build new due_date preserving the time component
     // Replace only the date part (YYYY-MM-DD), keep time part as-is
-    const dueTimePart = task.due_date.substring(task.due_date.indexOf('T'));
+    const dueHasTime = task.due_date.includes('T');
+    const dueTimePart = dueHasTime ? task.due_date.substring(task.due_date.indexOf('T')) : '';
     const newDueDate = newDateKey + dueTimePart;
 
     // Handle spanning tasks - shift start_date by the same day offset
@@ -96,7 +97,8 @@ export function CalendarView({
       const oldStartMs = new Date(oldStartDateKey + 'T00:00:00').getTime();
       const newStartLocal = new Date(oldStartMs + dayOffsetMs);
       const newStartKey = `${newStartLocal.getFullYear()}-${String(newStartLocal.getMonth() + 1).padStart(2, '0')}-${String(newStartLocal.getDate()).padStart(2, '0')}`;
-      const startTimePart = task.start_date.substring(task.start_date.indexOf('T'));
+      const startHasTime = task.start_date.includes('T');
+      const startTimePart = startHasTime ? task.start_date.substring(task.start_date.indexOf('T')) : '';
       const newStartDateStr = newStartKey + startTimePart;
 
       await onTaskUpdate(taskId, {

@@ -1,6 +1,52 @@
 import matter from 'gray-matter';
 import type { Task, TaskStatus, TaskPriority, TaskAssignee } from '@/types/task';
 
+// Custom gray-matter options to prevent automatic date parsing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const matterOptions: any = {
+  engines: {
+    yaml: {
+      parse: (str: string): object => {
+        // Use a simple YAML parser that doesn't convert dates
+        const lines = str.split('\n');
+        const result: Record<string, unknown> = {};
+        for (const line of lines) {
+          const colonIndex = line.indexOf(':');
+          if (colonIndex === -1) continue;
+          const key = line.slice(0, colonIndex).trim();
+          let value: unknown = line.slice(colonIndex + 1).trim();
+
+          // Handle arrays like [tag1, tag2]
+          if (typeof value === 'string' && value.startsWith('[') && value.endsWith(']')) {
+            value = value.slice(1, -1).split(',').map(v => v.trim()).filter(Boolean);
+          }
+          // Handle quoted strings - remove quotes but keep content as string
+          else if (typeof value === 'string' && ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'")))) {
+            value = value.slice(1, -1);
+          }
+          // Handle numbers
+          else if (typeof value === 'string' && /^-?\d+(\.\d+)?$/.test(value)) {
+            value = parseFloat(value);
+          }
+          // Handle booleans
+          else if (value === 'true') value = true;
+          else if (value === 'false') value = false;
+          // Keep everything else as string (including date-like strings)
+
+          if (key) result[key] = value;
+        }
+        return result;
+      },
+      stringify: (data: object): string => {
+        // This won't be used since we manually build YAML
+        return Object.entries(data)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join('\n');
+      }
+    }
+  }
+};
+
 // Valid status values
 const VALID_STATUSES: TaskStatus[] = [
   'TODO',
@@ -49,34 +95,60 @@ function parseTags(value: unknown): string[] {
   return [];
 }
 
-// Parse date string (required - defaults to now)
-function parseDate(value: unknown): string {
-  if (value instanceof Date) {
-    return value.toISOString();
-  }
-  if (typeof value === 'string') {
-    const date = new Date(value);
-    return isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
-  }
-  return new Date().toISOString();
+// Format Date as local time ISO string (without Z suffix)
+function toLocalISOString(date: Date): string {
+  const y = date.getFullYear();
+  const M = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const h = String(date.getHours()).padStart(2, '0');
+  const m = String(date.getMinutes()).padStart(2, '0');
+  const s = String(date.getSeconds()).padStart(2, '0');
+  const ms = String(date.getMilliseconds()).padStart(3, '0');
+  return `${y}-${M}-${d}T${h}:${m}:${s}.${ms}`;
 }
 
-// Parse optional date string (for start_date, due_date)
+// Parse date string preserving local time (required - defaults to now)
+function parseDate(value: unknown): string {
+  if (value instanceof Date) {
+    return isNaN(value.getTime()) ? toLocalISOString(new Date()) : toLocalISOString(value);
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    // Has timezone info - parse and convert to local
+    if (trimmed.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(trimmed)) {
+      const date = new Date(trimmed);
+      return isNaN(date.getTime()) ? toLocalISOString(new Date()) : toLocalISOString(date);
+    }
+    // No timezone - treat as local, validate and return as-is
+    const date = new Date(trimmed.includes('T') ? trimmed : trimmed + 'T00:00:00');
+    return isNaN(date.getTime()) ? toLocalISOString(new Date()) : trimmed;
+  }
+  return toLocalISOString(new Date());
+}
+
+// Parse optional date string preserving local time (for start_date, due_date)
 function parseOptionalDate(value: unknown): string | undefined {
   if (!value) return undefined;
   if (value instanceof Date) {
-    return value.toISOString();
+    return isNaN(value.getTime()) ? undefined : toLocalISOString(value);
   }
   if (typeof value === 'string' && value.trim()) {
-    const date = new Date(value);
-    return isNaN(date.getTime()) ? undefined : date.toISOString();
+    const trimmed = value.trim();
+    // Has timezone info - parse and convert to local
+    if (trimmed.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(trimmed)) {
+      const date = new Date(trimmed);
+      return isNaN(date.getTime()) ? undefined : toLocalISOString(date);
+    }
+    // No timezone - treat as local, validate and return as-is
+    const date = new Date(trimmed.includes('T') ? trimmed : trimmed + 'T00:00:00');
+    return isNaN(date.getTime()) ? undefined : trimmed;
   }
   return undefined;
 }
 
 // Parse a markdown file content into a Task object
 export function parseTaskContent(content: string, filePath: string): Task {
-  const { data, content: markdownContent } = matter(content);
+  const { data, content: markdownContent } = matter(content, matterOptions);
 
   // Extract ID from frontmatter or filename
   const id = typeof data.id === 'string' ? data.id : filePath.split('/').pop()?.replace('.md', '') || `task-${Date.now()}`;
@@ -109,8 +181,8 @@ export function generateTaskContent(task: Partial<Task>): string {
     status: task.status || 'TODO',
     priority: task.priority || 'MEDIUM',
     assignee: task.assignee || 'user',
-    created_at: task.created_at || new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: task.created_at || toLocalISOString(new Date()),
+    updated_at: toLocalISOString(new Date()),
     start_date: task.start_date,
     due_date: task.due_date,
     tags: task.tags || [],
@@ -125,15 +197,15 @@ export function generateTaskContent(task: Partial<Task>): string {
     `status: ${frontmatter.status}`,
     `priority: ${frontmatter.priority}`,
     `assignee: ${frontmatter.assignee}`,
-    `created_at: ${frontmatter.created_at}`,
-    `updated_at: ${frontmatter.updated_at}`,
+    `created_at: "${frontmatter.created_at}"`,
+    `updated_at: "${frontmatter.updated_at}"`,
   ];
 
   if (frontmatter.start_date) {
-    dateParts.push(`start_date: ${frontmatter.start_date}`);
+    dateParts.push(`start_date: "${frontmatter.start_date}"`);
   }
   if (frontmatter.due_date) {
-    dateParts.push(`due_date: ${frontmatter.due_date}`);
+    dateParts.push(`due_date: "${frontmatter.due_date}"`);
   }
 
   dateParts.push(`tags: [${frontmatter.tags.join(', ')}]`);
@@ -156,21 +228,46 @@ ${task.content || ''}
 `;
 }
 
+// Serialize value for YAML frontmatter (quote strings that look like dates)
+function serializeYamlValue(key: string, value: unknown): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(v => typeof v === 'string' ? v : String(v)).join(', ')}]`;
+  }
+  if (typeof value === 'string') {
+    // Quote date-like strings to prevent gray-matter from parsing them as Date
+    if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
+      return `"${value}"`;
+    }
+    // Quote strings that contain special YAML characters
+    if (/[:#\[\]{}|>&*!?,]/.test(value) || value.includes('\n')) {
+      return `"${value.replace(/"/g, '\\"')}"`;
+    }
+    return value;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return String(value);
+}
+
 // Update frontmatter in existing content
 export function updateTaskFrontmatter(
   originalContent: string,
   updates: Partial<Task>
 ): string {
-  const { data, content } = matter(originalContent);
+  const { data, content } = matter(originalContent, matterOptions);
 
   // If content field is being updated, replace the body
-  let updatedContent = updates.content !== undefined ? updates.content : content;
+  const updatedContent = updates.content !== undefined ? updates.content : content;
 
   // Merge updates into frontmatter
-  const updatedData = {
+  const updatedData: Record<string, unknown> = {
     ...data,
     ...updates,
-    updated_at: new Date().toISOString(),
+    updated_at: toLocalISOString(new Date()),
   };
 
   // Remove non-frontmatter fields
@@ -178,5 +275,30 @@ export function updateTaskFrontmatter(
   delete updatedData.filePath;
   delete updatedData.rawContent;
 
-  return matter.stringify(updatedContent, updatedData);
+  // Convert Date objects to local ISO strings
+  for (const key of Object.keys(updatedData)) {
+    if (updatedData[key] instanceof Date) {
+      updatedData[key] = toLocalISOString(updatedData[key] as Date);
+    }
+  }
+
+  // Build frontmatter manually to preserve date strings as-is
+  const frontmatterLines: string[] = [];
+  const fieldOrder = ['id', 'title', 'status', 'priority', 'assignee', 'created_at', 'updated_at', 'start_date', 'due_date', 'tags', 'task_size', 'total_hours', 'notion_id'];
+
+  // Add known fields in order
+  for (const key of fieldOrder) {
+    if (key in updatedData && updatedData[key] !== undefined && updatedData[key] !== null) {
+      frontmatterLines.push(`${key}: ${serializeYamlValue(key, updatedData[key])}`);
+    }
+  }
+
+  // Add any remaining fields not in the predefined order
+  for (const key of Object.keys(updatedData)) {
+    if (!fieldOrder.includes(key) && updatedData[key] !== undefined && updatedData[key] !== null) {
+      frontmatterLines.push(`${key}: ${serializeYamlValue(key, updatedData[key])}`);
+    }
+  }
+
+  return `---\n${frontmatterLines.join('\n')}\n---\n${updatedContent}`;
 }

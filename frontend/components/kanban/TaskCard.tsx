@@ -9,7 +9,9 @@ import { PRIORITY_CONFIG } from '@/types/task';
 function formatDueDate(dateStr?: string): { text: string; color: string; bg: string } | null {
   if (!dateStr) return null;
 
-  const date = new Date(dateStr);
+  // Parse as local time (append T00:00:00 for date-only strings to avoid UTC interpretation)
+  const stripped = dateStr.replace(/Z$/, '');
+  const date = new Date(stripped.includes('T') ? stripped : stripped + 'T00:00:00');
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const dueDate = new Date(date);

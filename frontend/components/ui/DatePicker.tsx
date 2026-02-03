@@ -32,23 +32,22 @@ export function DatePicker({
   };
 
   // Extract time (HH:mm) directly from ISO string (treated as local time)
-  // Treats 12:00 as "no time set" since that's the default
+  // Date-only strings (no 'T') have no time part
   const toTimeFormat = (dateStr?: string) => {
-    if (!dateStr || dateStr.length < 16) return '';
+    if (!dateStr || !dateStr.includes('T') || dateStr.length < 16) return '';
     const h = dateStr.slice(11, 13);
     const m = dateStr.slice(14, 16);
-    if (h === '12' && m === '00') return '';
     return `${h}:${m}`;
   };
 
-  // Build ISO-like string from date part (YYYY-MM-DD) and optional time part (HH:mm)
-  // Stored as-is (local time with Z suffix for format consistency)
+  // Build date string from date part (YYYY-MM-DD) and optional time part (HH:mm)
+  // Date-only when no time, with time part when specified
   const buildISOString = (datePart: string, timePart?: string) => {
     if (!datePart) return undefined;
     if (timePart) {
-      return `${datePart}T${timePart}:00.000Z`;
+      return `${datePart}T${timePart}:00.000`;
     }
-    return `${datePart}T12:00:00.000Z`;
+    return datePart;
   };
 
   // Handle date change - preserve existing time if set

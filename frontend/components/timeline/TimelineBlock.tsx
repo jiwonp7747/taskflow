@@ -53,7 +53,7 @@ export function TimelineBlock({
 
   // Format time from ISO string (read directly, treated as local time)
   const formatTime = (dateStr?: string) => {
-    if (!dateStr || dateStr.length < 16) return '';
+    if (!dateStr || !dateStr.includes('T') || dateStr.length < 16) return '';
     return `${dateStr.slice(11, 13)}:${dateStr.slice(14, 16)}`;
   };
 
