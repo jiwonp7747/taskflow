@@ -1,21 +1,7 @@
 // AI Worker Configuration Types
-
-export interface AIWorkerConfig {
-  enabled: boolean;
-  autoStart: boolean;
-  pollingInterval: number;   // ms, default: 30000
-  maxConcurrent: number;     // default: 1
-  timeout: number;           // ms, default: 600000 (10 minutes)
-  workingDirectory?: string; // optional, defaults to process.cwd()
-}
-
-export const DEFAULT_AI_WORKER_CONFIG: AIWorkerConfig = {
-  enabled: true,
-  autoStart: false,
-  pollingInterval: 30000,
-  maxConcurrent: 1,
-  timeout: 600000,
-};
+// Re-export AIWorkerConfig types from domain entity
+export type { AIWorkerConfigProps as AIWorkerConfig } from '../core/domain/entities/AIWorkerConfig';
+export { DEFAULT_AI_WORKER_CONFIG_VALUES as DEFAULT_AI_WORKER_CONFIG } from '../core/domain/entities/AIWorkerConfig';
 
 // AI Worker Status
 export interface AIWorkerStatus {
