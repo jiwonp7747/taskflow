@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/jiwonp7747/taskflow/tree/main/docs
+    about: Check the documentation before opening an issue
+  - name: Discussions
+    url: https://github.com/jiwonp7747/taskflow/discussions
+    about: Ask questions and discuss ideas
