@@ -8,18 +8,18 @@
 ### 1. System Overview
 ![System Overview](./system-overview.png)
 
-**설명**: TaskFlow 전체 시스템 구성도
+**Description**: Complete TaskFlow system architecture
 - Frontend: Next.js 16 + React 19
-- Core: Hexagonal Architecture 기반
+- Core: Hexagonal Architecture based
 - Persistence: File System (Markdown) + SQLite
-- AI Integration: Claude Code CLI 연동
+- AI Integration: Claude Code CLI
 
 ---
 
 ### 2. Hexagonal Architecture
 ![Hexagonal Architecture](./hexagonal-architecture.png)
 
-**설명**: Clean Architecture (Hexagonal) 구조
+**Description**: Clean Architecture (Hexagonal) structure
 - **Driving Adapters**: API Routes, React Hooks
 - **Application Core**: Services, Domain Entities, Ports
 - **Driven Adapters**: File Repository, SQLite Repository
@@ -29,21 +29,21 @@
 ### 3. AI Worker Flow
 ![AI Worker Flow](./ai-worker-flow.png)
 
-**설명**: AI Worker 작업 처리 흐름
-1. File Watcher가 Markdown 파일 변경 감지
-2. Task Parser가 태스크 파싱 (gray-matter)
-3. 적격 태스크 (assignee: ai-agent, status: TODO) 큐에 추가
-4. AI Worker가 큐에서 태스크 꺼내 실행
-5. Claude Executor가 Claude Code CLI 호출
-6. 결과를 Markdown 파일에 업데이트
-7. WebSocket으로 실시간 브로드캐스트
+**Description**: AI Worker task processing flow
+1. File Watcher detects Markdown file changes
+2. Task Parser parses tasks (gray-matter)
+3. Eligible tasks (assignee: ai-agent, status: TODO) added to queue
+4. AI Worker pulls tasks from queue and executes
+5. Claude Executor calls Claude Code CLI
+6. Results updated in Markdown file
+7. Real-time broadcast via WebSocket
 
 ---
 
 ### 4. Frontend Components
 ![Frontend Components](./frontend-components.png)
 
-**설명**: React 컴포넌트 구조
+**Description**: React component structure
 - **Kanban Board**: TaskBoard, TaskColumn, TaskCard, TaskSidebar
 - **AI Panel**: AIStatusBar, ConversationPanel
 - **Sidebar**: LeftSidebar, SourcePanel
@@ -54,18 +54,18 @@
 ### 5. API Routes
 ![API Routes](./api-routes.png)
 
-**설명**: Next.js API 라우트 구조
-- `/api/tasks/*`: 태스크 CRUD
-- `/api/config/*`: 설정 관리
-- `/api/ai/*`: AI Worker 제어 (start, stop, pause, resume, status)
-- `/api/watch`: 파일 변경 SSE 스트림
+**Description**: Next.js API route structure
+- `/api/tasks/*`: Task CRUD operations
+- `/api/config/*`: Configuration management
+- `/api/ai/*`: AI Worker control (start, stop, pause, resume, status)
+- `/api/watch`: File change SSE stream
 
 ---
 
-## 기술 스택
+## Technology Stack
 
-| 레이어 | 기술 |
-|--------|------|
+| Layer | Technology |
+|-------|------------|
 | Frontend | Next.js 16, React 19, TailwindCSS 4 |
 | State | React Hooks, SSE (Server-Sent Events) |
 | Persistence | File System (Markdown), SQLite (better-sqlite3) |
@@ -74,7 +74,7 @@
 | Parser | gray-matter (Markdown frontmatter) |
 | Watcher | chokidar |
 
-## 디렉토리 구조
+## Directory Structure
 
 ```
 frontend/
