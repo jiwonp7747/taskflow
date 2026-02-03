@@ -104,36 +104,31 @@ export interface SpanningTaskInfo {
   endDate: Date;
 }
 
+// Parse YYYY-MM-DD from ISO string and create a local midnight Date
+function toLocalDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.slice(0, 10).split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
 // Utility function to calculate spanning info for a task
 export function getTaskSpanInfo(task: Task): SpanningTaskInfo | null {
   if (!task.start_date && !task.due_date) {
     return null;
   }
 
-  const startDate = task.start_date
-    ? new Date(task.start_date)
-    : task.due_date
-      ? new Date(task.due_date)
-      : null;
+  const startDateStr = task.start_date || task.due_date;
+  const endDateStr = task.due_date || task.start_date;
 
-  const endDate = task.due_date
-    ? new Date(task.due_date)
-    : task.start_date
-      ? new Date(task.start_date)
-      : null;
-
-  if (!startDate || !endDate) {
+  if (!startDateStr || !endDateStr) {
     return null;
   }
 
-  // Reset time to midnight for date comparison
-  startDate.setHours(0, 0, 0, 0);
-  endDate.setHours(0, 0, 0, 0);
+  // Parse date portion only (treat as local time)
+  const startDate = toLocalDate(startDateStr);
+  const endDate = toLocalDate(endDateStr);
 
-  // Check if it spans multiple days
-  const spanDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-  if (spanDays <= 1) {
+  // Check if it spans multiple days by comparing date strings
+  if (startDateStr.slice(0, 10) === endDateStr.slice(0, 10)) {
     return null; // Single day task, not spanning
   }
 

@@ -51,13 +51,10 @@ export function TimelineBlock({
   const priorityColor = PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.LOW;
   const isAiAssigned = task.assignee === 'ai-agent';
 
-  // Format time from ISO string
+  // Format time from ISO string (read directly, treated as local time)
   const formatTime = (dateStr?: string) => {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    const h = d.getHours().toString().padStart(2, '0');
-    const m = d.getMinutes().toString().padStart(2, '0');
-    return `${h}:${m}`;
+    if (!dateStr || dateStr.length < 16) return '';
+    return `${dateStr.slice(11, 13)}:${dateStr.slice(14, 16)}`;
   };
 
   const startTime = formatTime(task.start_date);

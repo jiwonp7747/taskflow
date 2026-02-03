@@ -522,12 +522,14 @@ export function TaskSidebar({
                 value={editedTask.start_date}
                 onChange={(date) => handleChange('start_date', date)}
                 maxDate={editedTask.due_date}
+                showTime
               />
               <DatePicker
                 label="Due Date"
                 value={editedTask.due_date}
                 onChange={(date) => handleChange('due_date', date)}
                 minDate={editedTask.start_date}
+                showTime
               />
             </div>
 

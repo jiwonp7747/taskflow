@@ -172,12 +172,14 @@ export function CreateTaskModal({ isOpen, onClose, onCreate }: CreateTaskModalPr
                 value={startDate}
                 onChange={setStartDate}
                 maxDate={dueDate}
+                showTime
               />
               <DatePicker
                 label="Due Date"
                 value={dueDate}
                 onChange={setDueDate}
                 minDate={startDate}
+                showTime
               />
             </div>
 

@@ -24,9 +24,11 @@ interface TimelineGridProps {
 }
 
 // Parse time from an ISO date string, returning minutes from midnight
+// Reads directly from string, treating stored time as local time
 function getMinutesFromMidnight(dateStr: string): number {
-  const d = new Date(dateStr);
-  return d.getHours() * 60 + d.getMinutes();
+  const h = parseInt(dateStr.slice(11, 13), 10);
+  const m = parseInt(dateStr.slice(14, 16), 10);
+  return h * 60 + m;
 }
 
 // Calculate overlapping groups for column assignment
@@ -139,14 +141,8 @@ export function TimelineGrid({
       if (task.start_date) {
         startMinutes = getMinutesFromMidnight(task.start_date);
         if (task.due_date) {
-          // Check if due_date is same day
-          const dueDate = new Date(task.due_date);
-          const startDate = new Date(task.start_date);
-          if (
-            dueDate.getFullYear() === startDate.getFullYear() &&
-            dueDate.getMonth() === startDate.getMonth() &&
-            dueDate.getDate() === startDate.getDate()
-          ) {
+          // Check if due_date is same day (compare date portions directly)
+          if (task.due_date.slice(0, 10) === task.start_date.slice(0, 10)) {
             endMinutes = getMinutesFromMidnight(task.due_date);
           } else {
             // Multi-day: show until end of day

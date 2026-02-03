@@ -15,19 +15,26 @@ interface TimelineViewProps {
 }
 
 // Check if a date string has a meaningful time (not midnight 00:00:00)
+// Parses directly from ISO string, treating stored time as local time
 function hasTime(dateStr: string): boolean {
-  const d = new Date(dateStr);
-  return d.getHours() !== 0 || d.getMinutes() !== 0 || d.getSeconds() !== 0;
+  if (dateStr.length < 16) return false;
+  const h = parseInt(dateStr.slice(11, 13), 10);
+  const m = parseInt(dateStr.slice(14, 16), 10);
+  return h !== 0 || m !== 0;
+}
+
+// Format a JS Date to YYYY-MM-DD
+function formatDateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 // Check if a date falls on the target date
+// Compares the date portion of ISO string directly (local time)
 function isOnDate(dateStr: string, targetDate: Date): boolean {
-  const d = new Date(dateStr);
-  return (
-    d.getFullYear() === targetDate.getFullYear() &&
-    d.getMonth() === targetDate.getMonth() &&
-    d.getDate() === targetDate.getDate()
-  );
+  return dateStr.slice(0, 10) === formatDateKey(targetDate);
 }
 
 export function TimelineView({
@@ -47,15 +54,13 @@ export function TimelineView({
       const dueOnDate = task.due_date && isOnDate(task.due_date, date);
 
       // Check if task spans across this date (multi-day tasks)
+      // Uses string comparison on date portions (YYYY-MM-DD is lexicographically sortable)
       let spansThisDate = false;
       if (task.start_date && task.due_date) {
-        const start = new Date(task.start_date);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(task.due_date);
-        end.setHours(23, 59, 59, 999);
-        const target = new Date(date);
-        target.setHours(12, 0, 0, 0);
-        spansThisDate = target >= start && target <= end;
+        const startKey = task.start_date.slice(0, 10);
+        const endKey = task.due_date.slice(0, 10);
+        const targetKey = formatDateKey(date);
+        spansThisDate = startKey <= targetKey && targetKey <= endKey;
       }
 
       if (!startOnDate && !dueOnDate && !spansThisDate) continue;

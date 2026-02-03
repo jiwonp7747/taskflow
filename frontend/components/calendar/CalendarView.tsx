@@ -74,48 +74,30 @@ export function CalendarView({
     const task = tasks.find((t) => t.id === taskId);
     if (!task || !task.due_date) return;
 
-    // Parse the existing due_date to extract time component
-    const oldDueDate = new Date(task.due_date);
+    // Extract date portion from existing due_date
     const oldDueDateKey = task.due_date.split('T')[0];
 
     // If dropped on the same date, do nothing
     if (oldDueDateKey === newDateKey) return;
 
-    // Build new due_date preserving the time component if it exists
-    const hasTime = task.due_date.includes('T') && !task.due_date.endsWith('T00:00:00.000Z');
-    let newDueDate: string;
+    // Build new due_date preserving the time component
+    // Replace only the date part (YYYY-MM-DD), keep time part as-is
+    const dueTimePart = task.due_date.substring(task.due_date.indexOf('T'));
+    const newDueDate = newDateKey + dueTimePart;
 
-    if (hasTime) {
-      // Preserve original time - replace just the date part
-      const timePart = task.due_date.substring(task.due_date.indexOf('T'));
-      newDueDate = newDateKey + timePart;
-    } else {
-      newDueDate = new Date(newDateKey + 'T00:00:00').toISOString();
-    }
-
-    // Handle spanning tasks - shift both start_date and due_date by the same offset
+    // Handle spanning tasks - shift start_date by the same day offset
     if (task.start_date) {
-      const oldDueTime = oldDueDate.getTime();
-      const newDueTime = new Date(newDateKey + 'T00:00:00').getTime();
-      const dayOffsetMs = newDueTime - new Date(oldDueDateKey + 'T00:00:00').getTime();
+      // Calculate day offset using local midnight (only for offset calculation)
+      const dayOffsetMs = new Date(newDateKey + 'T00:00:00').getTime()
+        - new Date(oldDueDateKey + 'T00:00:00').getTime();
 
-      const oldStartDate = new Date(task.start_date);
-      const newStartTime = oldStartDate.getTime() + dayOffsetMs;
-      const newStartDate = new Date(newStartTime);
-
-      // Format new start_date preserving time component
-      const startHasTime = task.start_date.includes('T') && !task.start_date.endsWith('T00:00:00.000Z');
-      let newStartDateStr: string;
-
-      if (startHasTime) {
-        const startTimePart = task.start_date.substring(task.start_date.indexOf('T'));
-        const startYear = newStartDate.getFullYear();
-        const startMonth = String(newStartDate.getMonth() + 1).padStart(2, '0');
-        const startDay = String(newStartDate.getDate()).padStart(2, '0');
-        newStartDateStr = `${startYear}-${startMonth}-${startDay}${startTimePart}`;
-      } else {
-        newStartDateStr = new Date(newStartTime).toISOString();
-      }
+      // Shift start date by offset, preserving time part
+      const oldStartDateKey = task.start_date.slice(0, 10);
+      const oldStartMs = new Date(oldStartDateKey + 'T00:00:00').getTime();
+      const newStartLocal = new Date(oldStartMs + dayOffsetMs);
+      const newStartKey = `${newStartLocal.getFullYear()}-${String(newStartLocal.getMonth() + 1).padStart(2, '0')}-${String(newStartLocal.getDate()).padStart(2, '0')}`;
+      const startTimePart = task.start_date.substring(task.start_date.indexOf('T'));
+      const newStartDateStr = newStartKey + startTimePart;
 
       await onTaskUpdate(taskId, {
         due_date: newDueDate,
