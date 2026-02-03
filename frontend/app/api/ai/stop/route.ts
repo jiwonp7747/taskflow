@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { stopWorker, getWorkerConfig } from '@/lib/aiWorker';
 import type { AIStatusResponse } from '@/types/ai';
+import { errorResponse, ErrorCodes } from '@/lib/api/errors';
 
 // POST /api/ai/stop - Stop the worker
 export async function POST() {
@@ -16,11 +17,10 @@ export async function POST() {
     return NextResponse.json(response);
   } catch (error) {
     console.error('Error stopping AI worker:', error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Failed to stop worker',
-      },
-      { status: 500 }
+    return errorResponse(
+      ErrorCodes.AI_STOP_ERROR,
+      error instanceof Error ? error.message : 'Failed to stop worker',
+      500
     );
   }
 }

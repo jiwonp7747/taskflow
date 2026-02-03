@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllTasks, createTask, getTasksDirectoryAsync } from '@/lib/fileSystem';
 import { loadConfig } from '@/lib/config';
-import type { TaskListResponse, TaskCreateRequest, ApiError } from '@/types/task';
+import type { TaskListResponse, TaskCreateRequest } from '@/types/task';
+import { errorResponse, ErrorCodes, type ApiError } from '@/lib/api/errors';
 
 // GET /api/tasks - Get all tasks
 export async function GET(): Promise<NextResponse<TaskListResponse | ApiError>> {
@@ -9,14 +10,10 @@ export async function GET(): Promise<NextResponse<TaskListResponse | ApiError>> 
     // Check if any source is configured
     const config = await loadConfig();
     if (config.sources.length === 0) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'NO_SOURCE_CONFIGURED',
-            message: 'No task source folder configured. Please add a source folder to get started.',
-          },
-        },
-        { status: 400 }
+      return errorResponse(
+        ErrorCodes.NO_SOURCE_CONFIGURED,
+        'No task source folder configured. Please add a source folder to get started.',
+        400
       );
     }
 
@@ -30,15 +27,11 @@ export async function GET(): Promise<NextResponse<TaskListResponse | ApiError>> 
     });
   } catch (error) {
     console.error('Failed to get tasks:', error);
-    return NextResponse.json(
-      {
-        error: {
-          code: 'TASKS_FETCH_ERROR',
-          message: 'Failed to fetch tasks',
-          details: { error: String(error) },
-        },
-      },
-      { status: 500 }
+    return errorResponse(
+      ErrorCodes.TASKS_FETCH_ERROR,
+      'Failed to fetch tasks',
+      500,
+      { error: String(error) }
     );
   }
 }
@@ -51,14 +44,10 @@ export async function POST(
     const body = (await request.json()) as TaskCreateRequest;
 
     if (!body.title?.trim()) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: 'Title is required',
-          },
-        },
-        { status: 400 }
+      return errorResponse(
+        ErrorCodes.VALIDATION_ERROR,
+        'Title is required',
+        400
       );
     }
 
@@ -80,15 +69,11 @@ export async function POST(
     return NextResponse.json({ task }, { status: 201 });
   } catch (error) {
     console.error('Failed to create task:', error);
-    return NextResponse.json(
-      {
-        error: {
-          code: 'TASK_CREATE_ERROR',
-          message: 'Failed to create task',
-          details: { error: String(error) },
-        },
-      },
-      { status: 500 }
+    return errorResponse(
+      ErrorCodes.TASK_CREATE_ERROR,
+      'Failed to create task',
+      500,
+      { error: String(error) }
     );
   }
 }

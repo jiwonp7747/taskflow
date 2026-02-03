@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
+import { errorResponse, ErrorCodes } from '@/lib/api/errors';
 
 // Simple test to verify spawn works in Next.js API routes
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -36,12 +37,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
       child.on('error', (error) => {
         console.error('[Test Spawn] Error:', error);
-        resolve(NextResponse.json({
-          success: false,
-          error: error.message,
-          platform: process.platform,
-          cwd: process.cwd(),
-        }));
+        resolve(errorResponse(
+          'SPAWN_ERROR',
+          error.message,
+          500,
+          { platform: process.platform, cwd: process.cwd() }
+        ));
       });
 
       child.on('close', (code) => {
@@ -60,24 +61,22 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       setTimeout(() => {
         console.log('[Test Spawn] Timeout');
         child.kill();
-        resolve(NextResponse.json({
-          success: false,
-          error: 'Timeout',
-          stdout: stdout.trim(),
-          stderr: stderr.trim(),
-          platform: process.platform,
-          cwd: process.cwd(),
-        }));
+        resolve(errorResponse(
+          'SPAWN_TIMEOUT',
+          'Timeout',
+          500,
+          { stdout: stdout.trim(), stderr: stderr.trim(), platform: process.platform, cwd: process.cwd() }
+        ));
       }, 5000);
 
     } catch (error) {
       console.error('[Test Spawn] Catch error:', error);
-      resolve(NextResponse.json({
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        platform: process.platform,
-        cwd: process.cwd(),
-      }));
+      resolve(errorResponse(
+        ErrorCodes.INTERNAL_ERROR,
+        error instanceof Error ? error.message : 'Unknown error',
+        500,
+        { platform: process.platform, cwd: process.cwd() }
+      ));
     }
   });
 }

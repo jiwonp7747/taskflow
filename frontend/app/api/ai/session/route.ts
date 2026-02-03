@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sessionManager, type SessionEvent } from '@/lib/sessionManager';
 import { getAllTasks, getTasksDirectoryAsync } from '@/lib/fileSystem';
+import { errorResponse, ErrorCodes } from '@/lib/api/errors';
 
 // GET - Get session info for a task or stream events
 export async function GET(request: NextRequest) {
@@ -83,7 +84,11 @@ export async function POST(request: NextRequest) {
     const { action, taskId, message } = body;
 
     if (!taskId) {
-      return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
+      return errorResponse(
+        ErrorCodes.VALIDATION_ERROR,
+        'Task ID is required',
+        400
+      );
     }
 
     switch (action) {
@@ -94,7 +99,11 @@ export async function POST(request: NextRequest) {
         const task = tasks.find(t => t.id === taskId);
 
         if (!task) {
-          return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+          return errorResponse(
+            ErrorCodes.TASK_NOT_FOUND,
+            'Task not found',
+            404
+          );
         }
 
         // Use the current working directory (project root) which should have Claude context
@@ -118,7 +127,11 @@ export async function POST(request: NextRequest) {
 
       case 'message': {
         if (!message) {
-          return NextResponse.json({ error: 'Message is required' }, { status: 400 });
+          return errorResponse(
+            ErrorCodes.VALIDATION_ERROR,
+            'Message is required',
+            400
+          );
         }
 
         sessionManager.sendMessage(taskId, message);
@@ -145,12 +158,18 @@ export async function POST(request: NextRequest) {
       }
 
       default:
-        return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+        return errorResponse(
+          ErrorCodes.VALIDATION_ERROR,
+          'Invalid action',
+          400
+        );
     }
   } catch (error) {
     console.error('[Session API] Error:', error);
-    return NextResponse.json({
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }, { status: 500 });
+    return errorResponse(
+      ErrorCodes.AI_SESSION_ERROR,
+      error instanceof Error ? error.message : 'Unknown error',
+      500
+    );
   }
 }

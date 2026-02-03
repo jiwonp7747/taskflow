@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { fileWatcher, startWatching } from '@/lib/fileWatcher';
 import { getTasksDirectoryAsync } from '@/lib/fileSystem';
 import type { FileWatchEvent } from '@/types/task';
+import { errorResponse, ErrorCodes } from '@/lib/api/errors';
 
 // GET /api/watch - SSE endpoint for file changes
 export async function GET(): Promise<Response> {
-  const directory = await getTasksDirectoryAsync();
+  try {
+    const directory = await getTasksDirectoryAsync();
 
   // Start watching if not already
   startWatching(directory);
@@ -49,11 +51,19 @@ export async function GET(): Promise<Response> {
     },
   });
 
-  return new NextResponse(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-    },
-  });
+    return new NextResponse(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      },
+    });
+  } catch (error) {
+    console.error('Error starting file watcher:', error);
+    return errorResponse(
+      ErrorCodes.WATCH_ERROR,
+      'Failed to start file watcher',
+      500
+    );
+  }
 }

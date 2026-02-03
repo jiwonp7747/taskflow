@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTaskById, updateTask, deleteTask, getTasksDirectoryAsync } from '@/lib/fileSystem';
-import type { TaskDetailResponse, TaskUpdateRequest, ApiError } from '@/types/task';
+import type { TaskDetailResponse, TaskUpdateRequest } from '@/types/task';
+import { errorResponse, ErrorCodes, type ApiError } from '@/lib/api/errors';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -17,29 +18,21 @@ export async function GET(
     const task = await getTaskById(id, directory);
 
     if (!task) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'TASK_NOT_FOUND',
-            message: `Task with ID ${id} not found`,
-          },
-        },
-        { status: 404 }
+      return errorResponse(
+        ErrorCodes.TASK_NOT_FOUND,
+        `Task with ID ${id} not found`,
+        404
       );
     }
 
     return NextResponse.json({ task });
   } catch (error) {
     console.error('Failed to get task:', error);
-    return NextResponse.json(
-      {
-        error: {
-          code: 'TASK_FETCH_ERROR',
-          message: 'Failed to fetch task',
-          details: { error: String(error) },
-        },
-      },
-      { status: 500 }
+    return errorResponse(
+      ErrorCodes.TASK_FETCH_ERROR,
+      'Failed to fetch task',
+      500,
+      { error: String(error) }
     );
   }
 }
@@ -56,14 +49,10 @@ export async function PUT(
 
     const existingTask = await getTaskById(id, directory);
     if (!existingTask) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'TASK_NOT_FOUND',
-            message: `Task with ID ${id} not found`,
-          },
-        },
-        { status: 404 }
+      return errorResponse(
+        ErrorCodes.TASK_NOT_FOUND,
+        `Task with ID ${id} not found`,
+        404
       );
     }
 
@@ -96,14 +85,10 @@ export async function DELETE(
 
     const existingTask = await getTaskById(id, directory);
     if (!existingTask) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'TASK_NOT_FOUND',
-            message: `Task with ID ${id} not found`,
-          },
-        },
-        { status: 404 }
+      return errorResponse(
+        ErrorCodes.TASK_NOT_FOUND,
+        `Task with ID ${id} not found`,
+        404
       );
     }
 
@@ -112,15 +97,11 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to delete task:', error);
-    return NextResponse.json(
-      {
-        error: {
-          code: 'TASK_DELETE_ERROR',
-          message: 'Failed to delete task',
-          details: { error: String(error) },
-        },
-      },
-      { status: 500 }
+    return errorResponse(
+      ErrorCodes.TASK_DELETE_ERROR,
+      'Failed to delete task',
+      500,
+      { error: String(error) }
     );
   }
 }
