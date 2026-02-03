@@ -1,5 +1,13 @@
-import { execSync } from 'child_process';
+/**
+ * Session Manager for Claude Conversations
+ *
+ * Manages multi-turn conversations with Claude using session resumption.
+ * Uses core ClaudeExecutor for execution.
+ */
+
 import { EventEmitter } from 'events';
+import { executeWithExecSync, buildPrompt } from './claude';
+import type { ExecutorOptions } from '@/types/ai';
 
 // Message types
 export interface ConversationMessage {
@@ -12,7 +20,7 @@ export interface ConversationMessage {
 
 export interface TaskSession {
   taskId: string;
-  sessionId: string | null;  // Claude's --resume session ID
+  sessionId: string | null; // Claude's --resume session ID
   messages: ConversationMessage[];
   isActive: boolean;
   startedAt: string;
@@ -29,7 +37,9 @@ export type SessionEvent =
   | { type: 'session-ended'; taskId: string }
   | { type: 'error'; taskId: string; error: string };
 
-// Session manager singleton - supports multiple concurrent sessions per task
+/**
+ * Session manager singleton - supports multiple concurrent sessions per task
+ */
 class SessionManager extends EventEmitter {
   private sessions: Map<string, TaskSession> = new Map();
   private runningTasks: Set<string> = new Set();
@@ -38,23 +48,36 @@ class SessionManager extends EventEmitter {
     super();
   }
 
-  // Get or create session for a task
+  /**
+   * Get or create session for a task
+   */
   getSession(taskId: string): TaskSession | null {
     return this.sessions.get(taskId) || null;
   }
 
-  // Get all sessions
+  /**
+   * Get all sessions
+   */
   getAllSessions(): TaskSession[] {
     return Array.from(this.sessions.values());
   }
 
-  // Check if a task has an active session
+  /**
+   * Check if a task has an active session
+   */
   isSessionActive(taskId: string): boolean {
     return this.runningTasks.has(taskId);
   }
 
-  // Start a new session for a task
-  async startSession(taskId: string, taskTitle: string, taskContent: string, workingDirectory: string): Promise<void> {
+  /**
+   * Start a new session for a task
+   */
+  async startSession(
+    taskId: string,
+    taskTitle: string,
+    taskContent: string,
+    workingDirectory: string
+  ): Promise<void> {
     console.log('[SessionManager] Starting session for task:', taskId);
 
     // Get existing session if any (preserves message history)
@@ -77,7 +100,11 @@ class SessionManager extends EventEmitter {
     session.workingDirectory = workingDirectory;
     session.lastActivityAt = new Date().toISOString();
 
-    this.emit('event', { type: 'session-started', taskId, sessionId: session.sessionId || 'new' } as SessionEvent);
+    this.emit('event', {
+      type: 'session-started',
+      taskId,
+      sessionId: session.sessionId || 'new',
+    } as SessionEvent);
 
     // Add system message
     const systemMessage: ConversationMessage = {
@@ -89,22 +116,30 @@ class SessionManager extends EventEmitter {
     session.messages.push(systemMessage);
     this.emit('event', { type: 'message', taskId, message: systemMessage } as SessionEvent);
 
-    // Build initial prompt
-    const initialPrompt = `다음 태스크를 수행해주세요:
+    // Build initial prompt using core buildPrompt
+    const options: ExecutorOptions = {
+      taskId,
+      taskTitle,
+      taskContent,
+      workingDirectory,
+      timeout: 300000,
+      prompt: '작업을 시작하기 전에 계획을 간략히 설명해주세요.',
+    };
 
-태스크 ID: ${taskId}
-제목: ${taskTitle}
-
-${taskContent}
-
-작업을 시작하기 전에 계획을 간략히 설명해주세요.`;
+    const initialPrompt = buildPrompt(options);
 
     // Execute with initial prompt
     await this.executeClaudeCommand(taskId, initialPrompt, workingDirectory);
   }
 
-  // Execute a Claude command for a task using execSync
-  private async executeClaudeCommand(taskId: string, prompt: string, workingDirectory: string): Promise<void> {
+  /**
+   * Execute a Claude command for a task using execSync
+   */
+  private async executeClaudeCommand(
+    taskId: string,
+    prompt: string,
+    workingDirectory: string
+  ): Promise<void> {
     const session = this.sessions.get(taskId);
     if (!session) {
       throw new Error('Session not found');
@@ -130,41 +165,21 @@ ${taskContent}
       isStreaming: true,
     };
     session.messages.push(assistantMessage);
-    this.emit('event', { type: 'message', taskId, message: assistantMessage } as SessionEvent);
+    this.emit('event', {
+      type: 'message',
+      taskId,
+      message: assistantMessage,
+    } as SessionEvent);
 
     // Mark task as running
     this.runningTasks.add(taskId);
 
-    // Build Claude command
-    const claudeCommand = process.env.CLAUDE_CODE_PATH || 'claude';
-
-    // Escape the prompt for command line
-    const escapedPrompt = prompt.replace(/"/g, '\\"').replace(/\n/g, '\\n');
-
-    let args = ['--print', '--dangerously-skip-permissions'];
-
-    // If we have a session ID, resume it
-    if (session.sessionId) {
-      args.push('--resume', session.sessionId);
-    }
-
-    const fullCommand = `${claudeCommand} ${args.join(' ')} "${escapedPrompt}"`;
-
-    console.log('[SessionManager] Executing command (truncated):', fullCommand.substring(0, 100) + '...');
+    console.log('[SessionManager] Executing command...');
     console.log('[SessionManager] Working directory:', workingDirectory);
 
     try {
-      const result = execSync(fullCommand, {
-        cwd: workingDirectory,
-        encoding: 'utf-8',
-        timeout: 300000, // 5 minutes timeout
-        maxBuffer: 50 * 1024 * 1024, // 50MB
-        env: {
-          ...process.env,
-          FORCE_COLOR: '0',
-          NO_COLOR: '1',
-        },
-      });
+      // Use core executeWithExecSync
+      const result = executeWithExecSync(prompt, workingDirectory, session.sessionId || undefined);
 
       console.log('[SessionManager] Command completed, response length:', result?.length || 0);
 
@@ -186,7 +201,6 @@ ${taskContent}
         taskId,
         messageId: assistantMessageId,
       } as SessionEvent);
-
     } catch (error: any) {
       console.error('[SessionManager] Command failed:', error.message);
 
@@ -214,7 +228,9 @@ ${taskContent}
     }
   }
 
-  // Send a message to a task's session
+  /**
+   * Send a message to a task's session
+   */
   async sendMessage(taskId: string, content: string): Promise<void> {
     const session = this.sessions.get(taskId);
     if (!session) {
@@ -225,7 +241,9 @@ ${taskContent}
     await this.executeClaudeCommand(taskId, content, workingDirectory);
   }
 
-  // Stop a session for a specific task
+  /**
+   * Stop a session for a specific task
+   */
   stopSession(taskId: string): void {
     const session = this.sessions.get(taskId);
 
@@ -237,13 +255,17 @@ ${taskContent}
     this.emit('event', { type: 'session-ended', taskId } as SessionEvent);
   }
 
-  // Clear session data for a task
+  /**
+   * Clear session data for a task
+   */
   clearSession(taskId: string): void {
     this.stopSession(taskId);
     this.sessions.delete(taskId);
   }
 
-  // Generate unique ID
+  /**
+   * Generate unique ID
+   */
   private generateId(): string {
     return `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
