@@ -589,6 +589,7 @@ export default function App() {
         onStartSession={startSession}
         onSendMessage={sendMessage}
         onStopSession={stopSession}
+        availableTags={availableTags}
       />
 
       {/* Create task modal */}
@@ -596,6 +597,7 @@ export default function App() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={createTask}
+        availableTags={availableTags}
       />
     </div>
   );
