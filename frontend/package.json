@@ -1,6 +1,14 @@
 {
   "name": "taskflow",
   "version": "0.1.0",
+  "description": "AI-powered task management with Claude Code integration",
+  "author": "jiwonp7747",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jiwonp7747/taskflow.git"
+  },
+  "homepage": "https://github.com/jiwonp7747/taskflow",
   "private": true,
   "main": "dist-electron/main.js",
   "scripts": {

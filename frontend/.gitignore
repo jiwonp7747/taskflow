@@ -42,3 +42,6 @@ next-env.d.ts
 
 .idea
 package-lock.json
+
+# User-specific config (contains local paths)
+.taskflow.config.json

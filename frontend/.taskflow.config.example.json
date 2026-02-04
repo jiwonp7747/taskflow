@@ -1,0 +1,22 @@
+{
+  "sources": [
+    {
+      "id": "source-example",
+      "name": "my-tasks",
+      "path": "/path/to/your/markdown/tasks",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "lastAccessed": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "activeSourceId": "source-example",
+  "theme": "dark",
+  "sidebarCollapsed": false,
+  "aiWorker": {
+    "enabled": true,
+    "autoStart": false,
+    "pollingInterval": 30000,
+    "maxConcurrent": 1,
+    "timeout": 600000
+  }
+}
