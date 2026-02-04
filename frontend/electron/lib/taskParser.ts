@@ -14,15 +14,52 @@ const matterOptions: any = {
     yaml: {
       parse: (str: string): object => {
         // Use a simple YAML parser that doesn't convert dates
+        // Supports both inline arrays [a, b] and block sequences (- item)
         const lines = str.split('\n');
         const result: Record<string, unknown> = {};
-        for (const line of lines) {
+        let currentKey: string | null = null;
+        let currentArray: string[] | null = null;
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+
+          // Check if this is a block sequence item (starts with spaces + -)
+          const blockItemMatch = line.match(/^(\s+)-\s*(.*)$/);
+          if (blockItemMatch && currentKey && currentArray !== null) {
+            // This is a continuation of a block sequence
+            let itemValue = blockItemMatch[2].trim();
+            // Remove quotes if present
+            if ((itemValue.startsWith('"') && itemValue.endsWith('"')) ||
+                (itemValue.startsWith("'") && itemValue.endsWith("'"))) {
+              itemValue = itemValue.slice(1, -1);
+            }
+            if (itemValue) {
+              currentArray.push(itemValue);
+            }
+            continue;
+          }
+
+          // If we were building an array and hit a non-array line, save it
+          if (currentKey && currentArray !== null) {
+            result[currentKey] = currentArray;
+            currentKey = null;
+            currentArray = null;
+          }
+
           const colonIndex = line.indexOf(':');
           if (colonIndex === -1) continue;
+
           const key = line.slice(0, colonIndex).trim();
           let value: unknown = line.slice(colonIndex + 1).trim();
 
-          // Handle arrays like [tag1, tag2]
+          // Check if this is the start of a block sequence (key with no value, followed by - items)
+          if (value === '' && i + 1 < lines.length && lines[i + 1].match(/^\s+-/)) {
+            currentKey = key;
+            currentArray = [];
+            continue;
+          }
+
+          // Handle inline arrays like [tag1, tag2]
           if (typeof value === 'string' && value.startsWith('[') && value.endsWith(']')) {
             value = value.slice(1, -1).split(',').map(v => v.trim()).filter(Boolean);
           }
@@ -41,6 +78,12 @@ const matterOptions: any = {
 
           if (key) result[key] = value;
         }
+
+        // Don't forget to save the last array if we were building one
+        if (currentKey && currentArray !== null) {
+          result[currentKey] = currentArray;
+        }
+
         return result;
       },
       stringify: (data: object): string => {
