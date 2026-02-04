@@ -164,12 +164,12 @@ export function CreateTaskModal({ isOpen, onClose, onCreate, availableTags = [] 
                 className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all"
                 placeholder="backend, api, auth..."
               />
-              {/* Tag suggestions - horizontal scrollable */}
+              {/* Tag suggestions - wrap to multiple lines */}
               {availableTags.length > 0 && (() => {
                 const currentTags = tags.split(',').map((t) => t.trim()).filter(Boolean);
                 return (
-                <div className="mt-2 overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-700/50">
-                  <div className="flex gap-1.5 pb-1" style={{ minWidth: 'max-content' }}>
+                <div className="mt-2 max-h-[4.5rem] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-700/50">
+                  <div className="flex flex-wrap gap-1.5">
                     {availableTags.map((tag) => {
                       const isSelected = currentTags.includes(tag);
                       return (
@@ -187,7 +187,7 @@ export function CreateTaskModal({ isOpen, onClose, onCreate, availableTags = [] 
                               setTags(newTags.join(', '));
                             }
                           }}
-                          className={`px-2.5 py-1 text-xs font-mono rounded-md border transition-all whitespace-nowrap ${
+                          className={`px-2.5 py-1 text-xs font-mono rounded-md border transition-all ${
                             isSelected
                               ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
                               : 'bg-slate-800/50 border-white/5 text-slate-400 hover:border-white/10 hover:text-slate-300'
