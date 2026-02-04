@@ -7,6 +7,8 @@
 ## 목차
 
 1. [시작하기](#시작하기)
+   - [Source 설정](#source-설정)
+   - [GitHub Source 설정](#github-source-설정-v020)
 2. [Task 파일 관리](#task-파일-관리)
 3. [AI Agent 사용법](#ai-agent-사용법)
    - [방법 1: 웹 UI에서 자동 실행 (AI Worker)](#방법-1-웹-ui에서-자동-실행-ai-worker)
@@ -40,6 +42,36 @@ npm run dev
 1. 좌측 사이드바에서 **"Add Source"** 클릭
 2. Source 이름과 경로 입력
 3. **"Add"** 버튼 클릭
+
+### GitHub Source 설정 (v0.2.0+)
+
+GitHub 원격 저장소를 태스크 소스로 사용할 수 있습니다:
+
+1. 좌측 사이드바에서 **"+"** 클릭
+2. **"GitHub"** 탭 선택
+3. 다음 중 하나로 설정:
+   - **URL 붙여넣기**: `https://github.com/owner/repo/tree/branch/path` 형식의 URL 입력 시 자동 파싱
+   - **직접 입력**: Owner, Repository, Branch, Root Path 개별 입력
+4. **Personal Access Token** 입력 (필수)
+   - GitHub Settings → Developer settings → Personal access tokens
+   - `repo` scope 권한 필요 (private 저장소 접근 시)
+5. **"Test Connection"** 클릭하여 연결 확인
+6. **"Add GitHub Source"** 클릭
+
+#### 특징
+
+| 기능 | 설명 |
+|------|------|
+| 재귀 탐색 | 하위 폴더의 모든 `.md` 파일 자동 인식 |
+| 병렬 로딩 | 10개씩 배치 병렬 요청으로 빠른 로딩 |
+| SHA 캐싱 | 변경 없는 파일은 캐시 사용 (5분 TTL) |
+| 자동 파싱 | GitHub URL 붙여넣기 시 owner/repo/branch/path 자동 추출 |
+
+#### 제한 사항
+
+- 현재 읽기 전용 (태스크 생성/수정/삭제 미지원)
+- GitHub API Rate Limit: 인증 시 5,000 요청/시간
+- 동기화(Sync) 기능은 향후 지원 예정
 
 ---
 
