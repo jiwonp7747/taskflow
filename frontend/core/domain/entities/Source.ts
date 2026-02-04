@@ -4,6 +4,10 @@
  * 태스크 파일들이 저장되는 디렉토리 소스를 나타내는 도메인 엔티티
  */
 
+import type { GitHubSourceConfig } from './GitHubSourceConfig';
+
+export type SourceType = 'local' | 'github';
+
 export interface SourceProps {
   id: string;
   name: string;
@@ -11,11 +15,22 @@ export interface SourceProps {
   isActive: boolean;
   createdAt: Date;
   lastAccessed?: Date;
+  sourceType: SourceType;
+  githubConfig?: GitHubSourceConfig;
+  lastSynced?: Date;
 }
 
 export interface CreateSourceInput {
   name: string;
   path: string;
+  isActive?: boolean;
+  sourceType?: SourceType;
+  githubConfig?: GitHubSourceConfig;
+}
+
+export interface CreateGitHubSourceInput {
+  name: string;
+  githubConfig: GitHubSourceConfig;
   isActive?: boolean;
 }
 
@@ -32,6 +47,27 @@ export class Source {
       path: input.path,
       isActive: input.isActive ?? false,
       createdAt: new Date(),
+      sourceType: input.sourceType ?? 'local',
+      githubConfig: input.githubConfig,
+    });
+  }
+
+  /**
+   * GitHub Source 엔티티 생성
+   */
+  static createGitHubSource(input: CreateGitHubSourceInput): Source {
+    const { owner, repo, rootPath } = input.githubConfig;
+    // Generate a virtual path for GitHub sources
+    const virtualPath = `github://${owner}/${repo}${rootPath}`;
+
+    return new Source({
+      id: `source-${Date.now()}`,
+      name: input.name,
+      path: virtualPath,
+      isActive: input.isActive ?? false,
+      createdAt: new Date(),
+      sourceType: 'github',
+      githubConfig: input.githubConfig,
     });
   }
 
@@ -67,6 +103,26 @@ export class Source {
     return this.props.lastAccessed;
   }
 
+  get sourceType(): SourceType {
+    return this.props.sourceType;
+  }
+
+  get githubConfig(): GitHubSourceConfig | undefined {
+    return this.props.githubConfig;
+  }
+
+  get lastSynced(): Date | undefined {
+    return this.props.lastSynced;
+  }
+
+  get isGitHubSource(): boolean {
+    return this.props.sourceType === 'github';
+  }
+
+  get isLocalSource(): boolean {
+    return this.props.sourceType === 'local';
+  }
+
   // Domain Methods
   activate(): void {
     this.props.isActive = true;
@@ -95,6 +151,10 @@ export class Source {
     this.props.lastAccessed = new Date();
   }
 
+  updateLastSynced(): void {
+    this.props.lastSynced = new Date();
+  }
+
   /**
    * 직렬화를 위한 JSON 변환
    */
@@ -113,6 +173,9 @@ export class Source {
       isActive: this.props.isActive,
       createdAt: this.props.createdAt.toISOString(),
       lastAccessed: this.props.lastAccessed?.toISOString(),
+      sourceType: this.props.sourceType,
+      githubConfig: this.props.githubConfig,
+      lastSynced: this.props.lastSynced?.toISOString(),
     };
   }
 }

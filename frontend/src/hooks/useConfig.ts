@@ -15,6 +15,15 @@ interface UseConfigReturn {
   error: string | null;
   fetchConfig: () => Promise<void>;
   addSource: (data: AddSourceRequest) => Promise<SourceConfig | null>;
+  addGitHubSource: (data: {
+    name: string;
+    url?: string;
+    owner?: string;
+    repo?: string;
+    branch: string;
+    rootPath: string;
+    token: string;
+  }) => Promise<boolean>;
   updateSource: (
     id: string,
     data: Partial<SourceConfig>
@@ -64,6 +73,31 @@ export function useConfig(): UseConfigReturn {
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
         return null;
+      }
+    },
+    [fetchConfig]
+  );
+
+  // Add a GitHub source
+  const addGitHubSource = useCallback(
+    async (data: {
+      name: string;
+      url?: string;
+      owner?: string;
+      repo?: string;
+      branch: string;
+      rootPath: string;
+      token: string;
+    }): Promise<boolean> => {
+      try {
+        setError(null);
+        await ipc.addGitHubSource(data);
+        // Refresh config
+        await fetchConfig();
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+        return false;
       }
     },
     [fetchConfig]
@@ -157,6 +191,7 @@ export function useConfig(): UseConfigReturn {
     error,
     fetchConfig,
     addSource,
+    addGitHubSource,
     updateSource,
     deleteSource,
     setActiveSource,

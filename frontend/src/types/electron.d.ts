@@ -17,6 +17,8 @@ export type InvokeChannel =
   | 'sources:update'
   | 'sources:delete'
   | 'sources:setActive'
+  | 'github:validate'
+  | 'github:addSource'
   | 'ai:start'
   | 'ai:stop'
   | 'ai:pause'

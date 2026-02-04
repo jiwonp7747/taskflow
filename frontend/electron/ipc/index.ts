@@ -11,6 +11,7 @@ import { registerDialogIPC } from './dialog.ipc';
 import { registerAIWorkerIPC } from './ai.ipc';
 import { registerWindowIPC } from './window.ipc';
 import { registerTerminalIPC, cleanupAllPty } from './terminal.ipc';
+import { registerGitHubIPC } from './github.ipc';
 import { safeLog } from '../lib/safeConsole';
 
 /**
@@ -26,6 +27,7 @@ export function registerAllIPC(): void {
   registerAIWorkerIPC();
   registerWindowIPC();
   registerTerminalIPC();
+  registerGitHubIPC();
 
   safeLog('[IPC] All handlers registered');
 }
@@ -37,3 +39,4 @@ export { registerDialogIPC } from './dialog.ipc';
 export { registerAIWorkerIPC } from './ai.ipc';
 export { registerWindowIPC } from './window.ipc';
 export { registerTerminalIPC, cleanupAllPty } from './terminal.ipc';
+export { registerGitHubIPC } from './github.ipc';

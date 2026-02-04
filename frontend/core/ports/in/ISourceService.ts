@@ -5,6 +5,7 @@
  */
 
 import type { Source } from '@/core/domain/entities/Source';
+import type { GitHubSourceConfig, GitHubValidationResult } from '@/core/domain/entities/GitHubSourceConfig';
 
 // DTO (Data Transfer Objects)
 export interface AddSourceDTO {
@@ -24,6 +25,11 @@ export interface SourceValidationResult {
   isDirectory: boolean;
   taskCount: number;
   error?: string;
+}
+
+export interface AddGitHubSourceDTO {
+  name: string;
+  githubConfig: GitHubSourceConfig;
 }
 
 export interface ISourceService {
@@ -76,4 +82,19 @@ export interface ISourceService {
    * Source 디렉토리 생성
    */
   createSourceDirectory(path: string): Promise<void>;
+
+  /**
+   * GitHub 소스 추가
+   */
+  addGitHubSource(dto: AddGitHubSourceDTO): Promise<Source>;
+
+  /**
+   * GitHub 소스 유효성 검증
+   */
+  validateGitHubSource(config: GitHubSourceConfig): Promise<GitHubValidationResult>;
+
+  /**
+   * GitHub 소스 동기화 (pull latest)
+   */
+  syncGitHubSource(id: string): Promise<void>;
 }

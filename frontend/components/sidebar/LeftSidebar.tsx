@@ -9,6 +9,15 @@ interface LeftSidebarProps {
   isCollapsed: boolean;
   onToggle: () => void;
   onAddSource: (data: AddSourceRequest) => Promise<SourceConfig | null>;
+  onAddGitHubSource?: (data: {
+    name: string;
+    url?: string;
+    owner?: string;
+    repo?: string;
+    branch: string;
+    rootPath: string;
+    token: string;
+  }) => Promise<boolean>;
   onUpdateSource: (id: string, data: Partial<SourceConfig>) => Promise<SourceConfig | null>;
   onDeleteSource: (id: string) => Promise<boolean>;
   onSetActiveSource: (id: string) => Promise<boolean>;
@@ -23,6 +32,7 @@ export function LeftSidebar({
   isCollapsed,
   onToggle,
   onAddSource,
+  onAddGitHubSource,
   onUpdateSource,
   onDeleteSource,
   onSetActiveSource,
@@ -145,6 +155,7 @@ export function LeftSidebar({
                 sources={config.sources}
                 activeSourceId={config.activeSourceId}
                 onAddSource={onAddSource}
+                onAddGitHubSource={onAddGitHubSource}
                 onUpdateSource={onUpdateSource}
                 onDeleteSource={onDeleteSource}
                 onSetActiveSource={onSetActiveSource}

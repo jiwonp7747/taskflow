@@ -10,6 +10,15 @@ interface UseConfigReturn {
   error: string | null;
   fetchConfig: () => Promise<void>;
   addSource: (data: AddSourceRequest) => Promise<SourceConfig | null>;
+  addGitHubSource: (data: {
+    name: string;
+    url?: string;
+    owner?: string;
+    repo?: string;
+    branch: string;
+    rootPath: string;
+    token: string;
+  }) => Promise<boolean>;
   updateSource: (id: string, data: Partial<SourceConfig>) => Promise<SourceConfig | null>;
   deleteSource: (id: string) => Promise<boolean>;
   setActiveSource: (id: string) => Promise<boolean>;
@@ -70,6 +79,40 @@ export function useConfig(): UseConfigReturn {
     } catch (err) {
       setError(String(err));
       return null;
+    }
+  }, [fetchConfig]);
+
+  // Add a GitHub source
+  const addGitHubSource = useCallback(async (data: {
+    name: string;
+    url?: string;
+    owner?: string;
+    repo?: string;
+    branch: string;
+    rootPath: string;
+    token: string;
+  }): Promise<boolean> => {
+    try {
+      setError(null);
+
+      const response = await fetch('/api/config/sources/github', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error?.message || 'Failed to add GitHub source');
+      }
+
+      // Refresh config
+      await fetchConfig();
+      return true;
+    } catch (err) {
+      setError(String(err));
+      return false;
     }
   }, [fetchConfig]);
 
@@ -168,6 +211,7 @@ export function useConfig(): UseConfigReturn {
     error,
     fetchConfig,
     addSource,
+    addGitHubSource,
     updateSource,
     deleteSource,
     setActiveSource,

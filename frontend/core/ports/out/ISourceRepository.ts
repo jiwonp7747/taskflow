@@ -7,6 +7,7 @@
 
 import type { Source } from '@/core/domain/entities/Source';
 import type { SourceValidationResult } from '@/core/ports/in/ISourceService';
+import type { GitHubSourceConfig, GitHubValidationResult } from '@/core/domain/entities/GitHubSourceConfig';
 
 export interface ISourceRepository {
   /**
@@ -58,4 +59,9 @@ export interface ISourceRepository {
    * 기본 tasks 디렉토리 경로 반환 (파일시스템 작업)
    */
   getDefaultTasksPath(): string;
+
+  /**
+   * GitHub 소스 연결 유효성 검증
+   */
+  validateGitHubSource(config: GitHubSourceConfig): Promise<GitHubValidationResult>;
 }

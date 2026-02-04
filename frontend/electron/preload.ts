@@ -24,6 +24,9 @@ const validInvokeChannels = [
   'sources:update',
   'sources:delete',
   'sources:setActive',
+  // GitHub
+  'github:validate',
+  'github:addSource',
   // AI Worker
   'ai:start',
   'ai:stop',

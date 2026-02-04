@@ -2,11 +2,22 @@
 
 import { useState } from 'react';
 import type { SourceConfig, AddSourceRequest } from '@/types/config';
+import { GitHubSourceForm } from './GitHubSourceForm';
+import { SyncStatus } from './SyncStatus';
 
 interface SourcePanelProps {
   sources: SourceConfig[];
   activeSourceId: string | null;
   onAddSource: (data: AddSourceRequest) => Promise<SourceConfig | null>;
+  onAddGitHubSource?: (data: {
+    name: string;
+    url?: string;
+    owner?: string;
+    repo?: string;
+    branch: string;
+    rootPath: string;
+    token: string;
+  }) => Promise<boolean>;
   onUpdateSource: (id: string, data: Partial<SourceConfig>) => Promise<SourceConfig | null>;
   onDeleteSource: (id: string) => Promise<boolean>;
   onSetActiveSource: (id: string) => Promise<boolean>;
@@ -18,6 +29,7 @@ export function SourcePanel({
   sources,
   activeSourceId,
   onAddSource,
+  onAddGitHubSource,
   onUpdateSource,
   onDeleteSource,
   onSetActiveSource,
@@ -30,6 +42,7 @@ export function SourcePanel({
   const [newPath, setNewPath] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sourceTab, setSourceTab] = useState<'local' | 'github'>('local');
 
   // Handle add source
   const handleAdd = async () => {
@@ -104,73 +117,119 @@ export function SourcePanel({
       {/* Add source form */}
       {isAdding && (
         <div className="p-3 bg-slate-900/50 border border-cyan-500/20 rounded-lg space-y-3">
-          <div>
-            <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
-              Name
-            </label>
-            <input
-              type="text"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="My Project Tasks"
-              className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50"
-              autoFocus
-            />
+          {/* Tab buttons */}
+          <div className="flex gap-1 p-1 bg-slate-800/50 rounded-lg">
+            <button
+              onClick={() => setSourceTab('local')}
+              className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                sourceTab === 'local'
+                  ? 'bg-cyan-500 text-white'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Local
+            </button>
+            <button
+              onClick={() => setSourceTab('github')}
+              className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                sourceTab === 'github'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              GitHub
+            </button>
           </div>
-          <div>
-            <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
-              Path
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newPath}
-                onChange={(e) => setNewPath(e.target.value)}
-                placeholder="/path/to/tasks"
-                className="flex-1 px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 font-mono"
-              />
-              {onSelectFolder && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const selected = await onSelectFolder();
-                    if (selected) setNewPath(selected);
-                  }}
-                  className="px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-slate-400 hover:text-white hover:border-cyan-500/50 transition-colors"
-                  title="Browse folder"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                  </svg>
-                </button>
+
+          {sourceTab === 'local' ? (
+            <>
+              {/* Existing local form content */}
+              <div>
+                <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="My Project Tasks"
+                  className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
+                  Path
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newPath}
+                    onChange={(e) => setNewPath(e.target.value)}
+                    placeholder="/path/to/tasks"
+                    className="flex-1 px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 font-mono"
+                  />
+                  {onSelectFolder && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const selected = await onSelectFolder();
+                        if (selected) setNewPath(selected);
+                      }}
+                      className="px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-slate-400 hover:text-white hover:border-cyan-500/50 transition-colors"
+                      title="Browse folder"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {error && (
+                <p className="text-xs text-red-400">{error}</p>
               )}
-            </div>
-          </div>
 
-          {error && (
-            <p className="text-xs text-red-400">{error}</p>
-          )}
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleAdd}
-              disabled={isSubmitting}
-              className="flex-1 px-3 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm font-medium rounded-lg hover:from-cyan-400 hover:to-blue-400 transition-all disabled:opacity-50"
-            >
-              {isSubmitting ? 'Adding...' : 'Add Source'}
-            </button>
-            <button
-              onClick={() => {
-                setIsAdding(false);
-                setNewName('');
-                setNewPath('');
-                setError(null);
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleAdd}
+                  disabled={isSubmitting}
+                  className="flex-1 px-3 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm font-medium rounded-lg hover:from-cyan-400 hover:to-blue-400 transition-all disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Adding...' : 'Add Source'}
+                </button>
+                <button
+                  onClick={() => {
+                    setIsAdding(false);
+                    setNewName('');
+                    setNewPath('');
+                    setError(null);
+                  }}
+                  className="px-3 py-2 text-slate-400 text-sm hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          ) : (
+            <GitHubSourceForm
+              onSubmit={async (data) => {
+                if (!onAddGitHubSource) return false;
+                const success = await onAddGitHubSource(data);
+                if (success) {
+                  setIsAdding(false);
+                  onSourceChange?.();
+                }
+                return success;
               }}
-              className="px-3 py-2 text-slate-400 text-sm hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
+              onCancel={() => {
+                setIsAdding(false);
+                setSourceTab('local');
+              }}
+              isSubmitting={isSubmitting}
+            />
+          )}
         </div>
       )}
 
@@ -246,6 +305,12 @@ export function SourcePanel({
                 <p className="text-[11px] font-mono text-slate-500 truncate mt-0.5" title={source.path}>
                   {source.path}
                 </p>
+                {/* Source type indicator */}
+                {'sourceType' in source && source.sourceType === 'github' && (
+                  <span className="ml-1 px-1 py-0.5 text-[9px] font-mono uppercase bg-purple-500/20 text-purple-400 rounded">
+                    GitHub
+                  </span>
+                )}
               </div>
 
               {/* Actions */}
@@ -282,6 +347,17 @@ export function SourcePanel({
               <p className="text-[10px] text-slate-600 mt-2 pl-2">
                 Last accessed: {new Date(source.lastAccessed).toLocaleDateString()}
               </p>
+            )}
+
+            {/* Sync status for GitHub sources */}
+            {'sourceType' in source && source.sourceType === 'github' && source.id === activeSourceId && (
+              <SyncStatus
+                sourceId={source.id}
+                sourceName={source.name}
+                isGitHub={true}
+                lastSynced={'lastSynced' in source ? source.lastSynced as string : undefined}
+                onSync={onSourceChange ? async () => { onSourceChange(); } : undefined}
+              />
             )}
           </div>
         ))}

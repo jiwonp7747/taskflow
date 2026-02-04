@@ -39,6 +39,7 @@ export default function App() {
   const {
     config,
     addSource,
+    addGitHubSource,
     updateSource,
     deleteSource,
     setActiveSource,
@@ -177,6 +178,7 @@ export default function App() {
         isCollapsed={config.sidebarCollapsed}
         onToggle={toggleSidebar}
         onAddSource={addSource}
+        onAddGitHubSource={addGitHubSource}
         onUpdateSource={updateSource}
         onDeleteSource={deleteSource}
         onSetActiveSource={setActiveSource}

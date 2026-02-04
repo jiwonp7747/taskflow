@@ -26,7 +26,9 @@ function initializeSchema(database: Database.Database): void {
       path TEXT NOT NULL UNIQUE,
       is_active INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL,
-      last_accessed TEXT
+      last_accessed TEXT,
+      source_type TEXT DEFAULT 'local',
+      github_config TEXT
     );
 
     -- Config 테이블 (단일 행)
@@ -74,6 +76,20 @@ function initializeSchema(database: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_sources_is_active ON sources(is_active);
     CREATE INDEX IF NOT EXISTS idx_sources_path ON sources(path);
   `);
+
+  // Migration: Add source_type column if not exists
+  try {
+    database.exec(`ALTER TABLE sources ADD COLUMN source_type TEXT DEFAULT 'local'`);
+  } catch (e) {
+    // Column already exists, ignore
+  }
+
+  // Migration: Add github_config column if not exists
+  try {
+    database.exec(`ALTER TABLE sources ADD COLUMN github_config TEXT`);
+  } catch (e) {
+    // Column already exists, ignore
+  }
 }
 
 /**

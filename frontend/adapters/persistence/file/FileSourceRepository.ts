@@ -10,6 +10,8 @@ import { Source, SourceProps } from '@/core/domain/entities/Source';
 import type { ISourceRepository } from '@/core/ports/out/ISourceRepository';
 import type { SourceValidationResult } from '@/core/ports/in/ISourceService';
 import { getFileConfigStore, type PersistedSource } from './FileConfigStore';
+import type { GitHubSourceConfig, GitHubValidationResult } from '@/core/domain/entities/GitHubSourceConfig';
+import { GitHubApiAdapter } from '@/adapters/github/GitHubApiAdapter';
 
 export class FileSourceRepository implements ISourceRepository {
   private store = getFileConfigStore();
@@ -22,6 +24,9 @@ export class FileSourceRepository implements ISourceRepository {
       isActive: persisted.isActive,
       createdAt: new Date(persisted.createdAt),
       lastAccessed: persisted.lastAccessed ? new Date(persisted.lastAccessed) : undefined,
+      sourceType: persisted.sourceType || 'local',
+      githubConfig: persisted.githubConfig,
+      lastSynced: persisted.lastSynced ? new Date(persisted.lastSynced) : undefined,
     };
     return Source.fromPersistence(props);
   }
@@ -34,6 +39,9 @@ export class FileSourceRepository implements ISourceRepository {
       isActive: source.isActive,
       createdAt: source.createdAt.toISOString(),
       lastAccessed: source.lastAccessed?.toISOString(),
+      sourceType: source.sourceType,
+      githubConfig: source.githubConfig,
+      lastSynced: source.lastSynced?.toISOString(),
     };
   }
 
@@ -161,5 +169,10 @@ export class FileSourceRepository implements ISourceRepository {
 
   getDefaultTasksPath(): string {
     return path.join(process.cwd(), 'tasks');
+  }
+
+  async validateGitHubSource(config: GitHubSourceConfig): Promise<GitHubValidationResult> {
+    const adapter = new GitHubApiAdapter();
+    return adapter.validateConnection(config);
   }
 }

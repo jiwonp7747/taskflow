@@ -7,6 +7,8 @@
 import type { ISourceRepository } from '@/core/ports/out/ISourceRepository';
 import type { SourceValidationResult } from '@/core/ports/in/ISourceService';
 import { Source } from '@/core/domain/entities/Source';
+import type { SourceType } from '@/core/domain/entities/Source';
+import type { GitHubSourceConfig, GitHubValidationResult } from '@/core/domain/entities/GitHubSourceConfig';
 import { getDatabase } from './database';
 import type Database from 'better-sqlite3';
 import { promises as fs } from 'fs';
@@ -16,6 +18,7 @@ interface SourceRow {
   id: string;
   name: string;
   path: string;
+  sourceType?: string;
   is_active: number;
   created_at: string;
   last_accessed: string | null;
@@ -36,6 +39,7 @@ export class SqliteSourceRepository implements ISourceRepository {
       id: row.id,
       name: row.name,
       path: row.path,
+      sourceType: (row.sourceType as SourceType) || 'local',
       isActive: row.is_active === 1,
       createdAt: new Date(row.created_at),
       lastAccessed: row.last_accessed ? new Date(row.last_accessed) : undefined,
@@ -167,5 +171,11 @@ export class SqliteSourceRepository implements ISourceRepository {
 
   getDefaultTasksPath(): string {
     return path.join(process.cwd(), 'tasks');
+  }
+
+  async validateGitHubSource(config: GitHubSourceConfig): Promise<GitHubValidationResult> {
+    const { GitHubApiAdapter } = await import('@/adapters/github/GitHubApiAdapter');
+    const adapter = new GitHubApiAdapter();
+    return adapter.validateConnection(config);
   }
 }

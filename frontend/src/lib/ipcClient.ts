@@ -118,6 +118,19 @@ export async function setActiveSource(id: string): Promise<void> {
   return api.invoke<void>('sources:setActive', { id });
 }
 
+export async function addGitHubSource(data: {
+  name: string;
+  url?: string;
+  owner?: string;
+  repo?: string;
+  branch: string;
+  rootPath: string;
+  token: string;
+}): Promise<SourceConfig> {
+  if (!api) throw new Error('Not in Electron');
+  return api.invoke<SourceConfig>('github:addSource', data);
+}
+
 // ============================================================================
 // Dialog
 // ============================================================================
