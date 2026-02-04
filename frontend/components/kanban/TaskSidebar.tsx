@@ -45,6 +45,7 @@ export function TaskSidebar({
   const [chatInput, setChatInput] = useState('');
   const [isStartingSession, setIsStartingSession] = useState(false);
   const [isContentEditing, setIsContentEditing] = useState(false);
+  const [copied, setCopied] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -155,6 +156,29 @@ export function TaskSidebar({
     if (!task || !onStopSession) return;
     onStopSession(task.id);
   }, [task, onStopSession]);
+
+  // Helper function to get display path and URL
+  const getDisplayPathAndUrl = useCallback((filePath: string): { displayPath: string; copyUrl: string; isGitHub: boolean } => {
+    if (filePath.startsWith('github://')) {
+      // github://owner/repo/rootPath/file.md -> https://github.com/owner/repo/blob/main/rootPath/file.md
+      const parts = filePath.replace('github://', '').split('/');
+      const owner = parts[0];
+      const repo = parts[1];
+      const restPath = parts.slice(2).join('/');
+      const githubUrl = `https://github.com/${owner}/${repo}/blob/main/${restPath}`;
+      return { displayPath: filePath, copyUrl: githubUrl, isGitHub: true };
+    }
+    return { displayPath: filePath, copyUrl: filePath, isGitHub: false };
+  }, []);
+
+  // Handle copy path to clipboard
+  const handleCopyPath = useCallback(async () => {
+    if (!task) return;
+    const { copyUrl } = getDisplayPathAndUrl(task.filePath);
+    await navigator.clipboard.writeText(copyUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [task, getDisplayPathAndUrl]);
 
   // Wrap selected text in content textarea with markdown syntax
   const wrapSelection = useCallback((wrapper: string) => {
@@ -577,7 +601,22 @@ export function TaskSidebar({
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <span className="truncate">{task.filePath}</span>
+                <span className="truncate flex-1">{task.filePath}</span>
+                <button
+                  onClick={handleCopyPath}
+                  className="flex-shrink-0 p-1 text-slate-500 hover:text-slate-300 transition-colors"
+                  title="Copy path/URL"
+                >
+                  {copied ? (
+                    <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  )}
+                </button>
               </div>
               <div className="flex items-center gap-4 mt-2 text-[10px] font-mono text-slate-600">
                 <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
