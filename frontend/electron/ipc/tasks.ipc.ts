@@ -15,7 +15,7 @@ import {
   updateTask,
   deleteTask,
 } from '../lib/fileSystem';
-import { parseTaskContent } from '../lib/taskParser';
+import { parseTaskContent, generateTaskContent, updateTaskFrontmatter } from '../lib/taskParser';
 import { safeLog, safeError } from '../lib/safeConsole';
 
 interface GitHubSourceInfo {
@@ -42,6 +42,33 @@ interface GitHubCacheEntry {
 
 const githubCache = new Map<string, GitHubCacheEntry>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Get file SHA from cache or return null if not found
+ */
+async function getGitHubFileSha(
+  source: GitHubSourceInfo,
+  taskId: string
+): Promise<{ sha: string; content: string; filePath: string } | null> {
+  // First check cache
+  for (const [cacheKey, entry] of githubCache) {
+    if (entry.task.id === taskId) {
+      const filePath = cacheKey.split('/').slice(2).join('/'); // Remove owner/repo prefix
+      return { sha: entry.sha, content: entry.content, filePath };
+    }
+  }
+
+  // If not in cache, need to fetch - return null to indicate task not found
+  return null;
+}
+
+/**
+ * Invalidate cache for a specific file
+ */
+function invalidateGitHubCache(source: GitHubSourceInfo, filePath: string): void {
+  const cacheKey = `${source.owner}/${source.repo}/${filePath}`;
+  githubCache.delete(cacheKey);
+}
 
 /**
  * Get active source info from database
@@ -270,7 +297,89 @@ export function registerTasksIPC(): void {
       const source = requireActiveSource();
 
       if (source.isGitHub) {
-        throw new Error('Creating tasks in GitHub sources is not yet supported. Use sync to push local changes.');
+        try {
+          const octokit = new Octokit({ auth: source.token });
+
+          // Generate unique task ID
+          const taskId = `task-${Date.now()}`;
+          const now = new Date().toISOString();
+
+          // Build file path
+          const fileName = `${taskId}.md`;
+          const rootPathPrefix = source.rootPath === '/' ? '' : source.rootPath.replace(/^\//, '');
+          const filePath = rootPathPrefix ? `${rootPathPrefix}/${fileName}` : fileName;
+
+          // Generate markdown content
+          const taskContent = generateTaskContent({
+            id: taskId,
+            title: data.title,
+            status: 'TODO',
+            priority: data.priority || 'MEDIUM',
+            assignee: data.assignee || 'user',
+            created_at: now,
+            updated_at: now,
+            start_date: data.start_date,
+            due_date: data.due_date,
+            tags: data.tags || [],
+            content: data.content || '',
+            task_size: data.task_size,
+            total_hours: data.total_hours,
+            notion_id: data.notion_id,
+          });
+
+          // Create file on GitHub (no SHA = create new file)
+          const { data: result } = await octokit.repos.createOrUpdateFileContents({
+            owner: source.owner,
+            repo: source.repo,
+            path: filePath,
+            message: `Create task: ${data.title}`,
+            content: Buffer.from(taskContent, 'utf-8').toString('base64'),
+            branch: source.branch,
+          });
+
+          // Add to cache
+          const cacheKey = `${source.owner}/${source.repo}/${filePath}`;
+          const task: Task = {
+            id: taskId,
+            title: data.title,
+            status: 'TODO',
+            priority: data.priority || 'MEDIUM',
+            assignee: data.assignee || 'user',
+            created_at: now,
+            updated_at: now,
+            start_date: data.start_date,
+            due_date: data.due_date,
+            tags: data.tags || [],
+            content: data.content || '',
+            task_size: data.task_size,
+            total_hours: data.total_hours,
+            notion_id: data.notion_id,
+            filePath: fileName,
+            rawContent: taskContent,
+          };
+
+          githubCache.set(cacheKey, {
+            sha: result.content?.sha || '',
+            content: taskContent,
+            task,
+            fetchedAt: Date.now(),
+          });
+
+          safeLog('[TasksIPC] GitHub task created:', taskId);
+          return task;
+        } catch (error: any) {
+          // Handle GitHub-specific errors
+          if (error.status === 409) {
+            throw new Error(`GitHub conflict: File already exists. Please refresh and try again.`);
+          } else if (error.status === 403 && error.message?.includes('rate limit')) {
+            throw new Error(`GitHub rate limit exceeded. Please try again later.`);
+          } else if (error.status === 401) {
+            throw new Error(`GitHub authentication failed. Please check your token.`);
+          } else if (error.status === 404) {
+            throw new Error(`GitHub repository not found. Please check your configuration.`);
+          }
+          throw error;
+        }
       }
 
       try {
@@ -294,7 +403,59 @@ export function registerTasksIPC(): void {
       const source = requireActiveSource();
 
       if (source.isGitHub) {
-        throw new Error('Updating tasks in GitHub sources is not yet supported. Use sync to push local changes.');
+        try {
+          const octokit = new Octokit({ auth: source.token });
+
+          // Get current file info from cache
+          const fileInfo = await getGitHubFileSha(source, id);
+          if (!fileInfo) {
+            throw new Error(`Task ${id} not found in GitHub source`);
+          }
+
+          // Generate updated markdown content
+          const updatedContent = updateTaskFrontmatter(fileInfo.content, data);
+
+          // Update file on GitHub (with SHA)
+          const { data: result } = await octokit.repos.createOrUpdateFileContents({
+            owner: source.owner,
+            repo: source.repo,
+            path: fileInfo.filePath,
+            message: `Update task: ${id}`,
+            content: Buffer.from(updatedContent, 'utf-8').toString('base64'),
+            branch: source.branch,
+            sha: fileInfo.sha,
+          });
+
+          // Parse updated task
+          const relativePath = source.rootPath === '/'
+            ? fileInfo.filePath
+            : fileInfo.filePath.replace(source.rootPath.replace(/^\//, '') + '/', '');
+          const task = parseTaskContent(updatedContent, relativePath);
+
+          // Update cache
+          const cacheKey = `${source.owner}/${source.repo}/${fileInfo.filePath}`;
+          githubCache.set(cacheKey, {
+            sha: result.content?.sha || '',
+            content: updatedContent,
+            task,
+            fetchedAt: Date.now(),
+          });
+
+          safeLog('[TasksIPC] GitHub task updated:', id);
+          return task;
+        } catch (error: any) {
+          // Handle GitHub-specific errors
+          if (error.status === 409) {
+            throw new Error(`GitHub conflict: File has been modified on remote. Please refresh and try again.`);
+          } else if (error.status === 403 && error.message?.includes('rate limit')) {
+            throw new Error(`GitHub rate limit exceeded. Please try again later.`);
+          } else if (error.status === 401) {
+            throw new Error(`GitHub authentication failed. Please check your token.`);
+          } else if (error.status === 404) {
+            throw new Error(`GitHub file not found. The task may have been deleted.`);
+          }
+          throw error;
+        }
       }
 
       try {
@@ -315,7 +476,43 @@ export function registerTasksIPC(): void {
       const source = requireActiveSource();
 
       if (source.isGitHub) {
-        throw new Error('Deleting tasks in GitHub sources is not yet supported. Use sync to push local changes.');
+        try {
+          const octokit = new Octokit({ auth: source.token });
+
+          // Get current file info from cache
+          const fileInfo = await getGitHubFileSha(source, id);
+          if (!fileInfo) {
+            throw new Error(`Task ${id} not found in GitHub source`);
+          }
+
+          // Delete file on GitHub
+          await octokit.repos.deleteFile({
+            owner: source.owner,
+            repo: source.repo,
+            path: fileInfo.filePath,
+            message: `Delete task: ${id}`,
+            sha: fileInfo.sha,
+            branch: source.branch,
+          });
+
+          // Remove from cache
+          invalidateGitHubCache(source, fileInfo.filePath);
+
+          safeLog('[TasksIPC] GitHub task deleted:', id);
+          return;
+        } catch (error: any) {
+          // Handle GitHub-specific errors
+          if (error.status === 409) {
+            throw new Error(`GitHub conflict: File has been modified on remote. Please refresh and try again.`);
+          } else if (error.status === 403 && error.message?.includes('rate limit')) {
+            throw new Error(`GitHub rate limit exceeded. Please try again later.`);
+          } else if (error.status === 401) {
+            throw new Error(`GitHub authentication failed. Please check your token.`);
+          } else if (error.status === 404) {
+            throw new Error(`GitHub file not found. The task may have already been deleted.`);
+          }
+          throw error;
+        }
       }
 
       try {
