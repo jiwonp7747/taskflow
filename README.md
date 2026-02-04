@@ -279,7 +279,12 @@ npm run ai -- show <task-id>
 
 ## License
 
-MIT
+MIT - See [LICENSE](./LICENSE) for details.
+
+### Third-Party Licenses
+
+This project uses the following notable dependencies:
+- **sharp** (image processing): Uses `libvips` which is licensed under LGPL-3.0. As a dynamically linked library, this does not affect the license of this project.
 
 ---
 
@@ -289,6 +294,8 @@ Issues and pull requests are welcome. See [Contributing Guide](./docs/contributi
 
 ---
 
-## Contact
+## Links
 
-Please open an issue for project-related inquiries.
+- [GitHub Repository](https://github.com/jiwonp7747/taskflow)
+- [Issue Tracker](https://github.com/jiwonp7747/taskflow/issues)
+- [Documentation](./docs/README.md)
