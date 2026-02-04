@@ -44,7 +44,7 @@ const githubCache = new Map<string, GitHubCacheEntry>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
- * Get file SHA from cache or return null if not found
+ * Get file SHA from cache or fetch from GitHub if not found
  */
 async function getGitHubFileSha(
   source: GitHubSourceInfo,
@@ -58,7 +58,42 @@ async function getGitHubFileSha(
     }
   }
 
-  // If not in cache, need to fetch - return null to indicate task not found
+  // If not in cache, try to fetch from GitHub directly
+  const octokit = new Octokit({ auth: source.token });
+  const rootPathPrefix = source.rootPath === '/' ? '' : source.rootPath.replace(/^\//, '');
+  const filePath = rootPathPrefix ? `${rootPathPrefix}/${taskId}.md` : `${taskId}.md`;
+
+  try {
+    const { data } = await octokit.repos.getContent({
+      owner: source.owner,
+      repo: source.repo,
+      path: filePath,
+      ref: source.branch,
+    });
+
+    // getContent returns file data with sha and content
+    if ('sha' in data && 'content' in data && typeof data.content === 'string') {
+      const content = Buffer.from(data.content, 'base64').toString('utf-8');
+
+      // Cache the result for future use
+      const cacheKey = `${source.owner}/${source.repo}/${filePath}`;
+      const task = parseTaskContent(content, `${taskId}.md`);
+      githubCache.set(cacheKey, {
+        sha: data.sha,
+        content,
+        task,
+        fetchedAt: Date.now(),
+      });
+
+      return { sha: data.sha, content, filePath };
+    }
+  } catch (error: any) {
+    // 404 means file doesn't exist, other errors should be logged
+    if (error.status !== 404) {
+      safeError(`[TasksIPC] Failed to fetch file ${filePath} from GitHub:`, error);
+    }
+  }
+
   return null;
 }
 
