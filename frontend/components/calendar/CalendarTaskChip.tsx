@@ -23,24 +23,24 @@ export function CalendarTaskChip({ task, onClick, isAiWorking = false }: Calenda
   // Get priority dot color
   const getPriorityDotColor = () => {
     switch (task.priority) {
-      case 'URGENT': return 'bg-red-400';
-      case 'HIGH': return 'bg-orange-400';
-      case 'MEDIUM': return 'bg-blue-400';
-      case 'LOW': return 'bg-slate-400';
-      default: return 'bg-slate-400';
+      case 'URGENT': return 'bg-[var(--priority-urgent-dot)]';
+      case 'HIGH': return 'bg-[var(--priority-high-dot)]';
+      case 'MEDIUM': return 'bg-[var(--priority-medium-dot)]';
+      case 'LOW': return 'bg-[var(--priority-low-dot)]';
+      default: return 'bg-[var(--priority-low-dot)]';
     }
   };
 
   // Get status bar color
   const getStatusBarColor = () => {
     switch (task.status) {
-      case 'TODO': return 'bg-slate-400';
-      case 'IN_PROGRESS': return 'bg-cyan-400';
-      case 'IN_REVIEW': return 'bg-violet-400';
-      case 'NEED_FIX': return 'bg-orange-400';
-      case 'COMPLETE': return 'bg-emerald-400';
-      case 'ON_HOLD': return 'bg-amber-400';
-      default: return 'bg-slate-400';
+      case 'TODO': return 'bg-[var(--status-todo-border)]';
+      case 'IN_PROGRESS': return 'bg-[var(--status-in-progress-border)]';
+      case 'IN_REVIEW': return 'bg-[var(--status-in-review-border)]';
+      case 'NEED_FIX': return 'bg-[var(--status-need-fix-border)]';
+      case 'COMPLETE': return 'bg-[var(--status-complete-border)]';
+      case 'ON_HOLD': return 'bg-[var(--status-on-hold-border)]';
+      default: return 'bg-[var(--status-todo-border)]';
     }
   };
 
@@ -53,10 +53,10 @@ export function CalendarTaskChip({ task, onClick, isAiWorking = false }: Calenda
       className={`
         w-full group flex items-center gap-1 px-1.5 py-1 rounded
         text-left text-[10px] leading-tight
-        bg-slate-800/60 border border-white/5
-        hover:border-cyan-500/30 hover:bg-slate-700/60
+        bg-[var(--glass-bg)] border border-[var(--glass-border)]
+        hover:border-[var(--accent-primary)]/30 hover:bg-[var(--muted-bg)]
         transition-all duration-200
-        ${isAiWorking ? 'border-cyan-400/50 animate-pulse' : ''}
+        ${isAiWorking ? 'border-[var(--neon-cyan)]/50 animate-pulse' : ''}
         ${isDragging ? 'opacity-30 scale-95' : ''}
       `}
       title={`${task.title} (${priorityConfig.label} / ${task.status})`}
@@ -74,7 +74,7 @@ export function CalendarTaskChip({ task, onClick, isAiWorking = false }: Calenda
       />
 
       {/* Title (truncated) */}
-      <span className="flex-1 truncate text-slate-300 group-hover:text-white">
+      <span className="flex-1 truncate text-[var(--text-secondary)] group-hover:text-[var(--foreground)]">
         {task.title}
       </span>
 

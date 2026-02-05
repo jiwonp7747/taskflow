@@ -56,12 +56,12 @@ export function FilterBar({
   };
 
   return (
-    <div className="bg-slate-900/50 border border-white/5 rounded-xl mb-4 overflow-hidden">
+    <div className="bg-card border border-border rounded-xl mb-4 overflow-hidden">
       {/* Collapsed view: Filter button with indicator */}
       <div className="flex items-center justify-between p-3">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
         >
           {/* Filter icon */}
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -70,7 +70,7 @@ export function FilterBar({
           <span className="text-sm font-mono">Filters</span>
 
           {isFiltered && (
-            <span className="px-2 py-0.5 text-[10px] font-mono bg-cyan-500/20 text-cyan-400 rounded-full border border-cyan-500/30">
+            <span className="px-2 py-0.5 text-[10px] font-mono bg-accent/20 text-accent-foreground rounded-full border border-accent/30">
               {filteredCount}/{totalTasks}
             </span>
           )}
@@ -89,7 +89,7 @@ export function FilterBar({
         {isFiltered && (
           <button
             onClick={onClearFilters}
-            className="text-xs font-mono text-slate-500 hover:text-red-400 transition-colors flex items-center gap-1"
+            className="text-xs font-mono text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
           >
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -101,11 +101,11 @@ export function FilterBar({
 
       {/* Expanded filters */}
       {isExpanded && (
-        <div className="px-4 pb-4 space-y-4 border-t border-white/5 pt-4">
+        <div className="px-4 pb-4 space-y-4 border-t border-border pt-4">
           {/* Tag filter */}
           {availableTags.length > 0 && (
             <div>
-              <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
+              <label className="block text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-2">
                 Tags
               </label>
               <div className="flex flex-wrap gap-2">
@@ -120,8 +120,8 @@ export function FilterBar({
                     }}
                     className={`px-2 py-1 text-xs font-mono rounded-lg border transition-all ${
                       filter.tags?.includes(tag)
-                        ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
-                        : 'bg-slate-800/50 border-white/5 text-slate-400 hover:border-white/10 hover:text-slate-300'
+                        ? 'bg-accent/20 border-accent/50 text-accent-foreground'
+                        : 'bg-muted border-border text-muted-foreground hover:border-accent/30 hover:text-foreground'
                     }`}
                   >
                     #{tag}
@@ -133,7 +133,7 @@ export function FilterBar({
 
           {/* Assignee filter */}
           <div>
-            <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
+            <label className="block text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-2">
               Assignee
             </label>
             <div className="flex gap-2">
@@ -143,8 +143,8 @@ export function FilterBar({
                   onClick={() => onAssigneeChange(assignee)}
                   className={`px-3 py-1.5 text-xs font-mono rounded-lg border transition-all ${
                     filter.assignee === assignee
-                      ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
-                      : 'bg-slate-800/50 border-white/5 text-slate-400 hover:border-white/10 hover:text-slate-300'
+                      ? 'bg-accent/20 border-accent/50 text-accent-foreground'
+                      : 'bg-muted border-border text-muted-foreground hover:border-accent/30 hover:text-foreground'
                   }`}
                 >
                   {assignee === 'all' ? 'All' : assignee === 'user' ? 'User' : 'AI Agent'}
@@ -155,7 +155,7 @@ export function FilterBar({
 
           {/* Date filter */}
           <div>
-            <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
+            <label className="block text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-2">
               Due Date
             </label>
             <div className="flex flex-wrap gap-2">
@@ -166,9 +166,9 @@ export function FilterBar({
                   className={`px-3 py-1.5 text-xs font-mono rounded-lg border transition-all ${
                     filter.dateRange?.type === preset.value
                       ? preset.value === 'overdue'
-                        ? 'bg-red-500/20 border-red-500/50 text-red-400'
-                        : 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
-                      : 'bg-slate-800/50 border-white/5 text-slate-400 hover:border-white/10 hover:text-slate-300'
+                        ? 'bg-destructive/20 border-destructive/50 text-destructive'
+                        : 'bg-accent/20 border-accent/50 text-accent-foreground'
+                      : 'bg-muted border-border text-muted-foreground hover:border-accent/30 hover:text-foreground'
                   }`}
                 >
                   {preset.label}
@@ -183,16 +183,16 @@ export function FilterBar({
                   type="date"
                   value={customStartDate}
                   onChange={(e) => handleCustomDateChange(e.target.value, customEndDate)}
-                  className="px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white
-                    focus:outline-none focus:border-cyan-500/50 [color-scheme:dark]"
+                  className="px-3 py-2 bg-muted border border-border rounded-lg text-sm text-foreground
+                    focus:outline-none focus:border-accent/50"
                 />
-                <span className="text-slate-500 text-sm">to</span>
+                <span className="text-muted-foreground text-sm">to</span>
                 <input
                   type="date"
                   value={customEndDate}
                   onChange={(e) => handleCustomDateChange(customStartDate, e.target.value)}
-                  className="px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white
-                    focus:outline-none focus:border-cyan-500/50 [color-scheme:dark]"
+                  className="px-3 py-2 bg-muted border border-border rounded-lg text-sm text-foreground
+                    focus:outline-none focus:border-accent/50"
                 />
               </div>
             )}

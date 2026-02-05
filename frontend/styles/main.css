@@ -1,0 +1,21 @@
+/* ═══════════════════════════════════════════════════════════
+   TASKFLOW - MAIN STYLESHEET
+
+   This is the single source of truth for all styles.
+   Theme files are imported in order:
+   1. Cyberpunk (default) - sets :root variables
+   2. Soft - overrides via [data-theme="soft"]
+   3. Base - common utilities and animations
+
+   To add a new theme:
+   1. Create styles/themes/[theme-name].css
+   2. Add it after soft.css import
+   3. Use html[data-theme="theme-name"] selector
+   ═══════════════════════════════════════════════════════════ */
+
+/* Theme definitions */
+@import "./themes/cyberpunk.css";
+@import "./themes/soft.css";
+
+/* Common styles and utilities */
+@import "./base.css";

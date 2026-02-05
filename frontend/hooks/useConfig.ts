@@ -23,6 +23,7 @@ interface UseConfigReturn {
   deleteSource: (id: string) => Promise<boolean>;
   setActiveSource: (id: string) => Promise<boolean>;
   toggleSidebar: () => Promise<void>;
+  setTheme: (theme: 'dark' | 'light') => Promise<boolean>;
 }
 
 export function useConfig(): UseConfigReturn {
@@ -205,6 +206,36 @@ export function useConfig(): UseConfigReturn {
     }
   }, [config.sidebarCollapsed]);
 
+  // Set theme
+  const setTheme = useCallback(async (theme: 'dark' | 'light'): Promise<boolean> => {
+    try {
+      setError(null);
+
+      // Apply theme immediately to DOM for instant feedback
+      setConfig(prev => ({ ...prev, theme }));
+      if (typeof document !== 'undefined') {
+        document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'cyberpunk' : 'soft');
+      }
+
+      // Try to persist to server (may fail in non-Electron mode)
+      try {
+        const response = await fetch('/api/config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ theme }),
+        });
+        return response.ok;
+      } catch {
+        // API not available (dev mode), but theme is already applied
+        return true;
+      }
+    } catch (err) {
+      console.error('Failed to set theme:', err);
+      setError(String(err));
+      return false;
+    }
+  }, []);
+
   return {
     config,
     loading,
@@ -216,5 +247,6 @@ export function useConfig(): UseConfigReturn {
     deleteSource,
     setActiveSource,
     toggleSidebar,
+    setTheme,
   };
 }

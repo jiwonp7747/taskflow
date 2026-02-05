@@ -188,18 +188,18 @@ export function TimelineGrid({
         {hours.map(hour => (
           <div
             key={hour}
-            className="absolute w-full flex border-b border-white/5"
+            className="absolute w-full flex border-b border-[var(--timeline-grid-line)]"
             style={{ top: `${hour * HOUR_HEIGHT}px`, height: `${HOUR_HEIGHT}px` }}
           >
             {/* Time label */}
-            <div className="w-16 flex-shrink-0 px-2 pt-0 text-right border-r border-white/5">
-              <span className="text-[10px] font-mono text-slate-500 relative -top-2">
+            <div className="w-16 flex-shrink-0 px-2 pt-0 text-right border-r border-[var(--timeline-grid-line)]">
+              <span className="text-[10px] font-mono text-[var(--text-tertiary)] relative -top-2">
                 {hour.toString().padStart(2, '0')}:00
               </span>
             </div>
 
             {/* Time slot area */}
-            <div className="flex-1 hover:bg-slate-800/20 transition-colors" />
+            <div className="flex-1 hover:bg-[var(--muted-bg)] transition-colors" />
           </div>
         ))}
 
@@ -234,9 +234,9 @@ export function TimelineGrid({
           >
             <div className="flex items-center">
               <div className="w-16 flex justify-end pr-1">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-lg shadow-red-500/50" />
+                <div className="w-2.5 h-2.5 rounded-full bg-[var(--timeline-current-time)] shadow-lg shadow-[var(--timeline-current-time)]/50" />
               </div>
-              <div className="flex-1 h-[2px] bg-red-500 shadow-lg shadow-red-500/30" />
+              <div className="flex-1 h-[2px] bg-[var(--timeline-current-time)] shadow-lg shadow-[var(--timeline-current-time)]/30" />
             </div>
           </div>
         )}

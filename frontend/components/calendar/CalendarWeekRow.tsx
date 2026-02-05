@@ -112,14 +112,14 @@ export function CalendarWeekRow({
       {/* Spanning tasks row */}
       {spanningTasksInWeek.length > 0 && (
         <div
-          className="relative grid grid-cols-7 border-b border-white/5"
+          className="relative grid grid-cols-7 border-b border-[var(--glass-border)]"
           style={{ minHeight: `${spanningRowHeight}px` }}
         >
           {/* Grid lines for alignment */}
           {weekDays.map((_, index) => (
             <div
               key={index}
-              className="border-r border-white/5 last:border-r-0"
+              className="border-r border-[var(--glass-border)] last:border-r-0"
             />
           ))}
 

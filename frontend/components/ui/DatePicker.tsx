@@ -73,7 +73,7 @@ export function DatePicker({
   return (
     <div className={`relative ${className}`}>
       {label && (
-        <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
+        <label className="block text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider mb-2">
           {label}
         </label>
       )}
@@ -87,11 +87,11 @@ export function DatePicker({
           max={toDateFormat(maxDate)}
           onChange={handleDateChange}
           placeholder={placeholder}
-          className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white
+          className="w-full px-4 py-2.5 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-sm text-[var(--foreground)]
             focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20
             transition-all cursor-pointer
             [color-scheme:dark]
-            placeholder:text-slate-600"
+            placeholder:text-[var(--text-muted)]"
         />
 
         {/* Clear button */}
@@ -99,7 +99,7 @@ export function DatePicker({
           <button
             type="button"
             onClick={() => onChange(undefined)}
-            className="absolute right-10 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-slate-300 transition-colors"
+            className="absolute right-10 top-1/2 -translate-y-1/2 p-1 text-[var(--text-tertiary)] hover:text-[var(--foreground)] transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -109,7 +109,7 @@ export function DatePicker({
 
         {/* Calendar icon */}
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-          <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4 text-[var(--text-tertiary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         </div>
@@ -122,14 +122,14 @@ export function DatePicker({
             type="time"
             value={toTimeFormat(value)}
             onChange={handleTimeChange}
-            className="w-full px-4 py-2 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white
+            className="w-full px-4 py-2 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-sm text-[var(--foreground)]
               focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20
               transition-all cursor-pointer
               [color-scheme:dark]
-              placeholder:text-slate-600"
+              placeholder:text-[var(--text-muted)]"
           />
           <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-[var(--text-tertiary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>

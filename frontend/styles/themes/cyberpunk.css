@@ -1,0 +1,191 @@
+/* ═══════════════════════════════════════════════════════════
+   CYBERPUNK THEME - Dark Neon Terminal Aesthetic
+   ═══════════════════════════════════════════════════════════ */
+
+:root,
+html[data-theme="cyberpunk"] {
+  /* Base colors */
+  --background: #050508;
+  --foreground: #e2e8f0;
+
+  /* Neon accent colors */
+  --neon-cyan: #00f0ff;
+  --neon-violet: #a855f7;
+  --neon-orange: #ff6b35;
+  --neon-emerald: #10b981;
+  --neon-amber: #f59e0b;
+  --neon-red: #ef4444;
+
+  /* Glass effect */
+  --glass-bg: rgba(15, 23, 42, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.05);
+
+  /* Glow effects */
+  --glow-cyan: 0 0 20px rgba(0, 240, 255, 0.3);
+  --glow-violet: 0 0 20px rgba(168, 85, 247, 0.3);
+
+  /* Card and UI backgrounds */
+  --card-bg: linear-gradient(to bottom right, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.8));
+  --card-bg-solid: rgba(15, 23, 42, 0.9);
+  --bg-primary: #020617;
+  --muted-bg: rgba(30, 41, 59, 0.5);
+
+  /* Text colors */
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --text-muted: #475569;
+  --text-placeholder: #475569;
+
+  /* Accent colors */
+  --accent-primary: #00f0ff;
+  --accent-secondary: #a855f7;
+  --primary: #00f0ff;
+
+  /* Modal variables */
+  --modal-backdrop: rgba(0, 0, 0, 0.7);
+  --modal-bg: #020617;
+  --modal-border: rgba(255, 255, 255, 0.1);
+  --modal-header-bg: linear-gradient(to right, rgba(8, 47, 73, 0.5), rgba(15, 23, 42, 1));
+  --modal-footer-bg: rgba(15, 23, 42, 0.3);
+
+  /* Input variables */
+  --input-bg: rgba(15, 23, 42, 0.5);
+  --input-border: rgba(255, 255, 255, 0.05);
+  --input-border-hover: rgba(255, 255, 255, 0.1);
+  --input-border-focus: var(--neon-cyan);
+
+  /* Button variables */
+  --button-primary-bg: linear-gradient(to right, #06b6d4, #3b82f6);
+  --button-primary-text: #ffffff;
+  --button-secondary-bg: rgba(30, 41, 59, 0.5);
+  --button-secondary-text: #e2e8f0;
+
+  /* Filter bar specific */
+  --filter-bg: rgba(15, 23, 42, 0.6);
+  --filter-border: rgba(0, 240, 255, 0.1);
+  --filter-active-bg: rgba(0, 240, 255, 0.1);
+  --filter-active-border: rgba(0, 240, 255, 0.3);
+  --filter-hover-bg: rgba(0, 240, 255, 0.05);
+  --filter-text: #94a3b8;
+  --filter-text-active: #00f0ff;
+  --filter-glow: 0 0 10px rgba(0, 240, 255, 0.2);
+
+  /* Kanban column specific */
+  --column-bg: rgba(15, 23, 42, 0.4);
+  --column-header-bg: rgba(15, 23, 42, 0.6);
+  --column-border: rgba(255, 255, 255, 0.05);
+
+  /* Scrollbar */
+  --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+
+  /* Selection */
+  --selection-bg: rgba(0, 240, 255, 0.3);
+  --selection-text: white;
+
+  /* Focus ring */
+  --focus-ring: var(--neon-cyan);
+
+  /* Kbd */
+  --kbd-bg: rgba(30, 41, 59, 0.5);
+  --kbd-border: rgba(71, 85, 105, 0.3);
+  --kbd-text: #94a3b8;
+
+  /* Theme-specific flags */
+  --show-noise-texture: block;
+  --show-grid-pattern: block;
+
+  /* ═══════════════════════════════════════════════════════════
+     STATUS COLORS - Neon glow style for cyberpunk
+     ═══════════════════════════════════════════════════════════ */
+  --status-todo-bg: rgba(100, 116, 139, 0.3);
+  --status-todo-border: rgba(100, 116, 139, 0.5);
+  --status-todo-text: #94a3b8;
+
+  --status-in-progress-bg: rgba(0, 240, 255, 0.2);
+  --status-in-progress-border: rgba(0, 240, 255, 0.5);
+  --status-in-progress-text: #00f0ff;
+
+  --status-in-review-bg: rgba(168, 85, 247, 0.2);
+  --status-in-review-border: rgba(168, 85, 247, 0.5);
+  --status-in-review-text: #a855f7;
+
+  --status-need-fix-bg: rgba(255, 107, 53, 0.2);
+  --status-need-fix-border: rgba(255, 107, 53, 0.5);
+  --status-need-fix-text: #ff6b35;
+
+  --status-complete-bg: rgba(16, 185, 129, 0.2);
+  --status-complete-border: rgba(16, 185, 129, 0.5);
+  --status-complete-text: #10b981;
+
+  --status-on-hold-bg: rgba(245, 158, 11, 0.2);
+  --status-on-hold-border: rgba(245, 158, 11, 0.5);
+  --status-on-hold-text: #f59e0b;
+
+  /* ═══════════════════════════════════════════════════════════
+     PRIORITY COLORS - Vibrant neon for cyberpunk
+     ═══════════════════════════════════════════════════════════ */
+  --priority-urgent-bg: rgba(239, 68, 68, 0.2);
+  --priority-urgent-border: rgba(239, 68, 68, 0.5);
+  --priority-urgent-text: #ef4444;
+  --priority-urgent-dot: #ef4444;
+
+  --priority-high-bg: rgba(255, 107, 53, 0.2);
+  --priority-high-border: rgba(255, 107, 53, 0.5);
+  --priority-high-text: #ff6b35;
+  --priority-high-dot: #ff6b35;
+
+  --priority-medium-bg: rgba(59, 130, 246, 0.2);
+  --priority-medium-border: rgba(59, 130, 246, 0.5);
+  --priority-medium-text: #3b82f6;
+  --priority-medium-dot: #3b82f6;
+
+  --priority-low-bg: rgba(100, 116, 139, 0.2);
+  --priority-low-border: rgba(100, 116, 139, 0.5);
+  --priority-low-text: #64748b;
+  --priority-low-dot: #64748b;
+
+  /* ═══════════════════════════════════════════════════════════
+     TAG STYLES - Neon glow tags for cyberpunk
+     ═══════════════════════════════════════════════════════════ */
+  --tag-bg: rgba(0, 240, 255, 0.1);
+  --tag-border: rgba(0, 240, 255, 0.3);
+  --tag-text: #00f0ff;
+  --tag-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+  --tag-hover-bg: rgba(0, 240, 255, 0.2);
+  --tag-border-radius: 4px;
+
+  /* ═══════════════════════════════════════════════════════════
+     ICON STYLES - Glowing icons for cyberpunk
+     ═══════════════════════════════════════════════════════════ */
+  --icon-primary: #00f0ff;
+  --icon-secondary: #a855f7;
+  --icon-muted: #64748b;
+  --icon-glow: drop-shadow(0 0 4px rgba(0, 240, 255, 0.5));
+  --icon-glow-violet: drop-shadow(0 0 4px rgba(168, 85, 247, 0.5));
+
+  /* ═══════════════════════════════════════════════════════════
+     CALENDAR/TIMELINE SPECIFIC
+     ═══════════════════════════════════════════════════════════ */
+  --calendar-today-bg: rgba(0, 240, 255, 0.1);
+  --calendar-today-border: rgba(0, 240, 255, 0.3);
+  --calendar-today-text: #00f0ff;
+  --calendar-header-bg: rgba(15, 23, 42, 0.8);
+  --calendar-cell-hover: rgba(0, 240, 255, 0.05);
+
+  --timeline-current-time: #ef4444;
+  --timeline-hour-text: #64748b;
+  --timeline-grid-line: rgba(255, 255, 255, 0.05);
+}
+
+/* Cyberpunk-specific visual effects */
+html[data-theme="cyberpunk"] body::before,
+:root body::before {
+  display: var(--show-noise-texture, block);
+}
+
+html[data-theme="cyberpunk"] body::after,
+:root body::after {
+  display: var(--show-grid-pattern, block);
+}

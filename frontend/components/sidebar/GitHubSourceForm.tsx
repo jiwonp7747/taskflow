@@ -148,7 +148,7 @@ export function GitHubSourceForm({ onSubmit, onCancel, isSubmitting = false }: G
     <div className="space-y-4">
       {/* Name */}
       <div>
-        <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
+        <label className="block text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider mb-1">
           Name
         </label>
         <input
@@ -156,13 +156,13 @@ export function GitHubSourceForm({ onSubmit, onCancel, isSubmitting = false }: G
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="My GitHub Tasks"
-          className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50"
+          className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--glass-border)] rounded-lg text-sm text-[var(--foreground)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--neon-cyan)]/50"
         />
       </div>
 
       {/* Repository URL */}
       <div>
-        <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
+        <label className="block text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider mb-1">
           Repository URL
         </label>
         <input
@@ -170,9 +170,9 @@ export function GitHubSourceForm({ onSubmit, onCancel, isSubmitting = false }: G
           value={url}
           onChange={(e) => handleUrlChange(e.target.value)}
           placeholder="https://github.com/owner/repo/tree/main/tasks"
-          className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 font-mono"
+          className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--glass-border)] rounded-lg text-sm text-[var(--foreground)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--neon-cyan)]/50 font-mono"
         />
-        <p className="text-[10px] text-slate-600 mt-1">
+        <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
           Paste a GitHub URL to auto-fill owner, repo, branch, and path
         </p>
       </div>
@@ -180,7 +180,7 @@ export function GitHubSourceForm({ onSubmit, onCancel, isSubmitting = false }: G
       {/* Owner / Repo row */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
+          <label className="block text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider mb-1">
             Owner
           </label>
           <input
@@ -188,11 +188,11 @@ export function GitHubSourceForm({ onSubmit, onCancel, isSubmitting = false }: G
             value={owner}
             onChange={(e) => { setOwner(e.target.value); setValidationResult(null); }}
             placeholder="username"
-            className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 font-mono"
+            className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--glass-border)] rounded-lg text-sm text-[var(--foreground)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--neon-cyan)]/50 font-mono"
           />
         </div>
         <div>
-          <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
+          <label className="block text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider mb-1">
             Repository
           </label>
           <input
@@ -200,7 +200,7 @@ export function GitHubSourceForm({ onSubmit, onCancel, isSubmitting = false }: G
             value={repo}
             onChange={(e) => { setRepo(e.target.value); setValidationResult(null); }}
             placeholder="my-tasks"
-            className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 font-mono"
+            className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--glass-border)] rounded-lg text-sm text-[var(--foreground)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--neon-cyan)]/50 font-mono"
           />
         </div>
       </div>
@@ -208,7 +208,7 @@ export function GitHubSourceForm({ onSubmit, onCancel, isSubmitting = false }: G
       {/* Branch / Root Path row */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
+          <label className="block text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider mb-1">
             Branch
           </label>
           <input
@@ -216,11 +216,11 @@ export function GitHubSourceForm({ onSubmit, onCancel, isSubmitting = false }: G
             value={branch}
             onChange={(e) => { setBranch(e.target.value); setValidationResult(null); }}
             placeholder="main"
-            className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 font-mono"
+            className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--glass-border)] rounded-lg text-sm text-[var(--foreground)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--neon-cyan)]/50 font-mono"
           />
         </div>
         <div>
-          <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
+          <label className="block text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider mb-1">
             Root Path
           </label>
           <input
@@ -228,14 +228,14 @@ export function GitHubSourceForm({ onSubmit, onCancel, isSubmitting = false }: G
             value={rootPath}
             onChange={(e) => { setRootPath(e.target.value); setValidationResult(null); }}
             placeholder="/tasks"
-            className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 font-mono"
+            className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--glass-border)] rounded-lg text-sm text-[var(--foreground)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--neon-cyan)]/50 font-mono"
           />
         </div>
       </div>
 
       {/* Token */}
       <div>
-        <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
+        <label className="block text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider mb-1">
           Personal Access Token
         </label>
         <input
@@ -243,10 +243,10 @@ export function GitHubSourceForm({ onSubmit, onCancel, isSubmitting = false }: G
           value={token}
           onChange={(e) => { setToken(e.target.value); setValidationResult(null); }}
           placeholder="ghp_xxxxxxxxxxxx"
-          className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 font-mono"
+          className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--glass-border)] rounded-lg text-sm text-[var(--foreground)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--neon-cyan)]/50 font-mono"
         />
-        <p className="text-[10px] text-slate-600 mt-1">
-          Token needs <code className="text-cyan-500">repo</code> scope for private repos
+        <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
+          Token needs <code className="text-[var(--neon-cyan)]">repo</code> scope for private repos
         </p>
       </div>
 
@@ -285,7 +285,7 @@ export function GitHubSourceForm({ onSubmit, onCancel, isSubmitting = false }: G
         <button
           onClick={handleTestConnection}
           disabled={validating || !token || (!owner && !url)}
-          className="px-3 py-2 bg-slate-800 border border-white/10 text-white text-sm rounded-lg hover:bg-slate-700 hover:border-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-2 bg-[var(--surface)] border border-[var(--glass-border)] text-[var(--foreground)] text-sm rounded-lg hover:bg-[var(--glass-bg)] hover:border-[var(--glass-border-hover)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {validating ? 'Testing...' : 'Test Connection'}
         </button>
@@ -298,7 +298,7 @@ export function GitHubSourceForm({ onSubmit, onCancel, isSubmitting = false }: G
         </button>
         <button
           onClick={onCancel}
-          className="px-3 py-2 text-slate-400 text-sm hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+          className="px-3 py-2 text-[var(--text-secondary)] text-sm hover:text-[var(--foreground)] hover:bg-[var(--surface)] rounded-lg transition-colors"
         >
           Cancel
         </button>

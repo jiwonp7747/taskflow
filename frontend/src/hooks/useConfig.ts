@@ -32,6 +32,7 @@ interface UseConfigReturn {
   setActiveSource: (id: string) => Promise<boolean>;
   toggleSidebar: () => Promise<void>;
   selectFolder: () => Promise<string | null>;
+  setTheme: (theme: 'dark' | 'light') => Promise<boolean>;
 }
 
 export function useConfig(): UseConfigReturn {
@@ -185,6 +186,32 @@ export function useConfig(): UseConfigReturn {
     }
   }, []);
 
+  // Set theme
+  const setTheme = useCallback(async (theme: 'dark' | 'light'): Promise<boolean> => {
+    try {
+      setError(null);
+
+      // Apply theme immediately to DOM for instant feedback
+      setConfig(prev => ({ ...prev, theme }));
+      if (typeof document !== 'undefined') {
+        document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'cyberpunk' : 'soft');
+      }
+
+      // Persist to config via IPC
+      try {
+        await ipc.updateConfig({ theme });
+        return true;
+      } catch {
+        // IPC failed but theme is already applied visually
+        return true;
+      }
+    } catch (err) {
+      console.error('Failed to set theme:', err);
+      setError(err instanceof Error ? err.message : String(err));
+      return false;
+    }
+  }, []);
+
   return {
     config,
     loading,
@@ -197,5 +224,6 @@ export function useConfig(): UseConfigReturn {
     setActiveSource,
     toggleSidebar,
     selectFolder,
+    setTheme,
   };
 }

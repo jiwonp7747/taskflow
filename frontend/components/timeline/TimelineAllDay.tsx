@@ -17,10 +17,10 @@ export function TimelineAllDay({
   if (tasks.length === 0) return null;
 
   return (
-    <div className="border-b border-white/5 bg-slate-900/20">
+    <div className="border-b border-[var(--glass-border)] bg-[var(--glass-bg)]">
       <div className="flex">
         {/* Label */}
-        <div className="w-16 flex-shrink-0 px-2 py-2 text-[10px] font-mono text-slate-500 uppercase tracking-wider border-r border-white/5">
+        <div className="w-16 flex-shrink-0 px-2 py-2 text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider border-r border-[var(--glass-border)]">
           All day
         </div>
 

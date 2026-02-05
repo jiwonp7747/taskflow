@@ -2,22 +2,32 @@
 
 import type { Task, TaskStatus, TaskPriority } from '@/types/task';
 
-// Status background colors mapping (full opacity for spanning bars)
+// Status background colors mapping (using CSS variables)
 const STATUS_BG_COLORS: Record<TaskStatus, string> = {
-  TODO: 'bg-slate-600/80',
-  IN_PROGRESS: 'bg-cyan-600/80',
-  IN_REVIEW: 'bg-violet-600/80',
-  NEED_FIX: 'bg-orange-600/80',
-  COMPLETE: 'bg-emerald-600/80',
-  ON_HOLD: 'bg-amber-600/80',
+  TODO: 'bg-[var(--status-todo-bg)]',
+  IN_PROGRESS: 'bg-[var(--status-in-progress-bg)]',
+  IN_REVIEW: 'bg-[var(--status-in-review-bg)]',
+  NEED_FIX: 'bg-[var(--status-need-fix-bg)]',
+  COMPLETE: 'bg-[var(--status-complete-bg)]',
+  ON_HOLD: 'bg-[var(--status-on-hold-bg)]',
 };
 
-// Priority dot colors
+// Status border colors mapping (using CSS variables)
+const STATUS_BORDER_COLORS: Record<TaskStatus, string> = {
+  TODO: 'border-[var(--status-todo-border)]',
+  IN_PROGRESS: 'border-[var(--status-in-progress-border)]',
+  IN_REVIEW: 'border-[var(--status-in-review-border)]',
+  NEED_FIX: 'border-[var(--status-need-fix-border)]',
+  COMPLETE: 'border-[var(--status-complete-border)]',
+  ON_HOLD: 'border-[var(--status-on-hold-border)]',
+};
+
+// Priority dot colors (using CSS variables)
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
-  URGENT: 'bg-red-500',
-  HIGH: 'bg-orange-400',
-  MEDIUM: 'bg-blue-400',
-  LOW: 'bg-slate-400',
+  URGENT: 'bg-[var(--priority-urgent-dot)]',
+  HIGH: 'bg-[var(--priority-high-dot)]',
+  MEDIUM: 'bg-[var(--priority-medium-dot)]',
+  LOW: 'bg-[var(--priority-low-dot)]',
 };
 
 interface CalendarSpanningTaskProps {
@@ -42,6 +52,7 @@ export function CalendarSpanningTask({
   isEnd = true,
 }: CalendarSpanningTaskProps) {
   const statusBgColor = STATUS_BG_COLORS[task.status] || STATUS_BG_COLORS.TODO;
+  const statusBorderColor = STATUS_BORDER_COLORS[task.status] || STATUS_BORDER_COLORS.TODO;
   const priorityColor = PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.LOW;
   const isAiAssigned = task.assignee === 'ai-agent';
 
@@ -59,13 +70,14 @@ export function CalendarSpanningTask({
         className={`
           w-full h-full flex items-center gap-1 px-1.5
           ${statusBgColor}
+          ${statusBorderColor}
           transition-all duration-150
           ${isStart ? 'rounded-l-md' : ''}
           ${isEnd ? 'rounded-r-md' : ''}
           hover:brightness-125 hover:shadow-md
-          border-y border-white/20
-          ${isStart ? 'border-l border-l-white/20' : ''}
-          ${isEnd ? 'border-r border-r-white/20' : ''}
+          border-y
+          ${isStart ? 'border-l' : ''}
+          ${isEnd ? 'border-r' : ''}
         `}
       >
         {/* Priority dot - only show at start */}
@@ -74,7 +86,7 @@ export function CalendarSpanningTask({
         )}
 
         {/* Task title */}
-        <span className="text-[10px] font-mono text-white truncate flex-1">
+        <span className="text-[10px] font-mono text-[var(--foreground)] truncate flex-1">
           {task.title}
         </span>
 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { AppConfig, SourceConfig, AddSourceRequest } from '@/types/config';
 import { SourcePanel } from './SourcePanel';
+import { ThemeSelector } from '../settings/ThemeSelector';
 
 interface LeftSidebarProps {
   config: AppConfig;
@@ -23,6 +24,7 @@ interface LeftSidebarProps {
   onSetActiveSource: (id: string) => Promise<boolean>;
   onSourceChange?: () => void;
   onSelectFolder?: () => Promise<string | null>;
+  onSetTheme?: (theme: 'dark' | 'light') => Promise<boolean>;
 }
 
 type TabType = 'sources' | 'settings';
@@ -38,6 +40,7 @@ export function LeftSidebar({
   onSetActiveSource,
   onSourceChange,
   onSelectFolder,
+  onSetTheme,
 }: LeftSidebarProps) {
   const [activeTab, setActiveTab] = useState<TabType>('sources');
 
@@ -48,20 +51,20 @@ export function LeftSidebar({
       }`}
     >
       {/* Main sidebar content */}
-      <div className="flex-1 flex flex-col bg-slate-950 border-r border-white/5 overflow-hidden">
+      <div className="flex-1 flex flex-col bg-[var(--background)] border-r border-[var(--glass-border)] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/5">
+        <div className="flex items-center justify-between p-4 border-b border-[var(--glass-border)]">
           {!isCollapsed && (
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
                 <span className="text-white font-bold text-sm">T</span>
               </div>
-              <span className="font-semibold text-white">TaskFlow</span>
+              <span className="font-semibold text-[var(--foreground)]">TaskFlow</span>
             </div>
           )}
           <button
             onClick={onToggle}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
+            className="p-2 text-[var(--soft-text-muted,#94a3b8)] hover:text-[var(--foreground)] hover:bg-[var(--glass-bg)] rounded-lg transition-colors"
             title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <svg
@@ -77,13 +80,13 @@ export function LeftSidebar({
 
         {/* Tabs */}
         {!isCollapsed && (
-          <div className="flex border-b border-white/5">
+          <div className="flex border-b border-[var(--glass-border)]">
             <button
               onClick={() => setActiveTab('sources')}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
                 activeTab === 'sources'
-                  ? 'text-cyan-400 border-b-2 border-cyan-400 bg-cyan-500/5'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/30'
+                  ? 'text-[var(--neon-cyan)] border-b-2 border-[var(--neon-cyan)] bg-[var(--neon-cyan)]/5'
+                  : 'text-[var(--soft-text-muted,#94a3b8)] hover:text-[var(--foreground)] hover:bg-[var(--soft-hover-bg,rgba(30,41,59,0.3))]'
               }`}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -95,8 +98,8 @@ export function LeftSidebar({
               onClick={() => setActiveTab('settings')}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
                 activeTab === 'settings'
-                  ? 'text-cyan-400 border-b-2 border-cyan-400 bg-cyan-500/5'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/30'
+                  ? 'text-[var(--neon-cyan)] border-b-2 border-[var(--neon-cyan)] bg-[var(--neon-cyan)]/5'
+                  : 'text-[var(--soft-text-muted,#94a3b8)] hover:text-[var(--foreground)] hover:bg-[var(--soft-hover-bg,rgba(30,41,59,0.3))]'
               }`}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -118,8 +121,8 @@ export function LeftSidebar({
               }}
               className={`p-3 rounded-lg transition-colors ${
                 activeTab === 'sources'
-                  ? 'text-cyan-400 bg-cyan-500/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  ? 'text-[var(--neon-cyan)] bg-[var(--neon-cyan)]/10'
+                  : 'text-[var(--soft-text-muted,#94a3b8)] hover:text-[var(--foreground)] hover:bg-[var(--glass-bg)]'
               }`}
               title="Sources"
             >
@@ -134,8 +137,8 @@ export function LeftSidebar({
               }}
               className={`p-3 rounded-lg transition-colors ${
                 activeTab === 'settings'
-                  ? 'text-cyan-400 bg-cyan-500/10'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                  ? 'text-[var(--neon-cyan)] bg-[var(--neon-cyan)]/10'
+                  : 'text-[var(--soft-text-muted,#94a3b8)] hover:text-[var(--foreground)] hover:bg-[var(--glass-bg)]'
               }`}
               title="Settings"
             >
@@ -164,15 +167,21 @@ export function LeftSidebar({
               />
             )}
             {activeTab === 'settings' && (
-              <div className="p-4">
-                <div className="text-center py-8">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-slate-800/50 border border-white/5 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <p className="text-sm text-slate-500">Settings coming soon</p>
+              <div className="p-4 space-y-6">
+                {/* Theme Selection */}
+                <ThemeSelector
+                  currentTheme={config.theme}
+                  onThemeChange={onSetTheme || (async () => false)}
+                />
+
+                {/* Divider */}
+                <div className="border-t border-[var(--glass-border)]" />
+
+                {/* Future settings sections */}
+                <div className="text-center py-4">
+                  <p className="text-xs text-[var(--soft-text-muted,#64748b)]">
+                    More settings coming soon
+                  </p>
                 </div>
               </div>
             )}
@@ -181,8 +190,8 @@ export function LeftSidebar({
 
         {/* Footer */}
         {!isCollapsed && (
-          <div className="p-4 border-t border-white/5">
-            <div className="text-[10px] font-mono text-slate-600 text-center">
+          <div className="p-4 border-t border-[var(--glass-border)]">
+            <div className="text-[10px] font-mono text-[var(--soft-text-secondary,#475569)] text-center">
               TaskFlow v1.0
             </div>
           </div>

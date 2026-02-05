@@ -266,21 +266,21 @@ export function TaskSidebar({
       />
 
       {/* Sidebar */}
-      <div className="fixed right-0 top-8 bottom-0 w-full max-w-[72rem] z-50 flex flex-row bg-slate-950 border-l border-white/5 shadow-2xl shadow-black/50">
+      <div className="fixed right-0 top-8 bottom-0 w-full max-w-[72rem] z-50 flex flex-row bg-[var(--background)] border-l border-[var(--glass-border)] shadow-2xl shadow-black/50">
 
         {/* Left Panel: Content */}
-        <div className="flex-1 flex flex-col border-r border-white/5 min-w-0">
+        <div className="flex-1 flex flex-col border-r border-[var(--glass-border)] min-w-0">
           {/* Content Panel Header */}
-          <div className="flex items-center justify-between px-8 py-4 border-b border-white/5">
-            <label className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+          <div className="flex items-center justify-between px-8 py-4 border-b border-[var(--glass-border)]">
+            <label className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider">
               Content
             </label>
             <button
               onClick={() => setIsContentEditing(!isContentEditing)}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-lg transition-all ${
                 isContentEditing
-                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-[var(--neon-cyan)]/10 text-[var(--neon-cyan)] border border-[var(--neon-cyan)]/30'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--foreground)] hover:bg-[var(--glass-bg)]'
               }`}
               title="Toggle edit mode (⌘E)"
             >
@@ -308,29 +308,29 @@ export function TaskSidebar({
               ref={contentTextareaRef}
               value={editedTask.content || ''}
               onChange={(e) => handleChange('content', e.target.value)}
-              className="flex-1 w-full px-8 py-6 bg-transparent text-sm text-slate-300 leading-relaxed placeholder-slate-600 focus:outline-none resize-none font-mono"
+              className="flex-1 w-full px-8 py-6 bg-transparent text-sm text-[var(--text-secondary)] leading-relaxed placeholder-[var(--text-muted)] focus:outline-none resize-none font-mono"
               placeholder="Write task content here..."
               autoFocus
             />
           ) : (
-            <div className="flex-1 overflow-y-auto px-8 py-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-700/50">
+            <div className="flex-1 overflow-y-auto px-8 py-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[var(--text-muted)]/50">
               {editedTask.content ? (
                 <div className="prose prose-invert prose-sm max-w-none
-                  prose-headings:text-slate-200 prose-headings:font-semibold
-                  prose-h1:text-xl prose-h1:border-b prose-h1:border-white/10 prose-h1:pb-2 prose-h1:mb-4
+                  prose-headings:text-[var(--foreground)] prose-headings:font-semibold
+                  prose-h1:text-xl prose-h1:border-b prose-h1:border-[var(--glass-border)] prose-h1:pb-2 prose-h1:mb-4
                   prose-h2:text-lg prose-h2:mt-6
                   prose-h3:text-base
-                  prose-p:text-slate-300 prose-p:leading-relaxed
-                  prose-a:text-cyan-400 prose-a:no-underline hover:prose-a:underline
-                  prose-strong:text-white prose-strong:font-bold
-                  prose-code:text-cyan-300 prose-code:bg-slate-800/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
-                  prose-pre:bg-slate-900/80 prose-pre:border prose-pre:border-white/5 prose-pre:rounded-lg
+                  prose-p:text-[var(--text-secondary)] prose-p:leading-relaxed
+                  prose-a:text-[var(--neon-cyan)] prose-a:no-underline hover:prose-a:underline
+                  prose-strong:text-[var(--foreground)] prose-strong:font-bold
+                  prose-code:text-[var(--neon-cyan)] prose-code:bg-[var(--glass-bg)] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                  prose-pre:bg-[var(--glass-bg)] prose-pre:border prose-pre:border-[var(--glass-border)] prose-pre:rounded-lg
                   [&_pre_code]:p-0 [&_pre_code]:bg-transparent [&_pre_code]:rounded-none [&_pre_code]:text-sm
-                  prose-blockquote:border-cyan-500/30 prose-blockquote:text-slate-400
-                  prose-ul:text-slate-300 prose-ol:text-slate-300
-                  prose-li:marker:text-slate-500
-                  prose-hr:border-white/10
-                  prose-th:text-slate-300 prose-td:text-slate-400
+                  prose-blockquote:border-[var(--neon-cyan)]/30 prose-blockquote:text-[var(--text-secondary)]
+                  prose-ul:text-[var(--text-secondary)] prose-ol:text-[var(--text-secondary)]
+                  prose-li:marker:text-[var(--text-muted)]
+                  prose-hr:border-[var(--glass-border)]
+                  prose-th:text-[var(--text-secondary)] prose-td:text-[var(--text-secondary)]
                   prose-img:rounded-lg
                 ">
                   <ReactMarkdown
@@ -343,7 +343,7 @@ export function TaskSidebar({
                   >{editedTask.content.trim()}</ReactMarkdown>
                 </div>
               ) : (
-                <span className="text-slate-600 italic">No content yet...</span>
+                <span className="text-[var(--text-muted)] italic">No content yet...</span>
               )}
             </div>
           )}
@@ -352,7 +352,7 @@ export function TaskSidebar({
         {/* Right Panel: Settings / Chat */}
         <div className="w-[28rem] flex flex-col min-w-0">
           {/* Header */}
-          <div className="border-b border-white/5 bg-gradient-to-r from-slate-900/80 to-slate-950">
+          <div className="border-b border-[var(--glass-border)] bg-gradient-to-r from-[var(--glass-bg)] to-[var(--background)]">
             {/* Top row with status and close button */}
             <div className="flex items-center justify-between px-6 py-4">
               <div className="flex items-center gap-3">
@@ -363,7 +363,7 @@ export function TaskSidebar({
                 {/* Session status for chat */}
                 {activeTab === 'chat' && (
                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
-                    isSessionActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'
+                    isSessionActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-[var(--glass-bg)] text-[var(--text-muted)]'
                   }`}>
                     {isSessionActive ? '● 세션 활성' : '○ 세션 종료'}
                   </span>
@@ -391,7 +391,7 @@ export function TaskSidebar({
                 {/* Close button */}
                 <button
                   onClick={onClose}
-                  className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                  className="p-2 text-[var(--text-secondary)] hover:text-[var(--foreground)] hover:bg-[var(--glass-bg)] rounded-lg transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -406,8 +406,8 @@ export function TaskSidebar({
                 onClick={() => setActiveTab('settings')}
                 className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
                   activeTab === 'settings'
-                    ? 'bg-slate-950 text-white border-t border-x border-white/10'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                    ? 'bg-[var(--background)] text-[var(--foreground)] border-t border-x border-[var(--glass-border)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--foreground)] hover:bg-[var(--glass-bg)]'
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -422,8 +422,8 @@ export function TaskSidebar({
                 onClick={() => setActiveTab('chat')}
                 className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
                   activeTab === 'chat'
-                    ? 'bg-slate-950 text-white border-t border-x border-white/10'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                    ? 'bg-[var(--background)] text-[var(--foreground)] border-t border-x border-[var(--glass-border)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--foreground)] hover:bg-[var(--glass-bg)]'
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -432,7 +432,7 @@ export function TaskSidebar({
                   </svg>
                   채팅
                   {conversationMessages.length > 0 && (
-                    <span className="px-1.5 py-0.5 text-[10px] bg-cyan-500/20 text-cyan-400 rounded-full">
+                    <span className="px-1.5 py-0.5 text-[10px] bg-[var(--neon-cyan)]/20 text-[var(--neon-cyan)] rounded-full">
                       {conversationMessages.length}
                     </span>
                   )}
@@ -443,17 +443,17 @@ export function TaskSidebar({
 
           {/* Settings Tab Content */}
           {activeTab === 'settings' && (
-          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-700/50">
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[var(--text-muted)]/50">
             {/* Title */}
             <div>
-              <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
+              <label className="block text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider mb-2">
                 Task Title
               </label>
               <input
                 type="text"
                 value={editedTask.title || ''}
                 onChange={(e) => handleChange('title', e.target.value)}
-                className="w-full px-4 py-3 bg-slate-900/50 border border-white/5 rounded-lg text-lg font-medium text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
+                className="w-full px-4 py-3 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-lg font-medium text-[var(--foreground)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--neon-cyan)]/50 focus:ring-1 focus:ring-[var(--neon-cyan)]/20 transition-all"
                 placeholder="Task title..."
               />
             </div>
@@ -462,13 +462,13 @@ export function TaskSidebar({
             <div className="grid grid-cols-2 gap-4">
               {/* Status */}
               <div>
-                <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
+                <label className="block text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider mb-2">
                   Status
                 </label>
                 <select
                   value={editedTask.status || task.status}
                   onChange={(e) => handleChange('status', e.target.value as TaskStatus)}
-                  className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all appearance-none cursor-pointer"
+                  className="w-full px-4 py-2.5 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--neon-cyan)]/50 transition-all appearance-none cursor-pointer"
                 >
                   {COLUMNS.map((col) => (
                     <option key={col.id} value={col.id}>
@@ -480,13 +480,13 @@ export function TaskSidebar({
 
               {/* Priority */}
               <div>
-                <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
+                <label className="block text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider mb-2">
                   Priority
                 </label>
                 <select
                   value={editedTask.priority || task.priority}
                   onChange={(e) => handleChange('priority', e.target.value as TaskPriority)}
-                  className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-all appearance-none cursor-pointer"
+                  className="w-full px-4 py-2.5 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-sm text-[var(--foreground)] focus:outline-none focus:border-[var(--neon-cyan)]/50 transition-all appearance-none cursor-pointer"
                 >
                   {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
                     <option key={key} value={key}>
@@ -499,7 +499,7 @@ export function TaskSidebar({
 
             {/* Assignee */}
             <div>
-              <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
+              <label className="block text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider mb-2">
                 Assignee
               </label>
               <div className="flex gap-2">
@@ -508,8 +508,8 @@ export function TaskSidebar({
                   onClick={() => handleChange('assignee', 'user')}
                   className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-mono transition-all ${
                     editedTask.assignee === 'user'
-                      ? 'bg-cyan-500/10 border-cyan-500/50 text-cyan-400'
-                      : 'bg-slate-900/50 border-white/5 text-slate-400 hover:border-white/10'
+                      ? 'bg-[var(--neon-cyan)]/10 border-[var(--neon-cyan)]/50 text-[var(--neon-cyan)]'
+                      : 'bg-[var(--glass-bg)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-[var(--glass-border-hover)]'
                   }`}
                 >
                   👤 User
@@ -520,7 +520,7 @@ export function TaskSidebar({
                   className={`flex-1 px-4 py-2.5 rounded-lg border text-sm font-mono transition-all ${
                     editedTask.assignee === 'ai-agent'
                       ? 'bg-violet-500/10 border-violet-500/50 text-violet-400'
-                      : 'bg-slate-900/50 border-white/5 text-slate-400 hover:border-white/10'
+                      : 'bg-[var(--glass-bg)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-[var(--glass-border-hover)]'
                   }`}
                 >
                   🤖 AI Agent
@@ -530,19 +530,19 @@ export function TaskSidebar({
 
             {/* Tags */}
             <div>
-              <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
+              <label className="block text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-wider mb-2">
                 Tags (comma separated)
               </label>
               <input
                 type="text"
                 value={(editedTask.tags || []).join(', ')}
                 onChange={(e) => handleChange('tags', e.target.value.split(',').map((t) => t.trim()).filter(Boolean))}
-                className="w-full px-4 py-2.5 bg-slate-900/50 border border-white/5 rounded-lg text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all"
+                className="w-full px-4 py-2.5 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-sm text-[var(--foreground)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--neon-cyan)]/50 transition-all"
                 placeholder="backend, api, auth..."
               />
               {/* Tag suggestions - wrap to multiple lines */}
               {availableTags.length > 0 && (
-                <div className="mt-2 max-h-[4.5rem] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-700/50">
+                <div className="mt-2 max-h-[4.5rem] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[var(--text-muted)]/50">
                   <div className="flex flex-wrap gap-1.5">
                     {availableTags.map((tag) => {
                       const currentTags = editedTask.tags || [];
@@ -564,8 +564,8 @@ export function TaskSidebar({
                           }}
                           className={`px-2.5 py-1 text-xs font-mono rounded-md border transition-all ${
                             isSelected
-                              ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
-                              : 'bg-slate-800/50 border-white/5 text-slate-400 hover:border-white/10 hover:text-slate-300'
+                              ? 'bg-[var(--neon-cyan)]/20 border-[var(--neon-cyan)]/50 text-[var(--neon-cyan)]'
+                              : 'bg-[var(--glass-bg)] border-[var(--glass-border)] text-[var(--text-secondary)] hover:border-[var(--glass-border-hover)] hover:text-[var(--foreground)]'
                           }`}
                         >
                           #{tag}
@@ -596,15 +596,15 @@ export function TaskSidebar({
             </div>
 
             {/* File path */}
-            <div className="pt-4 border-t border-white/5">
-              <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500">
+            <div className="pt-4 border-t border-[var(--glass-border)]">
+              <div className="flex items-center gap-2 text-[10px] font-mono text-[var(--text-muted)]">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <span className="truncate flex-1">{task.filePath}</span>
                 <button
                   onClick={handleCopyPath}
-                  className="flex-shrink-0 p-1 text-slate-500 hover:text-slate-300 transition-colors"
+                  className="flex-shrink-0 p-1 text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors"
                   title="Copy path/URL"
                 >
                   {copied ? (
@@ -618,7 +618,7 @@ export function TaskSidebar({
                   )}
                 </button>
               </div>
-              <div className="flex items-center gap-4 mt-2 text-[10px] font-mono text-slate-600">
+              <div className="flex items-center gap-4 mt-2 text-[10px] font-mono text-[var(--text-muted)]">
                 <span>Created: {new Date(task.created_at).toLocaleDateString()}</span>
                 <span>Updated: {new Date(task.updated_at).toLocaleDateString()}</span>
               </div>
@@ -631,11 +631,11 @@ export function TaskSidebar({
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {conversationMessages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-950/50 to-slate-900 border border-cyan-500/20 flex items-center justify-center mb-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--neon-cyan)]/10 to-[var(--card-bg)] border border-[var(--neon-cyan)]/20 flex items-center justify-center mb-4">
                     <span className="text-3xl">💬</span>
                   </div>
-                  <h3 className="text-lg font-medium text-white mb-2">대화 시작하기</h3>
-                  <p className="text-sm text-slate-500 mb-6 max-w-sm">
+                  <h3 className="text-lg font-medium text-[var(--foreground)] mb-2">대화 시작하기</h3>
+                  <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-sm">
                     Claude와 대화형으로 태스크를 수행합니다.
                     세션을 시작하면 이전 대화를 이어서 진행할 수 있습니다.
                   </p>
@@ -673,7 +673,7 @@ export function TaskSidebar({
 
           {/* Footer - Settings Tab */}
           {activeTab === 'settings' && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-white/5 bg-slate-900/50">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--glass-border)] bg-[var(--glass-bg)]">
             {/* Delete button */}
             <button
               onClick={handleDelete}
@@ -692,7 +692,7 @@ export function TaskSidebar({
                 transition-all
                 ${hasChanges
                   ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40'
-                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  : 'bg-[var(--glass-bg)] text-[var(--text-muted)] cursor-not-allowed'
                 }
                 disabled:opacity-50
               `}
@@ -714,12 +714,12 @@ export function TaskSidebar({
 
           {/* Footer - Chat Tab */}
           {activeTab === 'chat' && (isSessionActive || conversationMessages.length > 0) && (
-            <div className="border-t border-white/10 p-4 bg-slate-900/50">
+            <div className="border-t border-[var(--glass-border)] p-4 bg-[var(--glass-bg)]">
               {!isSessionActive && conversationMessages.length > 0 ? (
                 <button
                   onClick={handleStartSession}
                   disabled={isStartingSession}
-                  className="w-full py-3 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 font-medium rounded-lg border border-cyan-500/30 hover:border-cyan-500/50 transition-all disabled:opacity-50"
+                  className="w-full py-3 bg-gradient-to-r from-[var(--neon-cyan)]/20 to-blue-500/20 text-[var(--neon-cyan)] font-medium rounded-lg border border-[var(--neon-cyan)]/30 hover:border-[var(--neon-cyan)]/50 transition-all disabled:opacity-50"
                 >
                   {isStartingSession ? '세션 재시작 중...' : '세션 재시작 (이전 대화 이어가기)'}
                 </button>
@@ -731,7 +731,7 @@ export function TaskSidebar({
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyDown={handleChatKeyDown}
                     placeholder="메시지를 입력하세요... (Enter로 전송, Shift+Enter로 줄바꿈)"
-                    className="flex-1 px-4 py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent"
+                    className="flex-1 px-4 py-3 bg-[var(--card-bg)] border border-[var(--glass-border)] rounded-lg text-[var(--foreground)] placeholder-[var(--text-secondary)] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--neon-cyan)]/50 focus:border-transparent"
                     rows={2}
                   />
                   <button
@@ -761,7 +761,7 @@ function MessageBubble({ message }: { message: ConversationMessage }) {
   if (isSystem) {
     return (
       <div className="flex justify-center">
-        <div className="px-3 py-1.5 bg-slate-800/50 text-slate-500 text-xs rounded-full">
+        <div className="px-3 py-1.5 bg-[var(--card-bg)] text-[var(--text-secondary)] text-xs rounded-full">
           {message.content}
         </div>
       </div>
@@ -774,13 +774,13 @@ function MessageBubble({ message }: { message: ConversationMessage }) {
         className={`max-w-[85%] rounded-2xl px-4 py-3 ${
           isUser
             ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
-            : 'bg-slate-800/50 border border-white/10 text-slate-200'
+            : 'bg-[var(--card-bg)] border border-[var(--glass-border)] text-[var(--foreground)]'
         }`}
       >
         {/* Content */}
         <div className="whitespace-pre-wrap text-sm leading-relaxed">
           {message.content || (
-            <span className="text-slate-500 italic">
+            <span className="text-[var(--text-secondary)] italic">
               {message.isStreaming ? (
                 <span className="flex items-center gap-2">
                   <span className="animate-pulse">●</span>
@@ -795,14 +795,14 @@ function MessageBubble({ message }: { message: ConversationMessage }) {
 
         {/* Streaming indicator */}
         {message.isStreaming && message.content && (
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-cyan-400">
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-[var(--neon-cyan)]">
             <span className="animate-pulse">●</span>
             <span>입력 중...</span>
           </div>
         )}
 
         {/* Timestamp */}
-        <div className={`mt-2 text-[10px] ${isUser ? 'text-white/60' : 'text-slate-500'}`}>
+        <div className={`mt-2 text-[10px] ${isUser ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
           {new Date(message.timestamp).toLocaleTimeString('ko-KR', {
             hour: '2-digit',
             minute: '2-digit',

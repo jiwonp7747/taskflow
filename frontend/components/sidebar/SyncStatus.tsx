@@ -94,12 +94,12 @@ export function SyncStatus({ sourceId, sourceName, isGitHub, lastSynced, onSync 
   }
 
   return (
-    <div className="mt-3 pt-3 border-t border-white/5">
+    <div className="mt-3 pt-3 border-t border-[var(--glass-border)]">
       {/* Status row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {/* GitHub icon */}
-          <svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="currentColor">
+          <svg className="w-4 h-4 text-[var(--text-secondary)]" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
           </svg>
 
@@ -120,7 +120,7 @@ export function SyncStatus({ sourceId, sourceName, isGitHub, lastSynced, onSync 
         {/* Sync button */}
         <button
           onClick={() => setShowDetails(!showDetails)}
-          className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors"
+          className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--foreground)] hover:bg-[var(--glass-bg)] rounded transition-colors"
           title="Sync options"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -131,7 +131,7 @@ export function SyncStatus({ sourceId, sourceName, isGitHub, lastSynced, onSync 
 
       {/* Last synced */}
       {lastSynced && (
-        <p className="text-[10px] text-slate-600 mt-1">
+        <p className="text-[10px] text-[var(--text-tertiary)] mt-1">
           Last synced: {new Date(lastSynced).toLocaleString()}
         </p>
       )}
@@ -143,19 +143,19 @@ export function SyncStatus({ sourceId, sourceName, isGitHub, lastSynced, onSync 
 
       {/* Expanded details */}
       {showDetails && (
-        <div className="mt-3 p-3 bg-slate-900/50 border border-white/5 rounded-lg space-y-3">
+        <div className="mt-3 p-3 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg space-y-3">
           {/* Unsaved files list */}
           {syncState.unsavedFiles.length > 0 && (
             <div>
-              <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
+              <p className="text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider mb-1">
                 Unsaved Changes
               </p>
-              <ul className="text-xs text-slate-400 space-y-0.5">
+              <ul className="text-xs text-[var(--text-secondary)] space-y-0.5">
                 {syncState.unsavedFiles.slice(0, 5).map(file => (
                   <li key={file} className="font-mono truncate">• {file}</li>
                 ))}
                 {syncState.unsavedFiles.length > 5 && (
-                  <li className="text-slate-500">...and {syncState.unsavedFiles.length - 5} more</li>
+                  <li className="text-[var(--text-tertiary)]">...and {syncState.unsavedFiles.length - 5} more</li>
                 )}
               </ul>
             </div>
@@ -166,21 +166,21 @@ export function SyncStatus({ sourceId, sourceName, isGitHub, lastSynced, onSync 
             <button
               onClick={() => handleSync('pull')}
               disabled={syncState.isSyncing}
-              className="flex-1 px-3 py-1.5 bg-slate-800 border border-white/10 text-white text-xs rounded-lg hover:bg-slate-700 transition-all disabled:opacity-50"
+              className="flex-1 px-3 py-1.5 bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--foreground)] text-xs rounded-lg hover:bg-[var(--glass-bg)] hover:brightness-110 transition-all disabled:opacity-50"
             >
               {syncState.isSyncing ? '...' : '↓ Pull'}
             </button>
             <button
               onClick={() => handleSync('push')}
               disabled={syncState.isSyncing || !syncState.hasUnsavedChanges}
-              className="flex-1 px-3 py-1.5 bg-slate-800 border border-white/10 text-white text-xs rounded-lg hover:bg-slate-700 transition-all disabled:opacity-50"
+              className="flex-1 px-3 py-1.5 bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--foreground)] text-xs rounded-lg hover:bg-[var(--glass-bg)] hover:brightness-110 transition-all disabled:opacity-50"
             >
               {syncState.isSyncing ? '...' : '↑ Push'}
             </button>
             <button
               onClick={() => handleSync('sync')}
               disabled={syncState.isSyncing}
-              className="flex-1 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-medium rounded-lg hover:from-purple-400 hover:to-pink-400 transition-all disabled:opacity-50"
+              className="flex-1 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 text-[var(--foreground)] text-xs font-medium rounded-lg hover:from-purple-400 hover:to-pink-400 transition-all disabled:opacity-50"
             >
               {syncState.isSyncing ? 'Syncing...' : '⟳ Sync'}
             </button>

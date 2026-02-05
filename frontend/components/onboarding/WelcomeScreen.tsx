@@ -66,21 +66,21 @@ export function WelcomeScreen({ onAddSource, onSourceAdded, onSelectFolder }: We
             </div>
           </div>
 
-          <h1 className="text-2xl font-bold text-white mb-2">
+          <h1 className="text-2xl font-bold text-[var(--foreground)] mb-2">
             Welcome to TaskFlow
           </h1>
-          <p className="text-slate-400 text-sm max-w-sm mx-auto">
+          <p className="text-[var(--text-secondary)] text-sm max-w-sm mx-auto">
             Manage your tasks with AI-powered markdown files.
             Add a source folder to get started.
           </p>
         </div>
 
         {/* Setup Form Card */}
-        <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-6">
+        <div className="bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-2xl p-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Source Name */}
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] mb-2">
                 <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
@@ -91,13 +91,13 @@ export function WelcomeScreen({ onAddSource, onSourceAdded, onSelectFolder }: We
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="My Project"
-                className="w-full px-4 py-3 bg-slate-950/50 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-colors"
+                className="w-full px-4 py-3 bg-[var(--surface)] border border-[var(--glass-border)] rounded-lg text-[var(--foreground)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--neon-cyan)]/50 focus:ring-1 focus:ring-[var(--neon-cyan)]/50 transition-colors"
               />
             </div>
 
             {/* Folder Path */}
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)] mb-2">
                 <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                 </svg>
@@ -109,7 +109,7 @@ export function WelcomeScreen({ onAddSource, onSourceAdded, onSelectFolder }: We
                   value={path}
                   onChange={(e) => setPath(e.target.value)}
                   placeholder="/Users/you/project/tasks"
-                  className="flex-1 px-4 py-3 bg-slate-950/50 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-colors font-mono text-sm"
+                  className="flex-1 px-4 py-3 bg-[var(--surface)] border border-[var(--glass-border)] rounded-lg text-[var(--foreground)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--neon-cyan)]/50 focus:ring-1 focus:ring-[var(--neon-cyan)]/50 transition-colors font-mono text-sm"
                 />
                 {onSelectFolder && (
                   <button
@@ -118,7 +118,7 @@ export function WelcomeScreen({ onAddSource, onSourceAdded, onSelectFolder }: We
                       const selected = await onSelectFolder();
                       if (selected) setPath(selected);
                     }}
-                    className="px-4 py-3 bg-slate-950/50 border border-white/10 rounded-lg text-slate-400 hover:text-white hover:border-cyan-500/50 transition-colors"
+                    className="px-4 py-3 bg-[var(--surface)] border border-[var(--glass-border)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--foreground)] hover:border-[var(--neon-cyan)]/50 transition-colors"
                     title="Browse folder"
                   >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -138,7 +138,7 @@ export function WelcomeScreen({ onAddSource, onSourceAdded, onSelectFolder }: We
                   onChange={(e) => setCreateIfNotExist(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-5 h-5 border border-white/20 rounded bg-slate-950/50 peer-checked:bg-cyan-500 peer-checked:border-cyan-500 transition-colors flex items-center justify-center">
+                <div className="w-5 h-5 border border-[var(--glass-border)] rounded bg-[var(--surface)] peer-checked:bg-[var(--neon-cyan)] peer-checked:border-[var(--neon-cyan)] transition-colors flex items-center justify-center">
                   {createIfNotExist && (
                     <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -146,7 +146,7 @@ export function WelcomeScreen({ onAddSource, onSourceAdded, onSelectFolder }: We
                   )}
                 </div>
               </div>
-              <span className="text-sm text-slate-400 group-hover:text-slate-300 transition-colors">
+              <span className="text-sm text-[var(--text-secondary)] group-hover:text-[var(--foreground)] transition-colors">
                 Create folder if it doesn&apos;t exist
               </span>
             </label>
@@ -188,7 +188,7 @@ export function WelcomeScreen({ onAddSource, onSourceAdded, onSelectFolder }: We
         </div>
 
         {/* Info box */}
-        <div className="mt-6 p-4 bg-slate-900/30 border border-white/5 rounded-xl">
+        <div className="mt-6 p-4 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-xl">
           <div className="flex gap-3">
             <div className="shrink-0 w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
               <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -196,8 +196,8 @@ export function WelcomeScreen({ onAddSource, onSourceAdded, onSelectFolder }: We
               </svg>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-slate-300 mb-1">What is a source?</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <h3 className="text-sm font-medium text-[var(--text-secondary)] mb-1">What is a source?</h3>
+              <p className="text-xs text-[var(--text-tertiary)] leading-relaxed">
                 A source is a folder containing your task markdown files (.md).
                 TaskFlow will watch this folder for changes and sync automatically.
                 You can add multiple sources later using the sidebar settings.

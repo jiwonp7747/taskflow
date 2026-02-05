@@ -44,11 +44,11 @@ export function CalendarGrid({
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Weekday headers */}
-      <div className="grid grid-cols-7 border-b border-white/5 bg-slate-900/30">
+      <div className="grid grid-cols-7 border-b border-[var(--glass-border)] bg-[var(--glass-bg)]">
         {WEEKDAYS.map(day => (
           <div
             key={day}
-            className="px-2 py-2 text-center text-[10px] font-mono text-slate-500 uppercase tracking-wider border-r border-white/5 last:border-r-0"
+            className="px-2 py-2 text-center text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider border-r border-[var(--glass-border)] last:border-r-0"
           >
             {day}
           </div>

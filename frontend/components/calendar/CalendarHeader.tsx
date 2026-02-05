@@ -14,25 +14,25 @@ export function CalendarHeader({
   onToday,
 }: CalendarHeaderProps) {
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-slate-950/50">
+    <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--glass-border)] bg-[var(--calendar-header-bg)]">
       {/* Month/Year display */}
-      <h2 className="text-lg font-semibold text-white tracking-wide">{monthYear}</h2>
+      <h2 className="text-lg font-semibold text-[var(--foreground)] tracking-wide">{monthYear}</h2>
 
       {/* Navigation controls */}
       <div className="flex items-center gap-2">
         {/* Today button */}
         <button
           onClick={onToday}
-          className="px-3 py-1.5 text-xs font-mono text-cyan-400 bg-cyan-500/10 border border-cyan-500/30 rounded-lg hover:bg-cyan-500/20 transition-colors"
+          className="px-3 py-1.5 text-xs font-mono text-[var(--accent-primary)] bg-[var(--glass-bg)] border border-[var(--accent-primary)]/30 rounded-lg hover:bg-[var(--accent-primary)]/10 transition-colors"
         >
           Today
         </button>
 
         {/* Previous/Next buttons */}
-        <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-0.5">
+        <div className="flex items-center gap-1 bg-[var(--glass-bg)] rounded-lg p-0.5">
           <button
             onClick={onPreviousMonth}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-md transition-colors"
+            className="p-2 text-[var(--text-tertiary)] hover:text-[var(--foreground)] hover:bg-[var(--muted-bg)] rounded-md transition-colors"
             title="Previous month"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -41,7 +41,7 @@ export function CalendarHeader({
           </button>
           <button
             onClick={onNextMonth}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-md transition-colors"
+            className="p-2 text-[var(--text-tertiary)] hover:text-[var(--foreground)] hover:bg-[var(--muted-bg)] rounded-md transition-colors"
             title="Next month"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

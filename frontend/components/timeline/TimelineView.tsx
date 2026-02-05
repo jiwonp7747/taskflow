@@ -96,7 +96,7 @@ export function TimelineView({
   }, [onDateChange]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-320px)] bg-slate-900/30 border border-white/5 rounded-xl overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-320px)] bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-xl overflow-hidden">
       <TimelineHeader
         date={date}
         onPreviousDay={handlePreviousDay}
@@ -118,14 +118,14 @@ export function TimelineView({
       />
 
       {/* Footer with task count */}
-      <div className="px-4 py-2 border-t border-white/5 bg-slate-950/50">
-        <div className="flex items-center gap-4 text-[10px] font-mono text-slate-500">
+      <div className="px-4 py-2 border-t border-[var(--glass-border)] bg-[var(--calendar-header-bg)]">
+        <div className="flex items-center gap-4 text-[10px] font-mono text-[var(--text-tertiary)]">
           <span>
-            <span className="text-cyan-400">{timedTasks.length}</span> timed task{timedTasks.length !== 1 ? 's' : ''}
+            <span className="text-cyan-500 dark:text-cyan-400">{timedTasks.length}</span> timed task{timedTasks.length !== 1 ? 's' : ''}
           </span>
           {allDayTasks.length > 0 && (
             <span>
-              <span className="text-amber-400">{allDayTasks.length}</span> all-day task{allDayTasks.length !== 1 ? 's' : ''}
+              <span className="text-amber-500 dark:text-amber-400">{allDayTasks.length}</span> all-day task{allDayTasks.length !== 1 ? 's' : ''}
             </span>
           )}
         </div>

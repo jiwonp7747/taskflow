@@ -9,14 +9,14 @@ interface ViewToggleProps {
 
 export function ViewToggle({ activeView, onViewChange }: ViewToggleProps) {
   return (
-    <div className="flex items-center gap-1 p-1 bg-slate-900/50 border border-white/5 rounded-lg">
+    <div className="flex items-center gap-1 p-1 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg">
       {/* Kanban view button */}
       <button
         onClick={() => onViewChange('kanban')}
         className={`flex items-center gap-2 px-3 py-1.5 text-sm font-mono rounded-md transition-all ${
           activeView === 'kanban'
-            ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-            : 'text-slate-400 hover:text-white hover:bg-slate-800/50 border border-transparent'
+            ? 'bg-[var(--neon-cyan)]/20 text-[var(--neon-cyan)] border border-[var(--neon-cyan)]/30'
+            : 'text-[var(--text-secondary)] hover:text-[var(--foreground)] hover:bg-[var(--surface)] border border-transparent'
         }`}
         title="Kanban Board View"
       >
@@ -32,8 +32,8 @@ export function ViewToggle({ activeView, onViewChange }: ViewToggleProps) {
         onClick={() => onViewChange('calendar')}
         className={`flex items-center gap-2 px-3 py-1.5 text-sm font-mono rounded-md transition-all ${
           activeView === 'calendar'
-            ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-            : 'text-slate-400 hover:text-white hover:bg-slate-800/50 border border-transparent'
+            ? 'bg-[var(--neon-cyan)]/20 text-[var(--neon-cyan)] border border-[var(--neon-cyan)]/30'
+            : 'text-[var(--text-secondary)] hover:text-[var(--foreground)] hover:bg-[var(--surface)] border border-transparent'
         }`}
         title="Calendar View"
       >
@@ -49,8 +49,8 @@ export function ViewToggle({ activeView, onViewChange }: ViewToggleProps) {
         onClick={() => onViewChange('timeline')}
         className={`flex items-center gap-2 px-3 py-1.5 text-sm font-mono rounded-md transition-all ${
           activeView === 'timeline'
-            ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-            : 'text-slate-400 hover:text-white hover:bg-slate-800/50 border border-transparent'
+            ? 'bg-[var(--neon-cyan)]/20 text-[var(--neon-cyan)] border border-[var(--neon-cyan)]/30'
+            : 'text-[var(--text-secondary)] hover:text-[var(--foreground)] hover:bg-[var(--surface)] border border-transparent'
         }`}
         title="Timeline View"
       >

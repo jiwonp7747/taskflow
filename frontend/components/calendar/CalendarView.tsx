@@ -203,7 +203,7 @@ export function CalendarView({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex flex-col h-[calc(100vh-320px)] bg-slate-900/30 border border-white/5 rounded-xl overflow-hidden">
+      <div className="flex flex-col h-[calc(100vh-320px)] bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-xl overflow-hidden">
         <CalendarHeader
           monthYear={formatMonthYear()}
           onPreviousMonth={goToPreviousMonth}
@@ -224,8 +224,8 @@ export function CalendarView({
 
         {/* Footer with tasks without date indicator */}
         {tasksWithoutDate > 0 && (
-          <div className="px-4 py-2 border-t border-white/5 bg-slate-950/50">
-            <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500">
+          <div className="px-4 py-2 border-t border-[var(--glass-border)] bg-[var(--calendar-header-bg)]">
+            <div className="flex items-center gap-2 text-[10px] font-mono text-[var(--text-tertiary)]">
               <svg className="w-3 h-3 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
@@ -238,8 +238,8 @@ export function CalendarView({
 
         {/* Legend for spanning tasks */}
         {spanningTasks.length > 0 && (
-          <div className="px-4 py-2 border-t border-white/5 bg-slate-950/50">
-            <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500">
+          <div className="px-4 py-2 border-t border-[var(--glass-border)] bg-[var(--calendar-header-bg)]">
+            <div className="flex items-center gap-2 text-[10px] font-mono text-[var(--text-tertiary)]">
               <div className="w-8 h-3 bg-cyan-500/60 rounded-sm" />
               <span>
                 <span className="text-cyan-400">{spanningTasks.length}</span> task{spanningTasks.length > 1 ? 's' : ''} spanning multiple days
@@ -277,9 +277,9 @@ function CalendarTaskOverlay({ task }: { task: Task }) {
   };
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-cyan-500/50 bg-slate-900/95 backdrop-blur-md shadow-2xl shadow-cyan-500/30 rotate-2 max-w-[200px]">
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--neon-cyan)]/50 bg-[var(--bg-primary)]/95 backdrop-blur-md shadow-2xl shadow-[var(--neon-cyan)]/30 rotate-2 max-w-[200px]">
       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getPriorityDotColor()}`} />
-      <span className="text-xs font-medium text-cyan-100 truncate">
+      <span className="text-xs font-medium text-[var(--foreground)] truncate">
         {task.title}
       </span>
     </div>

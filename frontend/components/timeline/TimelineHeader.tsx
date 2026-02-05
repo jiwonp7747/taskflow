@@ -29,13 +29,13 @@ export function TimelineHeader({
   })();
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-slate-900/30">
+    <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--glass-border)] bg-[var(--glass-bg)]">
       <div className="flex items-center gap-3">
         {/* Navigation buttons */}
         <div className="flex items-center gap-1">
           <button
             onClick={onPreviousDay}
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 border border-white/5 rounded-md transition-all"
+            className="p-1.5 text-[var(--text-tertiary)] hover:text-[var(--foreground)] hover:bg-[var(--muted-bg)] border border-[var(--glass-border)] rounded-md transition-all"
             title="Previous day"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -44,7 +44,7 @@ export function TimelineHeader({
           </button>
           <button
             onClick={onNextDay}
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 border border-white/5 rounded-md transition-all"
+            className="p-1.5 text-[var(--text-tertiary)] hover:text-[var(--foreground)] hover:bg-[var(--muted-bg)] border border-[var(--glass-border)] rounded-md transition-all"
             title="Next day"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -58,17 +58,17 @@ export function TimelineHeader({
           onClick={onToday}
           className={`px-3 py-1.5 text-xs font-mono rounded-md border transition-all ${
             isToday
-              ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
-              : 'text-slate-400 hover:text-white hover:bg-slate-800/50 border-white/5'
+              ? 'bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] border-[var(--accent-primary)]/30'
+              : 'text-[var(--text-tertiary)] hover:text-[var(--foreground)] hover:bg-[var(--muted-bg)] border-[var(--glass-border)]'
           }`}
         >
           Today
         </button>
 
         {/* Date display */}
-        <h2 className="text-lg font-bold text-white font-mono">
+        <h2 className="text-lg font-bold text-[var(--foreground)] font-mono">
           {year}년 {month}월 {day}일
-          <span className="text-slate-400 ml-1">({dayOfWeek})</span>
+          <span className="text-[var(--text-tertiary)] ml-1">({dayOfWeek})</span>
         </h2>
       </div>
     </div>

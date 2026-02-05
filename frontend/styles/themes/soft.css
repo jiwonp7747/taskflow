@@ -1,0 +1,234 @@
+/* ═══════════════════════════════════════════════════════════
+   SOFT THEME - Calm Pastel Minimalism
+   A gentle, warm aesthetic inspired by natural tones
+   ═══════════════════════════════════════════════════════════ */
+
+html[data-theme="soft"] {
+  /* Base colors */
+  --background: #F8F6F3;
+  --foreground: #2d2d2d;
+
+  /* Accent colors (muted, soft pastels) */
+  --neon-cyan: #5A9AAA;
+  --neon-violet: #B8A9C9;
+  --neon-orange: #E8A87C;
+  --neon-emerald: #7CB99A;
+  --neon-amber: #D4A574;
+  --neon-red: #C97B7B;
+
+  /* Glass effect (light version) */
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.06);
+
+  /* Subtle shadows instead of glows */
+  --glow-cyan: 0 2px 8px rgba(90, 154, 170, 0.15);
+  --glow-violet: 0 2px 8px rgba(184, 169, 201, 0.15);
+
+  /* Card and UI backgrounds */
+  --card-bg: #ffffff;
+  --card-bg-solid: #ffffff;
+  --bg-primary: #F8F6F3;
+  --muted-bg: rgba(0, 0, 0, 0.03);
+
+  /* Text colors */
+  --text-primary: #1a1a1a;
+  --text-secondary: #4a4a4a;
+  --text-tertiary: #888888;
+  --text-muted: #aaaaaa;
+  --text-placeholder: #999999;
+
+  /* Accent colors */
+  --accent-primary: #5A9AAA;
+  --accent-secondary: #B8A9C9;
+  --primary: #B8A9C9;
+
+  /* Modal variables */
+  --modal-backdrop: rgba(0, 0, 0, 0.3);
+  --modal-bg: #ffffff;
+  --modal-border: rgba(0, 0, 0, 0.08);
+  --modal-header-bg: #f5f5f5;
+  --modal-footer-bg: #fafafa;
+
+  /* Input variables */
+  --input-bg: #ffffff;
+  --input-border: rgba(0, 0, 0, 0.08);
+  --input-border-hover: rgba(0, 0, 0, 0.15);
+  --input-border-focus: var(--neon-violet);
+
+  /* Button variables */
+  --button-primary-bg: linear-gradient(to right, #B8A9C9, #9A8BB8);
+  --button-primary-text: #ffffff;
+  --button-secondary-bg: rgba(0, 0, 0, 0.05);
+  --button-secondary-text: #2d2d2d;
+
+  /* Filter bar specific */
+  --filter-bg: #ffffff;
+  --filter-border: rgba(184, 169, 201, 0.2);
+  --filter-active-bg: rgba(184, 169, 201, 0.15);
+  --filter-active-border: rgba(184, 169, 201, 0.4);
+  --filter-hover-bg: rgba(184, 169, 201, 0.08);
+  --filter-text: #666666;
+  --filter-text-active: #6B5B7A;
+  --filter-glow: 0 2px 8px rgba(184, 169, 201, 0.2);
+
+  /* Kanban column specific */
+  --column-bg: rgba(255, 255, 255, 0.6);
+  --column-header-bg: rgba(255, 255, 255, 0.8);
+  --column-border: rgba(0, 0, 0, 0.06);
+
+  /* Scrollbar */
+  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+
+  /* Selection */
+  --selection-bg: rgba(184, 169, 201, 0.3);
+  --selection-text: #2d2d2d;
+
+  /* Focus ring */
+  --focus-ring: var(--neon-violet);
+
+  /* Kbd */
+  --kbd-bg: rgba(0, 0, 0, 0.05);
+  --kbd-border: rgba(0, 0, 0, 0.1);
+  --kbd-text: #666666;
+
+  /* Theme-specific flags */
+  --show-noise-texture: none;
+  --show-grid-pattern: none;
+
+  /* ═══════════════════════════════════════════════════════════
+     STATUS COLORS - Soft pastel style
+     ═══════════════════════════════════════════════════════════ */
+  --status-todo-bg: #F0F0F0;
+  --status-todo-border: #D0D0D0;
+  --status-todo-text: #666666;
+
+  --status-in-progress-bg: #E8F4F6;
+  --status-in-progress-border: #5A9AAA;
+  --status-in-progress-text: #3D7A8A;
+
+  --status-in-review-bg: #F3EFF8;
+  --status-in-review-border: #B8A9C9;
+  --status-in-review-text: #7A6B8A;
+
+  --status-need-fix-bg: #FDF2EC;
+  --status-need-fix-border: #E8A87C;
+  --status-need-fix-text: #B87A4A;
+
+  --status-complete-bg: #EDF7F1;
+  --status-complete-border: #7CB99A;
+  --status-complete-text: #4A8A6A;
+
+  --status-on-hold-bg: #FBF5ED;
+  --status-on-hold-border: #D4A574;
+  --status-on-hold-text: #9A7A4A;
+
+  /* ═══════════════════════════════════════════════════════════
+     PRIORITY COLORS - Muted pastels for soft theme
+     ═══════════════════════════════════════════════════════════ */
+  --priority-urgent-bg: #FCEAEA;
+  --priority-urgent-border: #C97B7B;
+  --priority-urgent-text: #9A5A5A;
+  --priority-urgent-dot: #C97B7B;
+
+  --priority-high-bg: #FDF2EC;
+  --priority-high-border: #E8A87C;
+  --priority-high-text: #B87A4A;
+  --priority-high-dot: #E8A87C;
+
+  --priority-medium-bg: #EDF4F8;
+  --priority-medium-border: #7AAFC4;
+  --priority-medium-text: #4A7A9A;
+  --priority-medium-dot: #7AAFC4;
+
+  --priority-low-bg: #F5F5F5;
+  --priority-low-border: #CCCCCC;
+  --priority-low-text: #888888;
+  --priority-low-dot: #CCCCCC;
+
+  /* ═══════════════════════════════════════════════════════════
+     TAG STYLES - Rounded pill tags for soft theme
+     ═══════════════════════════════════════════════════════════ */
+  --tag-bg: #F3EFF8;
+  --tag-border: #D8D0E4;
+  --tag-text: #6B5B7A;
+  --tag-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --tag-hover-bg: #EBE5F3;
+  --tag-border-radius: 20px;
+
+  /* ═══════════════════════════════════════════════════════════
+     ICON STYLES - Soft muted icons
+     ═══════════════════════════════════════════════════════════ */
+  --icon-primary: #5A9AAA;
+  --icon-secondary: #B8A9C9;
+  --icon-muted: #AAAAAA;
+  --icon-glow: none;
+  --icon-glow-violet: none;
+
+  /* ═══════════════════════════════════════════════════════════
+     CALENDAR/TIMELINE SPECIFIC
+     ═══════════════════════════════════════════════════════════ */
+  --calendar-today-bg: #F3EFF8;
+  --calendar-today-border: #B8A9C9;
+  --calendar-today-text: #6B5B7A;
+  --calendar-header-bg: #FAFAFA;
+  --calendar-cell-hover: rgba(184, 169, 201, 0.1);
+
+  --timeline-current-time: #C97B7B;
+  --timeline-hour-text: #888888;
+  --timeline-grid-line: rgba(0, 0, 0, 0.06);
+}
+
+/* Soft theme visual overrides */
+html[data-theme="soft"] body::before {
+  display: none; /* Remove noise texture */
+}
+
+html[data-theme="soft"] body::after {
+  display: none; /* Remove grid pattern */
+}
+
+html[data-theme="soft"] ::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+html[data-theme="soft"] *::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+
+html[data-theme="soft"] *::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+html[data-theme="soft"] *:focus-visible {
+  outline-color: var(--focus-ring);
+}
+
+html[data-theme="soft"] kbd {
+  color: var(--kbd-text);
+  background: var(--kbd-bg);
+  border-color: var(--kbd-border);
+}
+
+/* Soft theme glass effect override */
+html[data-theme="soft"] .glass {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+html[data-theme="soft"] .glass-dark {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* Disable glow effects in soft theme */
+html[data-theme="soft"] .glow-cyan,
+html[data-theme="soft"] .glow-violet {
+  box-shadow: none;
+}
+
+html[data-theme="soft"] .text-glow-cyan,
+html[data-theme="soft"] .text-glow-violet {
+  text-shadow: none;
+}

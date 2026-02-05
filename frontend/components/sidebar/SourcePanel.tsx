@@ -102,10 +102,10 @@ export function SourcePanel({
     <div className="p-4 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-white">Task Sources</h3>
+        <h3 className="text-sm font-medium text-[var(--foreground)]">Task Sources</h3>
         <button
           onClick={() => setIsAdding(true)}
-          className="p-1.5 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 rounded-lg transition-colors"
+          className="p-1.5 text-[var(--neon-cyan)] hover:text-[var(--neon-cyan-bright)] hover:bg-[var(--neon-cyan)]/10 rounded-lg transition-colors"
           title="Add source"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -116,15 +116,15 @@ export function SourcePanel({
 
       {/* Add source form */}
       {isAdding && (
-        <div className="p-3 bg-slate-900/50 border border-cyan-500/20 rounded-lg space-y-3">
+        <div className="p-3 bg-[var(--glass-bg)] border border-[var(--neon-cyan)]/20 rounded-lg space-y-3">
           {/* Tab buttons */}
-          <div className="flex gap-1 p-1 bg-slate-800/50 rounded-lg">
+          <div className="flex gap-1 p-1 bg-[var(--surface)] rounded-lg">
             <button
               onClick={() => setSourceTab('local')}
               className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                 sourceTab === 'local'
-                  ? 'bg-cyan-500 text-white'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[var(--neon-cyan)] text-white'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--foreground)]'
               }`}
             >
               Local
@@ -134,7 +134,7 @@ export function SourcePanel({
               className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                 sourceTab === 'github'
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--foreground)]'
               }`}
             >
               GitHub
@@ -145,7 +145,7 @@ export function SourcePanel({
             <>
               {/* Existing local form content */}
               <div>
-                <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
+                <label className="block text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider mb-1">
                   Name
                 </label>
                 <input
@@ -153,12 +153,12 @@ export function SourcePanel({
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="My Project Tasks"
-                  className="w-full px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50"
+                  className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--glass-border)] rounded-lg text-sm text-[var(--foreground)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--neon-cyan)]/50"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-1">
+                <label className="block text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider mb-1">
                   Path
                 </label>
                 <div className="flex gap-2">
@@ -167,7 +167,7 @@ export function SourcePanel({
                     value={newPath}
                     onChange={(e) => setNewPath(e.target.value)}
                     placeholder="/path/to/tasks"
-                    className="flex-1 px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 font-mono"
+                    className="flex-1 px-3 py-2 bg-[var(--surface)] border border-[var(--glass-border)] rounded-lg text-sm text-[var(--foreground)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--neon-cyan)]/50 font-mono"
                   />
                   {onSelectFolder && (
                     <button
@@ -176,7 +176,7 @@ export function SourcePanel({
                         const selected = await onSelectFolder();
                         if (selected) setNewPath(selected);
                       }}
-                      className="px-3 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-sm text-slate-400 hover:text-white hover:border-cyan-500/50 transition-colors"
+                      className="px-3 py-2 bg-[var(--surface)] border border-[var(--glass-border)] rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--foreground)] hover:border-[var(--neon-cyan)]/50 transition-colors"
                       title="Browse folder"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -206,7 +206,7 @@ export function SourcePanel({
                     setNewPath('');
                     setError(null);
                   }}
-                  className="px-3 py-2 text-slate-400 text-sm hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                  className="px-3 py-2 text-[var(--text-secondary)] text-sm hover:text-[var(--foreground)] hover:bg-[var(--surface)] rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
@@ -237,15 +237,15 @@ export function SourcePanel({
       <div className="space-y-2">
         {sources.length === 0 && !isAdding && (
           <div className="text-center py-8">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-slate-800/50 border border-white/5 flex items-center justify-center">
-              <svg className="w-6 h-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-[var(--surface)] border border-[var(--glass-border)] flex items-center justify-center">
+              <svg className="w-6 h-6 text-[var(--text-tertiary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
               </svg>
             </div>
-            <p className="text-sm text-slate-500 mb-2">No sources configured</p>
+            <p className="text-sm text-[var(--text-tertiary)] mb-2">No sources configured</p>
             <button
               onClick={() => setIsAdding(true)}
-              className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+              className="text-sm text-[var(--neon-cyan)] hover:text-[var(--neon-cyan-bright)] transition-colors"
             >
               Add your first source
             </button>
@@ -257,8 +257,8 @@ export function SourcePanel({
             key={source.id}
             className={`group relative p-3 rounded-lg border transition-all cursor-pointer ${
               source.id === activeSourceId
-                ? 'bg-cyan-500/10 border-cyan-500/30'
-                : 'bg-slate-900/30 border-white/5 hover:border-white/10'
+                ? 'bg-[var(--neon-cyan)]/10 border-[var(--neon-cyan)]/30'
+                : 'bg-[var(--glass-bg)] border-[var(--glass-border)] hover:border-[var(--glass-border-hover)]'
             }`}
             onClick={() => {
               if (source.id !== activeSourceId) {
@@ -268,7 +268,7 @@ export function SourcePanel({
           >
             {/* Active indicator */}
             {source.id === activeSourceId && (
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-cyan-400 rounded-r" />
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[var(--neon-cyan)] rounded-r" />
             )}
 
             <div className="flex items-start justify-between">
@@ -286,23 +286,23 @@ export function SourcePanel({
                         setEditingId(null);
                       }
                     }}
-                    className="w-full px-2 py-1 bg-slate-800 border border-cyan-500/50 rounded text-sm text-white focus:outline-none"
+                    className="w-full px-2 py-1 bg-[var(--surface)] border border-[var(--neon-cyan)]/50 rounded text-sm text-[var(--foreground)] focus:outline-none"
                     autoFocus
                     onClick={(e) => e.stopPropagation()}
                   />
                 ) : (
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-white truncate">
+                    <span className="text-sm font-medium text-[var(--foreground)] truncate">
                       {source.name}
                     </span>
                     {source.id === activeSourceId && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-cyan-400 bg-cyan-500/20 rounded">
+                      <span className="px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-[var(--neon-cyan)] bg-[var(--neon-cyan)]/20 rounded">
                         Active
                       </span>
                     )}
                   </div>
                 )}
-                <p className="text-[11px] font-mono text-slate-500 truncate mt-0.5" title={source.path}>
+                <p className="text-[11px] font-mono text-[var(--text-tertiary)] truncate mt-0.5" title={source.path}>
                   {source.path}
                 </p>
                 {/* Source type indicator */}
@@ -320,7 +320,7 @@ export function SourcePanel({
                     e.stopPropagation();
                     setEditingId(source.id);
                   }}
-                  className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors"
+                  className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--foreground)] hover:bg-[var(--surface)] rounded transition-colors"
                   title="Edit"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -332,7 +332,7 @@ export function SourcePanel({
                     e.stopPropagation();
                     handleDelete(source.id);
                   }}
-                  className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                  className="p-1.5 text-[var(--text-secondary)] hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
                   title="Delete"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -344,7 +344,7 @@ export function SourcePanel({
 
             {/* Last accessed */}
             {source.lastAccessed && (
-              <p className="text-[10px] text-slate-600 mt-2 pl-2">
+              <p className="text-[10px] text-[var(--text-tertiary)] mt-2 pl-2">
                 Last accessed: {new Date(source.lastAccessed).toLocaleDateString()}
               </p>
             )}
@@ -364,8 +364,8 @@ export function SourcePanel({
       </div>
 
       {/* Info */}
-      <div className="pt-4 border-t border-white/5">
-        <p className="text-[10px] font-mono text-slate-600 leading-relaxed">
+      <div className="pt-4 border-t border-[var(--glass-border)]">
+        <p className="text-[10px] font-mono text-[var(--text-tertiary)] leading-relaxed">
           Sources are directories containing task markdown files. The active source is used for the kanban board.
         </p>
       </div>

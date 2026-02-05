@@ -36,10 +36,10 @@ export function AIStatusBar({
   // Determine status display
   const getStatusDisplay = () => {
     if (!config.enabled) {
-      return { text: 'Disabled', color: 'text-gray-500', bgColor: 'bg-gray-800/50' };
+      return { text: 'Disabled', color: 'text-[var(--text-tertiary)]', bgColor: 'bg-[var(--glass-bg)]' };
     }
     if (!status.isRunning) {
-      return { text: 'Stopped', color: 'text-gray-400', bgColor: 'bg-gray-800/50' };
+      return { text: 'Stopped', color: 'text-[var(--text-secondary)]', bgColor: 'bg-[var(--glass-bg)]' };
     }
     if (status.isPaused) {
       return { text: 'Paused', color: 'text-amber-400', bgColor: 'bg-amber-900/30' };
@@ -53,7 +53,7 @@ export function AIStatusBar({
   const statusDisplay = getStatusDisplay();
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2 bg-black/40 border-b border-white/10 backdrop-blur-sm">
+    <div className="flex items-center gap-3 px-4 py-2 bg-[var(--background)]/40 border-b border-[var(--glass-border)] backdrop-blur-sm">
       {/* AI Status Indicator */}
       <div className="flex items-center gap-2">
         <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${statusDisplay.bgColor}`}>
@@ -69,9 +69,9 @@ export function AIStatusBar({
             <span
               className={`relative inline-flex rounded-full h-2 w-2 ${
                 !config.enabled
-                  ? 'bg-gray-500'
+                  ? 'bg-[var(--text-tertiary)]'
                   : !status.isRunning
-                    ? 'bg-gray-400'
+                    ? 'bg-[var(--text-secondary)]'
                     : status.isPaused
                       ? 'bg-amber-400'
                       : status.currentTask
@@ -88,8 +88,8 @@ export function AIStatusBar({
 
       {/* Current Task */}
       {status.currentTask && (
-        <div className="flex items-center gap-2 text-xs text-cyan-300/80">
-          <span className="text-white/40">|</span>
+        <div className="flex items-center gap-2 text-xs text-[var(--neon-cyan)]/80">
+          <span className="text-[var(--foreground)]/40">|</span>
           <span className="animate-pulse">🤖</span>
           <span className="max-w-[200px] truncate">{status.currentTaskTitle || status.currentTask}</span>
         </div>
@@ -97,8 +97,8 @@ export function AIStatusBar({
 
       {/* Queue Info */}
       {status.queueLength > 0 && (
-        <div className="flex items-center gap-2 text-xs text-white/50">
-          <span className="text-white/40">|</span>
+        <div className="flex items-center gap-2 text-xs text-[var(--foreground)]/50">
+          <span className="text-[var(--foreground)]/40">|</span>
           <span>📋 Queue: {status.queueLength}</span>
         </div>
       )}
@@ -115,7 +115,7 @@ export function AIStatusBar({
             disabled={isLoading || !config.enabled}
             className={`px-3 py-1 text-xs rounded-md transition-all ${
               isLoading || !config.enabled
-                ? 'bg-white/5 text-white/30 cursor-not-allowed'
+                ? 'bg-[var(--foreground)]/5 text-[var(--foreground)]/30 cursor-not-allowed'
                 : 'bg-emerald-600/50 text-emerald-200 hover:bg-emerald-600/70 border border-emerald-500/50'
             }`}
           >
@@ -130,7 +130,7 @@ export function AIStatusBar({
                 disabled={isLoading}
                 className={`px-3 py-1 text-xs rounded-md transition-all ${
                   isLoading
-                    ? 'bg-white/5 text-white/30 cursor-not-allowed'
+                    ? 'bg-[var(--foreground)]/5 text-[var(--foreground)]/30 cursor-not-allowed'
                     : 'bg-amber-600/50 text-amber-200 hover:bg-amber-600/70 border border-amber-500/50'
                 }`}
               >
@@ -142,7 +142,7 @@ export function AIStatusBar({
                 disabled={isLoading}
                 className={`px-3 py-1 text-xs rounded-md transition-all ${
                   isLoading
-                    ? 'bg-white/5 text-white/30 cursor-not-allowed'
+                    ? 'bg-[var(--foreground)]/5 text-[var(--foreground)]/30 cursor-not-allowed'
                     : 'bg-amber-600/50 text-amber-200 hover:bg-amber-600/70 border border-amber-500/50'
                 }`}
               >
@@ -156,7 +156,7 @@ export function AIStatusBar({
               disabled={isLoading}
               className={`px-3 py-1 text-xs rounded-md transition-all ${
                 isLoading
-                  ? 'bg-white/5 text-white/30 cursor-not-allowed'
+                  ? 'bg-[var(--foreground)]/5 text-[var(--foreground)]/30 cursor-not-allowed'
                   : 'bg-red-600/50 text-red-200 hover:bg-red-600/70 border border-red-500/50'
               }`}
             >

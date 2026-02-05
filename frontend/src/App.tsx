@@ -45,6 +45,7 @@ export default function App() {
     setActiveSource,
     toggleSidebar,
     selectFolder,
+    setTheme,
   } = useConfig();
 
   const {
@@ -168,7 +169,7 @@ export default function App() {
   const activeSource = config.sources.find((s) => s.id === config.activeSourceId);
 
   return (
-    <div className="min-h-screen bg-[#050508]">
+    <div className="min-h-screen bg-[var(--background)]">
       {/* macOS Title Bar - 드래그 가능, 더블클릭으로 최대화 */}
       <TitleBar />
 
@@ -184,6 +185,7 @@ export default function App() {
         onSetActiveSource={setActiveSource}
         onSourceChange={handleSourceChange}
         onSelectFolder={selectFolder}
+        onSetTheme={setTheme}
       />
 
       {/* Main content area - pt-8 accounts for title bar */}
@@ -193,7 +195,7 @@ export default function App() {
         }`}
       >
         {/* Header */}
-        <header className="sticky top-8 z-30 border-b border-white/5 bg-slate-950/80 backdrop-blur-md">
+        <header className="sticky top-8 z-30 border-b border-[var(--glass-border)] bg-[var(--background)]/80 backdrop-blur-md">
           <div className="max-w-[1800px] mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               {/* Title & Source info */}
@@ -207,10 +209,10 @@ export default function App() {
 
                   {/* Title */}
                   <div>
-                    <h1 className="text-xl font-bold text-white tracking-tight">
+                    <h1 className="text-xl font-bold text-[var(--foreground)] tracking-tight">
                       TaskFlow
                     </h1>
-                    <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                    <p className="text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider">
                       AI Task Management System
                     </p>
                   </div>
@@ -218,7 +220,7 @@ export default function App() {
 
                 {/* Active source indicator */}
                 {activeSource && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900/50 border border-white/5 rounded-lg">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg">
                     <svg
                       className="w-4 h-4 text-cyan-400"
                       fill="none"
@@ -232,7 +234,7 @@ export default function App() {
                         d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
                       />
                     </svg>
-                    <span className="text-sm text-white font-medium">
+                    <span className="text-sm text-[var(--foreground)] font-medium">
                       {activeSource.name}
                     </span>
                   </div>
@@ -261,7 +263,7 @@ export default function App() {
                 {/* Connection status - Electron always connected */}
                 <div className="flex items-center gap-2 ml-4">
                   <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                  <span className="text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider">
                     Desktop App
                   </span>
                 </div>
@@ -270,8 +272,8 @@ export default function App() {
               {/* Actions */}
               <div className="flex items-center gap-3">
                 {/* Task count */}
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900/50 border border-white/5 rounded-lg">
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg">
+                  <span className="text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider">
                     Tasks
                   </span>
                   <span className="text-sm font-mono font-bold text-cyan-400">
@@ -283,7 +285,7 @@ export default function App() {
                 <button
                   onClick={fetchTasks}
                   disabled={loading}
-                  className="p-2.5 text-slate-400 hover:text-white hover:bg-slate-800 border border-white/5 rounded-lg transition-all disabled:opacity-50"
+                  className="p-2.5 text-[var(--text-secondary)] hover:text-[var(--foreground)] hover:bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg transition-all disabled:opacity-50"
                   title="Refresh (Cmd+R)"
                 >
                   <svg
@@ -307,7 +309,7 @@ export default function App() {
                   className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-all ${
                     isTerminalMode
                       ? 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30 hover:bg-cyan-500/20'
-                      : 'text-slate-300 bg-slate-800/50 border-white/5 hover:text-white hover:bg-slate-800'
+                      : 'text-[var(--text-secondary)] bg-[var(--glass-bg)] border-[var(--glass-border)] hover:text-[var(--foreground)] hover:bg-[var(--card-bg)]'
                   }`}
                 >
                   <svg
@@ -411,7 +413,7 @@ export default function App() {
                   />
                 </svg>
               </div>
-              <p className="text-sm font-mono text-slate-500 uppercase tracking-wider">
+              <p className="text-sm font-mono text-[var(--text-tertiary)] uppercase tracking-wider">
                 Loading tasks...
               </p>
             </div>
@@ -505,8 +507,8 @@ export default function App() {
                       />
                     </svg>
                   </div>
-                  <h2 className="text-lg font-medium text-white mb-2">No tasks yet</h2>
-                  <p className="text-sm text-slate-500 mb-6 max-w-sm">
+                  <h2 className="text-lg font-medium text-[var(--foreground)] mb-2">No tasks yet</h2>
+                  <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-sm">
                     Create your first task or add markdown files to the tasks folder.
                   </p>
                   <button
@@ -536,23 +538,23 @@ export default function App() {
 
         {/* Footer */}
         <footer
-          className="fixed bottom-0 z-20 border-t border-white/5 bg-slate-950/80 backdrop-blur-md transition-all duration-300"
+          className="fixed bottom-0 z-20 border-t border-[var(--glass-border)] bg-[var(--background)]/80 backdrop-blur-md transition-all duration-300"
           style={{
             left: config.sidebarCollapsed ? '4rem' : '20rem',
             right: 0,
           }}
         >
           <div className="max-w-[1800px] mx-auto px-6 py-3">
-            <div className="flex items-center justify-between text-[10px] font-mono text-slate-600">
+            <div className="flex items-center justify-between text-[10px] font-mono text-[var(--text-tertiary)]">
               <div className="flex items-center gap-4">
                 <span>TaskFlow v1.0</span>
-                <span className="text-slate-700">|</span>
+                <span className="text-[var(--glass-border)]">|</span>
                 <span>Electron Desktop App</span>
                 {activeSource && (
                   <>
-                    <span className="text-slate-700">|</span>
+                    <span className="text-[var(--glass-border)]">|</span>
                     <span
-                      className="text-slate-500 truncate max-w-[300px]"
+                      className="text-[var(--text-secondary)] truncate max-w-[300px]"
                       title={activeSource.path}
                     >
                       {activeSource.path}

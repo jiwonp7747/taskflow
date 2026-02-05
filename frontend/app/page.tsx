@@ -39,6 +39,7 @@ export default function Home() {
     deleteSource,
     setActiveSource,
     toggleSidebar,
+    setTheme,
   } = useConfig();
 
   const {
@@ -168,7 +169,7 @@ export default function Home() {
   const activeSource = config.sources.find(s => s.id === config.activeSourceId);
 
   return (
-    <div className="min-h-screen bg-[#050508]">
+    <div className="min-h-screen bg-[var(--background)]">
       {/* Left Sidebar */}
       <LeftSidebar
         config={config}
@@ -180,6 +181,7 @@ export default function Home() {
         onDeleteSource={deleteSource}
         onSetActiveSource={setActiveSource}
         onSourceChange={handleSourceChange}
+        onSetTheme={setTheme}
       />
 
       {/* Main content area */}
@@ -189,7 +191,7 @@ export default function Home() {
         }`}
       >
         {/* Header */}
-        <header className="sticky top-0 z-30 border-b border-white/5 bg-slate-950/80 backdrop-blur-md">
+        <header className="sticky top-0 z-30 border-b border-[var(--glass-border)] bg-[var(--background)]/80 backdrop-blur-md">
           <div className="max-w-[1800px] mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               {/* Title & Source info */}
@@ -203,10 +205,10 @@ export default function Home() {
 
                   {/* Title */}
                   <div>
-                    <h1 className="text-xl font-bold text-white tracking-tight">
+                    <h1 className="text-xl font-bold text-[var(--foreground)] tracking-tight">
                       TaskFlow
                     </h1>
-                    <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                    <p className="text-[10px] font-mono text-[var(--soft-text-muted,#64748b)] uppercase tracking-wider">
                       AI Task Management System
                     </p>
                   </div>
@@ -214,34 +216,34 @@ export default function Home() {
 
                 {/* Active source indicator */}
                 {activeSource && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900/50 border border-white/5 rounded-lg">
-                    <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg">
+                    <svg className="w-4 h-4 text-[var(--neon-cyan)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                     </svg>
-                    <span className="text-sm text-white font-medium">{activeSource.name}</span>
+                    <span className="text-sm text-[var(--foreground)] font-medium">{activeSource.name}</span>
                   </div>
                 )}
 
                 {/* No source warning */}
                 {!activeSource && config.sources.length === 0 && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                    <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 text-[var(--neon-amber)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
-                    <span className="text-sm text-amber-400">No source configured</span>
+                    <span className="text-sm text-[var(--neon-amber)]">No source configured</span>
                   </div>
                 )}
 
                 {/* Connection status */}
                 <div className="flex items-center gap-2 ml-4">
                   <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                  <span className="text-[10px] font-mono text-[var(--soft-text-muted,#64748b)] uppercase tracking-wider">
                     {isConnected ? 'Live Sync' : 'Disconnected'}
                   </span>
                   {!isConnected && (
                     <button
                       onClick={reconnect}
-                      className="text-[10px] font-mono text-cyan-400 hover:text-cyan-300 underline underline-offset-2"
+                      className="text-[10px] font-mono text-[var(--neon-cyan)] hover:text-cyan-300 underline underline-offset-2"
                     >
                       Reconnect
                     </button>
@@ -252,16 +254,16 @@ export default function Home() {
               {/* Actions */}
               <div className="flex items-center gap-3">
                 {/* Task count */}
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900/50 border border-white/5 rounded-lg">
-                  <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Tasks</span>
-                  <span className="text-sm font-mono font-bold text-cyan-400">{tasks.length}</span>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg">
+                  <span className="text-[10px] font-mono text-[var(--soft-text-muted,#64748b)] uppercase tracking-wider">Tasks</span>
+                  <span className="text-sm font-mono font-bold text-[var(--neon-cyan)]">{tasks.length}</span>
                 </div>
 
                 {/* Refresh button */}
                 <button
                   onClick={fetchTasks}
                   disabled={loading}
-                  className="p-2.5 text-slate-400 hover:text-white hover:bg-slate-800 border border-white/5 rounded-lg transition-all disabled:opacity-50"
+                  className="p-2.5 text-[var(--soft-text-muted,#64748b)] hover:text-[var(--foreground)] hover:bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg transition-all disabled:opacity-50"
                   title="Refresh (Cmd+R)"
                 >
                   <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -323,12 +325,12 @@ export default function Home() {
           {loading && tasks.length === 0 && !noSource && (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-cyan-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-[var(--neon-cyan)] animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
               </div>
-              <p className="text-sm font-mono text-slate-500 uppercase tracking-wider">
+              <p className="text-sm font-mono text-[var(--soft-text-muted,#64748b)] uppercase tracking-wider">
                 Loading tasks...
               </p>
             </div>
@@ -389,13 +391,13 @@ export default function Home() {
           {/* Empty state - has source but no tasks */}
           {!noSource && !loading && tasks.length === 0 && !error && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-950/50 to-slate-900 border border-cyan-500/20 flex items-center justify-center mb-6">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-950/50 to-[var(--glass-bg)] border border-cyan-500/20 flex items-center justify-center mb-6">
                 <svg className="w-10 h-10 text-cyan-400/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
               </div>
-              <h2 className="text-lg font-medium text-white mb-2">No tasks yet</h2>
-              <p className="text-sm text-slate-500 mb-6 max-w-sm">
+              <h2 className="text-lg font-medium text-[var(--foreground)] mb-2">No tasks yet</h2>
+              <p className="text-sm text-[var(--soft-text-muted,#64748b)] mb-6 max-w-sm">
                 Create your first task or add markdown files to the tasks folder.
               </p>
               <button
@@ -412,22 +414,22 @@ export default function Home() {
         </main>
 
         {/* Footer */}
-        <footer className="fixed bottom-0 z-20 border-t border-white/5 bg-slate-950/80 backdrop-blur-md transition-all duration-300"
+        <footer className="fixed bottom-0 z-20 border-t border-[var(--glass-border)] bg-[var(--background)]/80 backdrop-blur-md transition-all duration-300"
           style={{
             left: config.sidebarCollapsed ? '4rem' : '20rem',
             right: 0,
           }}
         >
           <div className="max-w-[1800px] mx-auto px-6 py-3">
-            <div className="flex items-center justify-between text-[10px] font-mono text-slate-600">
+            <div className="flex items-center justify-between text-[10px] font-mono text-[var(--soft-text-muted,#64748b)]">
               <div className="flex items-center gap-4">
                 <span>TaskFlow v1.0</span>
-                <span className="text-slate-700">|</span>
+                <span className="text-[var(--glass-border)]">|</span>
                 <span>File-based AI Task Management</span>
                 {activeSource && (
                   <>
-                    <span className="text-slate-700">|</span>
-                    <span className="text-slate-500 truncate max-w-[300px]" title={activeSource.path}>
+                    <span className="text-[var(--glass-border)]">|</span>
+                    <span className="text-[var(--soft-text-muted,#64748b)] truncate max-w-[300px]" title={activeSource.path}>
                       {activeSource.path}
                     </span>
                   </>

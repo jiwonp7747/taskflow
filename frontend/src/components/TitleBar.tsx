@@ -49,7 +49,7 @@ export function TitleBar({ title = 'TaskFlow' }: TitleBarProps) {
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 h-8 z-[100] bg-[#050508] flex items-center select-none"
+      className="fixed top-0 left-0 right-0 h-8 z-[100] bg-[var(--background)] flex items-center select-none"
       style={{
         WebkitAppRegion: 'drag',
       } as React.CSSProperties}
@@ -60,7 +60,7 @@ export function TitleBar({ title = 'TaskFlow' }: TitleBarProps) {
 
       {/* 타이틀 (가운데 정렬) */}
       <div className="flex-1 text-center">
-        <span className="text-xs font-medium text-slate-500">
+        <span className="text-xs font-medium text-[var(--text-tertiary)]">
           {title}
         </span>
       </div>

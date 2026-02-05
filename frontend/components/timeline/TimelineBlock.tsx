@@ -3,28 +3,28 @@
 import type { Task, TaskStatus, TaskPriority } from '@/types/task';
 
 const STATUS_BG_COLORS: Record<TaskStatus, string> = {
-  TODO: 'bg-slate-600/80',
-  IN_PROGRESS: 'bg-cyan-600/80',
-  IN_REVIEW: 'bg-violet-600/80',
-  NEED_FIX: 'bg-orange-600/80',
-  COMPLETE: 'bg-emerald-600/80',
-  ON_HOLD: 'bg-amber-600/80',
+  TODO: 'bg-[var(--status-todo-bg)]',
+  IN_PROGRESS: 'bg-[var(--status-in-progress-bg)]',
+  IN_REVIEW: 'bg-[var(--status-in-review-bg)]',
+  NEED_FIX: 'bg-[var(--status-need-fix-bg)]',
+  COMPLETE: 'bg-[var(--status-complete-bg)]',
+  ON_HOLD: 'bg-[var(--status-on-hold-bg)]',
 };
 
 const STATUS_BORDER_COLORS: Record<TaskStatus, string> = {
-  TODO: 'border-slate-500/50',
-  IN_PROGRESS: 'border-cyan-500/50',
-  IN_REVIEW: 'border-violet-500/50',
-  NEED_FIX: 'border-orange-500/50',
-  COMPLETE: 'border-emerald-500/50',
-  ON_HOLD: 'border-amber-500/50',
+  TODO: 'border-[var(--glass-border)]',
+  IN_PROGRESS: 'border-[var(--status-in-progress-border)]',
+  IN_REVIEW: 'border-[var(--status-in-review-border)]',
+  NEED_FIX: 'border-[var(--status-need-fix-border)]',
+  COMPLETE: 'border-[var(--status-complete-border)]',
+  ON_HOLD: 'border-[var(--status-on-hold-border)]',
 };
 
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
-  URGENT: 'bg-red-500',
-  HIGH: 'bg-orange-400',
-  MEDIUM: 'bg-blue-400',
-  LOW: 'bg-slate-400',
+  URGENT: 'bg-[var(--priority-urgent-dot)]',
+  HIGH: 'bg-[var(--priority-high-dot)]',
+  MEDIUM: 'bg-[var(--priority-medium-dot)]',
+  LOW: 'bg-[var(--priority-low-dot)]',
 };
 
 interface TimelineBlockProps {
@@ -77,7 +77,7 @@ export function TimelineBlock({
           h-full rounded-md border ${statusBorder} ${statusBg}
           transition-all duration-150
           hover:brightness-125 hover:shadow-lg hover:z-20
-          ${isAiWorking ? 'animate-pulse ring-1 ring-cyan-400/50' : ''}
+          ${isAiWorking ? 'animate-pulse ring-1 ring-[var(--accent-primary)]/50' : ''}
           overflow-hidden px-2 py-1
         `}
       >
@@ -87,13 +87,13 @@ export function TimelineBlock({
 
           <div className="flex-1 min-w-0">
             {/* Title */}
-            <div className="text-[11px] font-mono text-white truncate leading-tight">
+            <div className="text-[11px] font-mono text-[var(--foreground)] truncate leading-tight">
               {task.title}
             </div>
 
             {/* Time range - only if enough height */}
             {!showCompact && startTime && (
-              <div className="text-[9px] font-mono text-white/60 mt-0.5">
+              <div className="text-[9px] font-mono text-[var(--text-tertiary)] mt-0.5">
                 {startTime}{endTime ? ` - ${endTime}` : ''}
               </div>
             )}
@@ -105,8 +105,8 @@ export function TimelineBlock({
               className={`
                 text-[8px] font-mono px-1 rounded flex-shrink-0
                 ${isAiWorking
-                  ? 'bg-cyan-400/30 text-cyan-300'
-                  : 'bg-violet-500/30 text-violet-300'
+                  ? 'bg-[var(--accent-primary)]/30 text-[var(--accent-primary)]'
+                  : 'bg-[var(--status-in-review-bg)] text-[var(--status-in-review-text)]'
                 }
               `}
             >

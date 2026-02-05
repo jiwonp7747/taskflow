@@ -88,20 +88,20 @@ export function ConversationPanel({
       />
 
       {/* Panel */}
-      <div className="relative w-[600px] bg-slate-950 border-l border-white/10 flex flex-col shadow-2xl">
+      <div className="relative w-[600px] bg-[var(--glass-bg)] border-l border-[var(--glass-border)] flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-slate-900/50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)] bg-[var(--card-bg)]">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
               <span className="text-white text-sm">🤖</span>
             </div>
             <div>
-              <h2 className="text-white font-medium truncate max-w-[400px]">
+              <h2 className="text-[var(--foreground)] font-medium truncate max-w-[400px]">
                 {task.title}
               </h2>
-              <div className="flex items-center gap-2 text-xs text-slate-400">
+              <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
                 <span className={`px-1.5 py-0.5 rounded ${
-                  isSessionActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'
+                  isSessionActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-[var(--glass-bg)] text-[var(--text-tertiary)]'
                 }`}>
                   {isSessionActive ? '● 세션 활성' : '○ 세션 종료'}
                 </span>
@@ -121,7 +121,7 @@ export function ConversationPanel({
             )}
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+              className="p-2 text-[var(--text-tertiary)] hover:text-[var(--foreground)] hover:bg-white/5 rounded-lg transition-colors"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -134,11 +134,11 @@ export function ConversationPanel({
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-950/50 to-slate-900 border border-cyan-500/20 flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-950/50 to-[var(--glass-bg)] border border-cyan-500/20 flex items-center justify-center mb-4">
                 <span className="text-3xl">💬</span>
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">대화 시작하기</h3>
-              <p className="text-sm text-slate-500 mb-6 max-w-sm">
+              <h3 className="text-lg font-medium text-[var(--foreground)] mb-2">대화 시작하기</h3>
+              <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-sm">
                 Claude와 대화형으로 태스크를 수행합니다.
                 세션을 시작하면 이전 대화를 이어서 진행할 수 있습니다.
               </p>
@@ -175,7 +175,7 @@ export function ConversationPanel({
 
         {/* Input area */}
         {(isSessionActive || messages.length > 0) && (
-          <div className="border-t border-white/10 p-4 bg-slate-900/50">
+          <div className="border-t border-[var(--glass-border)] p-4 bg-[var(--card-bg)]">
             {!isSessionActive && messages.length > 0 ? (
               <button
                 onClick={handleStartSession}
@@ -192,7 +192,7 @@ export function ConversationPanel({
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="메시지를 입력하세요... (Enter로 전송, Shift+Enter로 줄바꿈)"
-                  className="flex-1 px-4 py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent"
+                  className="flex-1 px-4 py-3 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-lg text-[var(--foreground)] placeholder-[var(--text-tertiary)] resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent"
                   rows={2}
                 />
                 <button
@@ -221,7 +221,7 @@ function MessageBubble({ message }: { message: ConversationMessage }) {
   if (isSystem) {
     return (
       <div className="flex justify-center">
-        <div className="px-3 py-1.5 bg-slate-800/50 text-slate-500 text-xs rounded-full">
+        <div className="px-3 py-1.5 bg-[var(--glass-bg)] text-[var(--text-secondary)] text-xs rounded-full">
           {message.content}
         </div>
       </div>
@@ -234,13 +234,13 @@ function MessageBubble({ message }: { message: ConversationMessage }) {
         className={`max-w-[85%] rounded-2xl px-4 py-3 ${
           isUser
             ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
-            : 'bg-slate-800/50 border border-white/10 text-slate-200'
+            : 'bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--foreground)]'
         }`}
       >
         {/* Content */}
         <div className="whitespace-pre-wrap text-sm leading-relaxed">
           {message.content || (
-            <span className="text-slate-500 italic">
+            <span className="text-[var(--text-secondary)] italic">
               {message.isStreaming ? (
                 <span className="flex items-center gap-2">
                   <span className="animate-pulse">●</span>
@@ -262,7 +262,7 @@ function MessageBubble({ message }: { message: ConversationMessage }) {
         )}
 
         {/* Timestamp */}
-        <div className={`mt-2 text-[10px] ${isUser ? 'text-white/60' : 'text-slate-500'}`}>
+        <div className={`mt-2 text-[10px] ${isUser ? 'text-white/60' : 'text-[var(--text-tertiary)]'}`}>
           {new Date(message.timestamp).toLocaleTimeString('ko-KR', {
             hour: '2-digit',
             minute: '2-digit',

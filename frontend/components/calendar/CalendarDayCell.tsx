@@ -40,13 +40,13 @@ export function CalendarDayCell({
     <div
       ref={setNodeRef}
       className={`
-        flex flex-col min-h-[120px] p-1.5 border-r border-b border-white/5
+        flex flex-col min-h-[120px] p-1.5 border-r border-b border-[var(--glass-border)]
         transition-all duration-200
-        ${isCurrentMonth ? 'bg-slate-900/20' : 'bg-slate-950/50'}
-        ${isToday ? 'bg-cyan-950/30 ring-1 ring-inset ring-cyan-500/30' : ''}
+        ${isCurrentMonth ? 'bg-[var(--bg-primary)]' : 'bg-[var(--glass-bg)]'}
+        ${isToday ? 'bg-[var(--calendar-today-bg)] ring-1 ring-inset ring-[var(--calendar-today-border)]' : ''}
         ${isOver
-          ? 'bg-cyan-950/40 ring-2 ring-inset ring-cyan-500/50 shadow-inner shadow-cyan-500/10'
-          : 'hover:bg-slate-800/30'
+          ? 'bg-[var(--calendar-today-bg)] ring-2 ring-inset ring-[var(--calendar-today-border)] shadow-inner shadow-[var(--calendar-today-border)]/10'
+          : 'hover:bg-[var(--calendar-cell-hover)]'
         }
       `}
       onDoubleClick={(e) => {
@@ -62,10 +62,10 @@ export function CalendarDayCell({
             w-7 h-7 flex items-center justify-center rounded-full text-xs font-mono
             transition-colors
             ${isToday
-              ? 'bg-cyan-500 text-white font-bold shadow-lg shadow-cyan-500/30'
+              ? 'bg-[var(--accent-primary)] text-[var(--calendar-today-text)] font-bold shadow-lg shadow-[var(--accent-primary)]/30'
               : isCurrentMonth
-                ? 'text-slate-300'
-                : 'text-slate-600'
+                ? 'text-[var(--text-secondary)]'
+                : 'text-[var(--text-tertiary)]'
             }
           `}
         >
@@ -86,7 +86,7 @@ export function CalendarDayCell({
 
         {/* Show more indicator */}
         {hasMore && (
-          <div className="text-[9px] font-mono text-slate-500 text-center py-0.5 hover:text-cyan-400 cursor-pointer transition-colors">
+          <div className="text-[9px] font-mono text-[var(--text-tertiary)] text-center py-0.5 hover:text-[var(--accent-primary)] cursor-pointer transition-colors">
             +{tasks.length - MAX_VISIBLE_TASKS} more
           </div>
         )}
