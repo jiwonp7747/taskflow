@@ -15,13 +15,14 @@ id: YYYY-MM-DD-제목-slug
 title: 작업 제목
 status: TODO
 priority: HIGH | MEDIUM | LOW | URGENT
-start_date: YYYY-MM-DDTHH:MM:SS.000Z
-created_at: YYYY-MM-DDTHH:MM:SS.000Z
-updated_at: YYYY-MM-DDTHH:MM:SS.000Z
 assignee: user
-tags:
-  - tag1
-  - tag2
+created_at: "YYYY-MM-DDTHH:MM:SS.mmm"
+updated_at: "YYYY-MM-DDTHH:MM:SS.mmm"
+start_date: "YYYY-MM-DDTHH:MM:SS.mmm"
+due_date: "YYYY-MM-DDTHH:MM:SS.mmm"
+tags: [tag1, tag2]
+task_size: S | M | L | XL
+total_hours: 8
 ---
 
 상세 내용 (마크다운)
@@ -29,17 +30,25 @@ tags:
 
 ## Field Rules
 
-| Field | Rule |
-|-------|------|
-| `id` | `YYYY-MM-DD-제목-slug` (날짜-제목 기반) |
-| `title` | 간결한 작업 제목 (따옴표 없이) |
-| `status` | 항상 `TODO` |
-| `priority` | 사용자 언급 없으면 `MEDIUM` |
-| `start_date` | ISO8601 전체 형식 (`2026-02-05T09:00:00.000Z`) |
-| `created_at` | ISO8601 전체 형식 (따옴표 없이) |
-| `updated_at` | created_at과 동일 |
-| `assignee` | **항상 `user`** (AI가 생성해도 user가 할당 결정) |
-| `tags` | 내용에서 추출 (회사, 개인, 개발, 문서 등) |
+| Field | Required | Rule |
+|-------|----------|------|
+| `id` | Yes | `YYYY-MM-DD-제목-slug` (날짜-제목 기반) |
+| `title` | Yes | 간결한 작업 제목 |
+| `status` | Yes | 항상 `TODO` (새 작업) |
+| `priority` | Yes | `LOW`, `MEDIUM`, `HIGH`, `URGENT` (기본: `MEDIUM`) |
+| `assignee` | Yes | 항상 `user` (기본값) |
+| `created_at` | Yes | 로컬 ISO8601 (따옴표 필수, Z 없음): `"2026-02-05T09:00:00.000"` |
+| `updated_at` | Yes | created_at과 동일 |
+| `start_date` | No | 시작일 (선택, 따옴표 필수) |
+| `due_date` | No | 마감일 (선택, 따옴표 필수) |
+| `tags` | Yes | 인라인 배열: `[회사, 개발]` |
+| `task_size` | No | 작업 크기: `S`, `M`, `L`, `XL` |
+| `total_hours` | No | 예상 소요 시간 (숫자) |
+
+**중요: 날짜 형식**
+- Z 접미사 없음 (UTC가 아닌 로컬 시간)
+- 따옴표로 감싸기 필수: `created_at: "2026-02-05T09:00:00.000"`
+- 밀리초 포함: `.000`
 
 ## Workflow
 
@@ -79,26 +88,13 @@ tags:
 
 **로컬 폴더 구조:** `{지정경로}/YYYY-MM-DD-title.md`
 
-**파일 생성:**
-```python
-# Write tool로 직접 생성
-file_path = f"{local_path}/{today}-{slug}.md"
-```
-
 ### GitHub Source
 
 GitHub API를 통해 파일 생성. 사용자의 GitHub 저장소 설정 필요.
 
-**설정 방법:**
-1. 사용자가 GitHub 저장소 URL 제공
-2. `gh` CLI 인증 필요
-
 ```bash
-# 현재 월 폴더 확인/생성
-YEAR_MONTH=$(date +%Y-%m)
-
 # 파일 생성 (gh CLI 사용)
-# {OWNER}/{REPO}를 사용자 저장소로 대체
+YEAR_MONTH=$(date +%Y-%m)
 gh api repos/{OWNER}/{REPO}/contents/schedule/${YEAR_MONTH}/${FILENAME} \
   -X PUT \
   -f message="Add task: ${TITLE}" \
@@ -121,15 +117,15 @@ id: 2026-02-05-si-portal-db-installer
 title: SI Portal DB 설치 프로그램 작성
 status: TODO
 priority: HIGH
-start_date: 2026-02-05T09:00:00.000Z
-created_at: 2026-02-05T00:00:00.000Z
-updated_at: 2026-02-05T00:00:00.000Z
 assignee: user
-tags:
-  - 회사
-  - 개발
-  - SI Portal
+created_at: "2026-02-05T09:00:00.000"
+updated_at: "2026-02-05T09:00:00.000"
+start_date: "2026-02-05T09:00:00.000"
+due_date: "2026-02-07T18:00:00.000"
+tags: [회사, 개발, SI Portal]
+task_size: M
 ---
+
 SI Portal DB 설치 프로그램 작성
 - DB 설치 자동화 스크립트 개발
 - 설치 가이드 문서 포함
@@ -142,14 +138,15 @@ id: 2026-02-12-api-documentation
 title: API 문서 정리
 status: TODO
 priority: MEDIUM
-start_date: 2026-02-12T09:00:00.000Z
-created_at: 2026-02-05T00:00:00.000Z
-updated_at: 2026-02-05T00:00:00.000Z
 assignee: user
-tags:
-  - 회사
-  - 문서
+created_at: "2026-02-05T09:00:00.000"
+updated_at: "2026-02-05T09:00:00.000"
+start_date: "2026-02-10T09:00:00.000"
+due_date: "2026-02-14T18:00:00.000"
+tags: [회사, 문서]
+task_size: S
 ---
+
 API 문서 정리
 - 기존 API 엔드포인트 문서화
 - 사용 예시 추가
@@ -161,7 +158,6 @@ API 문서 정리
 ```bash
 # Write tool로 직접 생성
 # file_path: ~/tasks/YYYY-MM-DD-slug.md
-# 또는 사용자 지정 경로: {사용자지정경로}/YYYY-MM-DD-slug.md
 ```
 
 ### GitHub
@@ -170,14 +166,6 @@ API 문서 정리
 YEAR_MONTH=$(date +%Y-%m)
 gh api repos/{OWNER}/{REPO}/contents/schedule/${YEAR_MONTH}/${FILENAME} \
   -X PUT -f message="Add task: ${TITLE}" -f content="$(echo -n "${CONTENT}" | base64)"
-
-# 기존 파일 확인
-gh api repos/{OWNER}/{REPO}/contents/schedule/${YEAR_MONTH} --jq '.[].name'
-
-# 파일 삭제 (필요시)
-SHA=$(gh api repos/{OWNER}/{REPO}/contents/schedule/${YEAR_MONTH}/${FILENAME} --jq '.sha')
-gh api repos/{OWNER}/{REPO}/contents/schedule/${YEAR_MONTH}/${FILENAME} \
-  -X DELETE -f message="Delete task" -f sha="${SHA}"
 ```
 
 ## Usage Examples
@@ -199,6 +187,28 @@ gh api repos/{OWNER}/{REPO}/contents/schedule/${YEAR_MONTH}/${FILENAME} \
 "깃헙에 작업 추가: 코드 리뷰 완료"
 → GitHub schedule/2026-02/ 폴더에 파일 생성
 ```
+
+## Valid Values Reference
+
+### Status (새 작업은 항상 TODO)
+- `TODO` - 할 일
+- `IN_PROGRESS` - 진행 중
+- `IN_REVIEW` - 검토 중
+- `NEED_FIX` - 수정 필요
+- `COMPLETE` - 완료
+- `ON_HOLD` - 보류
+
+### Priority
+- `LOW` - 낮음
+- `MEDIUM` - 보통 (기본값)
+- `HIGH` - 높음
+- `URGENT` - 긴급
+
+### Task Size (선택)
+- `S` - 소규모 (1-2시간)
+- `M` - 중규모 (반나절)
+- `L` - 대규모 (하루)
+- `XL` - 초대규모 (며칠)
 
 ## Configuration
 
