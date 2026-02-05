@@ -304,7 +304,7 @@ export class GitHubApiAdapter implements IGitHubAdapter {
       if (
         item.type === 'blob' &&
         item.path?.endsWith('.md') &&
-        (rootPathPrefix === '' || item.path.startsWith(rootPathPrefix))
+        (rootPathPrefix === '' || item.path.startsWith(rootPathPrefix + '/') || item.path === rootPathPrefix)
       ) {
         // Remove root path prefix from path
         const relativePath = rootPathPrefix

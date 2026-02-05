@@ -79,13 +79,14 @@ export function useTaskFilter(tasks: Task[]): UseTaskFilterReturn {
         }
       }
 
-      // Date filter (based on due_date)
+      // Date filter (based on due_date, fallback to start_date)
       if (filter.dateRange && filter.dateRange.type !== 'all') {
-        // If filtering by date but task has no due_date, exclude it
-        if (!task.due_date) return false;
+        // Use due_date if available, otherwise use start_date
+        const taskDate = task.due_date || task.start_date;
+        if (!taskDate) return false;
 
         // Parse as local time (append T00:00:00 for date-only strings to avoid UTC interpretation)
-        const stripped = task.due_date.replace(/Z$/, '');
+        const stripped = taskDate.replace(/Z$/, '');
         const taskDueDate = new Date(stripped.includes('T') ? stripped : stripped + 'T00:00:00');
 
         if (filter.dateRange.type === 'custom') {
